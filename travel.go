@@ -1,0 +1,3 @@
+package graphlib
+
+// TODO implement travel algorithms for graph, for example dfs,bfs...
