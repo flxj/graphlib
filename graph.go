@@ -16,17 +16,23 @@ type Graph[K comparable, V any, W number | any] interface {
 	Order() int
 	Size() int
 
-	AddVertex(vertex *Vertex[K, V]) error
+	AddVertex(vertex Vertex[K, V]) error
 	RemoveVertex(key K) error
 	AddEdge(edge Edge[K, W]) error
-	RemoveEdge(key K) error
+	RemoveEdgeByKey(key K) error
+	RemoveEdge(endpoint1, endpoint2 K) error
 
 	Degree(vertex K) int
-	Neighbours(vertex K) []*Vertex[K, V]
-	GetVertex(key K) (*Vertex[K, V], error)
-	GetEdge(key K) (*Edge[K, W], error)
-	GetVerticesByLabel(labels map[string]string) ([]*Vertex[K, V], error)
-	GetEdgesByLabel(labels map[string]string) ([]*Vertex[K, W], error)
+	Neighbours(vertex K) []Vertex[K, V]
+	GetVertex(key K) (Vertex[K, V], error)
+	GetEdge(key K) (Edge[K, W], error)
+	GetVerticesByLabel(labels map[string]string) ([]Vertex[K, V], error)
+	GetEdgesByLabel(labels map[string]string) ([]Vertex[K, W], error)
+
+	SetVertexLabel(key K, labelKey, labelVal string) error
+	DeleteVertexLabel(key K, labelKey string) error
+	SetEdgeLabel(key K, labelKey, labelVal string) error
+	DeleteEdgeLabel(key K, labelKey string) error
 
 	//Diameter()int
 	//Radius()int

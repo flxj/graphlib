@@ -4,12 +4,13 @@ import "io"
 
 type Digraph[K comparable, V any, W number] interface {
 	Graph[K, V, W]
-	InDegree(vertex K) int
-	OutDegree(vertex K) int
-	InNeighbours(vertex K) []*Vertex[K, V]
-	OutNeighbours(vertex K) []*Vertex[K, V]
-	Sources() ([]*Vertex[K, V], error)
-	Sinks() ([]*Vertex[K, V], error)
+	InDegree(vertex K) (int, error)
+	OutDegree(vertex K) (int, error)
+	InNeighbours(vertex K) ([]Vertex[K, V], error)
+	OutNeighbours(vertex K) ([]Vertex[K, V], error)
+	Sources() ([]Vertex[K, V], error)
+	Sinks() ([]Vertex[K, V], error)
+	DetectCycle() ([][]K, error)
 }
 
 func NewDigraph[K comparable, V any, W number]() (Digraph[K, V, W], error) {
