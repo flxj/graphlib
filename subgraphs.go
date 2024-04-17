@@ -1,17 +1,17 @@
 package graphlib
 
-func Contains[K comparable](g Graph[K, any, any], subg Graph[K, any, any]) bool {
+func Contains[K comparable, N number](g Graph[K, any, N], subg Graph[K, any, N]) bool {
 	return false
 }
 
-func SpanningSubgraph[K comparable](g Graph[K, any, any], edges []K) (Graph[K, any, any], error) {
+func SpanningSubgraph[K comparable, N number](g Graph[K, any, N], edges []K) (Graph[K, any, N], error) {
 	return nil, nil
 }
 
-func SpanningSupergraph[K comparable, V any, W number | any](g Graph[K, V, W], edges []*Edge[K, W]) (Graph[K, any, any], error) {
+func SpanningSupergraph[K comparable, V any, N number](g Graph[K, V, N], edges []*Edge[K, N]) (Graph[K, any, N], error) {
 	return nil, nil
 }
 
-func InducedSubgraph[K comparable](g Graph[K, any, any], vertices []K) (Graph[K, any, any], error) {
+func InducedSubgraph[K comparable, N number](g Graph[K, any, N], vertices []K) (Graph[K, any, N], error) {
 	return nil, nil
 }

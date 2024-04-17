@@ -4,17 +4,26 @@ type number interface {
 	int | int64
 }
 
-type Graph[K comparable, V any, W number | any] interface {
+type Graph[K comparable, V any, W number] interface {
 	IsDigraph() bool
-	IsSample() bool
+	IsSimple() bool
 	IsRegular() bool
-	IsHyper() bool
 	IsMulti() bool
-	IsAcyclic() bool // is forest
+	IsAcyclic() bool
 	IsConnected() bool
+	IsCompleted() bool
+	IsTree() bool 
+	IsForest() bool 
+	HasLoop()bool
 
 	Order() int
 	Size() int
+	MinDegree() int
+	MaxDegree() int
+	AvgDegree() int
+
+	AllVertexes()([]Vertex[K,V],error)
+	AllEdges()([]Edge[K,W],error)
 
 	AddVertex(vertex Vertex[K, V]) error
 	RemoveVertex(key K) error
@@ -46,7 +55,7 @@ type Vertex[K comparable, V any] struct {
 	Lables map[string]string
 }
 
-type Edge[K comparable, W number | any] struct {
+type Edge[K comparable, W number] struct {
 	Key    K
 	Head   K
 	Tail   K
