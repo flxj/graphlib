@@ -13,9 +13,13 @@ type Digraph[K comparable, V any, W number] interface {
 	DetectCycle() ([][]K, error)
 }
 
-func NewDigraph[K comparable, V any, W number]() (Digraph[K, V, W], error) {
+func NewDigraph[K comparable, V any, W number](name string) (Digraph[K, V, W], error) {
 	return nil, nil
 }
+
 func NewDigraphFromFile[K comparable, V any, W number](r io.Reader) (Digraph[K, V, W], error) {
 	return nil, nil
+}
+
+type digraphImpl[K comparable, V any, W number] struct {
 }

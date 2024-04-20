@@ -8,7 +8,7 @@ func SpanningSubgraph[K comparable, N number](g Graph[K, any, N], edges []K) (Gr
 	return nil, nil
 }
 
-func SpanningSupergraph[K comparable, V any, N number](g Graph[K, V, N], edges []*Edge[K, N]) (Graph[K, any, N], error) {
+func SpanningSupergraph[K comparable, N number](g Graph[K, any, N], edges []*Edge[K, N]) (Graph[K, any, N], error) {
 	return nil, nil
 }
 

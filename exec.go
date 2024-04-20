@@ -2,7 +2,6 @@ package graphlib
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"sync"
@@ -52,18 +51,6 @@ const (
 
 	//
 	DefaultMaxConcurrencyJob = 1000000
-)
-
-var (
-	ErrNotImplement   = errors.New("not implement the method now")
-	ErrExistsCycle    = errors.New("there are cycles in the current execgraph")
-	ErrAlreadyRunning = errors.New("the current ExecGraph is already running")
-	ErrJobNotExists   = errors.New("the job not exists in current graph")
-	ErrExecCanceled   = errors.New("the execgraph has been canceled")
-	ErrJobCanceled    = errors.New("the job has been canceled")
-	ErrForbidModify   = errors.New("current status is not waiting,cannot modify execgraph structure")
-	ErrJobIsNull      = errors.New("the job is null")
-	ErrNoEntrypoint   = errors.New("not found entrypoint node in current execgraph object")
 )
 
 func edgeFormat[K comparable](v1, v2 K) K {
@@ -215,7 +202,7 @@ type ExecGraph[K comparable, J job] interface { // TODO: change the name as GoGr
 
 // Create an empty ExecGraph.
 func NewExecGraph[K comparable, J job]() (ExecGraph[K, J], error) {
-	dag, err := NewDigraph[K, struct{}, int]()
+	dag, err := NewDigraph[K, any, int]("exec")
 	if err != nil {
 		return nil, err
 	}
@@ -234,21 +221,21 @@ func NewExecGraph[K comparable, J job]() (ExecGraph[K, J], error) {
 
 // Load a DAG from text data and create an ExecGraph based on it.
 func NewExecGraphFromFile[K comparable, J job](r io.Reader) (ExecGraph[K, J], error) {
-	return nil, ErrNotImplement
+	return nil, errNotImplement
 }
 
 // Create an ExecGraph based on an existing DAG object.
 func NewExecGraphFromDAG[K comparable, V any, W number, J job](g Digraph[K, V, W]) (ExecGraph[K, J], error) {
 	if !g.IsAcyclic() {
-		return nil, ErrExistsCycle
+		return nil, errExistsCycle
 	}
 	var (
 		err error
-		dag Digraph[K, struct{}, int]
+		dag Digraph[K, any, int]
 		vs  []Vertex[K, V]
 		es  []Edge[K, W]
 	)
-	if dag, err = NewDigraph[K, struct{}, int](); err != nil {
+	if dag, err = NewDigraph[K, any, int](g.Name() + "-exec"); err != nil {
 		return nil, err
 	}
 	if vs, err = g.AllVertexes(); err != nil {
@@ -258,7 +245,7 @@ func NewExecGraphFromDAG[K comparable, V any, W number, J job](g Digraph[K, V, W
 		return nil, err
 	}
 	for _, v := range vs {
-		nv := Vertex[K, struct{}]{Key: v.Key}
+		nv := Vertex[K, any]{Key: v.Key}
 		if err = dag.AddVertex(nv); err != nil {
 			return nil, err
 		}
@@ -374,7 +361,7 @@ func (e *execNode[K, J]) run(ch chan *execResult[K]) error {
 			err = runWithRetry(e.retryLimit, e.timeout, job)
 		} else {
 			e.mu.Unlock()
-			err = ErrJobIsNull
+			err = errJobIsNull
 		}
 		end := time.Now()
 
@@ -417,7 +404,7 @@ func (e *execNode[K, J]) stop(ignoreErr bool) error {
 	if ignoreErr {
 		e.info.Status = Success
 	} else {
-		e.info.Error = ErrJobCanceled
+		e.info.Error = errJobCanceled
 		e.info.Status = Stopped
 	}
 
@@ -443,10 +430,10 @@ func (e *execNode[K, J]) isRunning() bool {
 }
 
 type execGraph[K comparable, J job] struct {
-	mu    sync.RWMutex
-	limit int
+	mu sync.RWMutex
+	//limit int
 	// using DAG to orchestrate the execution workflow of Jobs.
-	dag Digraph[K, struct{}, int]
+	dag Digraph[K, any, int]
 	// to stop the start() goroutinue.
 	complete  chan struct{}
 	completed bool
@@ -474,14 +461,14 @@ type execGraph[K comparable, J job] struct {
 
 func (g *execGraph[K, J]) Start() error {
 	if !g.dag.IsAcyclic() {
-		return ErrExistsCycle
+		return errExistsCycle
 	}
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
 	switch g.status {
 	case Running:
-		return ErrAlreadyRunning
+		return errAlreadyRunning
 	case Paused:
 		// continue run from the last suspened point.
 		g.suspend = false
@@ -510,7 +497,7 @@ func (g *execGraph[K, J]) start() {
 	// load source vertecis.
 	sources, err := g.dag.Sources()
 	if err != nil {
-		g.scheduledError(any("").(K), ErrNoEntrypoint)
+		g.scheduledError(any("").(K), errNoEntrypoint)
 		return
 	}
 	for _, v := range sources {
@@ -701,7 +688,7 @@ func (g *execGraph[K, J]) Stop() error {
 			return err
 		}
 		g.status = Stopped
-		g.err = ErrExecCanceled
+		g.err = errExecCanceled
 		close(g.wait)
 	case Success:
 		return fmt.Errorf("current status is %s,which means no jobs running,needont stop anything", g.status)
@@ -764,7 +751,7 @@ func (g *execGraph[K, J]) Job(key K) (JobInfo[K], error) {
 	if job, ok := g.nodes[key]; ok {
 		return job.getInfo(), nil
 	}
-	return JobInfo[K]{}, ErrJobNotExists
+	return JobInfo[K]{}, errJobNotExists
 }
 
 func (g *execGraph[K, J]) Reset() error {
@@ -798,7 +785,7 @@ func (g *execGraph[K, J]) addJob(key K, job J, d time.Duration, n int) error {
 	defer g.mu.Unlock()
 	//
 	if g.status != Waiting {
-		return ErrForbidModify
+		return errForbidModify
 	}
 	if jb, ok := g.nodes[key]; ok {
 		jb.updateJob(job)
@@ -811,7 +798,7 @@ func (g *execGraph[K, J]) addJob(key K, job J, d time.Duration, n int) error {
 		return nil
 	}
 
-	v := Vertex[K, struct{}]{
+	v := Vertex[K, any]{
 		Key: key,
 	}
 	if err := g.dag.AddVertex(v); err != nil {
@@ -839,12 +826,12 @@ func (g *execGraph[K, J]) RemoveJob(key K) error {
 	defer g.mu.Unlock()
 	//
 	if g.status != Waiting {
-		return ErrForbidModify
+		return errForbidModify
 	}
 	//
 	_, ok := g.nodes[key]
 	if !ok {
-		return ErrJobNotExists
+		return errJobNotExists
 	}
 	if err := g.dag.RemoveVertex(key); err != nil {
 		return err
@@ -860,14 +847,14 @@ func (g *execGraph[K, J]) AddDependency(source, target K) error {
 	defer g.mu.Unlock()
 	//
 	if g.status != Waiting {
-		return ErrForbidModify
+		return errForbidModify
 	}
 
 	if _, ok := g.nodes[source]; !ok {
-		return ErrJobNotExists
+		return errJobNotExists
 	}
 	if _, ok := g.nodes[target]; !ok {
-		return ErrJobNotExists
+		return errJobNotExists
 	}
 
 	edge := Edge[K, int]{
@@ -883,14 +870,14 @@ func (g *execGraph[K, J]) RemoveDependency(source, target K) error {
 	defer g.mu.Unlock()
 	//
 	if g.status != Waiting {
-		return ErrForbidModify
+		return errForbidModify
 	}
 
 	if _, ok := g.nodes[source]; !ok {
-		return ErrJobNotExists
+		return errJobNotExists
 	}
 	if _, ok := g.nodes[target]; !ok {
-		return ErrJobNotExists
+		return errJobNotExists
 	}
 
 	return g.dag.RemoveEdgeByKey(edgeFormat(source, target))
@@ -905,7 +892,7 @@ func (g *execGraph[K, J]) StopJob(key K, ignoreErr bool) error {
 
 	node, ok := g.nodes[key]
 	if !ok {
-		return ErrJobNotExists
+		return errJobNotExists
 	}
 	if err := node.stop(ignoreErr); err != nil {
 		return err
@@ -916,7 +903,7 @@ func (g *execGraph[K, J]) StopJob(key K, ignoreErr bool) error {
 		endAt: time.Now(),
 	}
 	if !ignoreErr {
-		res.err = ErrJobCanceled
+		res.err = errJobCanceled
 	}
 	g.resCh <- res
 
@@ -924,7 +911,7 @@ func (g *execGraph[K, J]) StopJob(key K, ignoreErr bool) error {
 }
 
 func (g *execGraph[K, J]) RunJob(key K) error {
-	return ErrNotImplement
+	return errNotImplement
 }
 
 func (g *execGraph[K, J]) DetectCycle() ([][]K, error) {
