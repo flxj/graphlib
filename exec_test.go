@@ -103,3 +103,27 @@ func Test3(t *testing.T) {
 		fmt.Printf("(%d,%s,%v)\n", k, v.Data, v.Mp)
 	}
 }
+
+func Test4(t *testing.T) {
+	g, _ := NewGraph[int, string, float32](false, "test")
+
+	v1 := Vertex[int, string]{
+		Key:   1,
+		Value: "v1",
+	}
+	v2 := Vertex[int, string]{
+		Key:   2,
+		Value: "v2",
+	}
+	_ = g.AddVertex(v1)
+	_ = g.AddVertex(v2)
+
+	e := Edge[int, float32]{
+		Key:   1,
+		Head:  1,
+		Tail:  2,
+		Value: "e1",
+	}
+	_ = g.AddEdge(e)
+
+}

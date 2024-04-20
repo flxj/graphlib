@@ -9,6 +9,7 @@ var (
 	errVertexNotExists = errors.New("vertex not exists")
 	errEdgeNotExists   = errors.New("edge not exists")
 	errUnknownProperty = errors.New("unknown graph property")
+	errNotDigraph      = errors.New("the graph is not digraph")
 )
 
 var (
