@@ -3,13 +3,33 @@ package graphlib
 // TODO implement some algebra operations about graph
 
 func Union[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K, V, W], error) {
-	return nil, nil
+	return nil, errNotImplement
 }
 
 func Intersection[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K, V, W], error) {
-	return nil, nil
+	return nil, errNotImplement
 }
 
 func CartesianProduct[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K, V, W], error) {
-	return nil, nil
+	return nil, errNotImplement
+}
+
+// page 55
+func Identify[K comparable, V any, W number](g Graph[K, V, W], v1, v2 K, newVertex K) (Graph[K, V, W], error) {
+	return nil, errNotImplement
+}
+
+// page 55
+func Contract[K comparable, V any, W number](g Graph[K, V, W], v1, v2 K, newVertex K) (Graph[K, V, W], error) {
+	return nil, errNotImplement
+}
+
+// page 55
+func Split[K comparable, V any, W number](g Graph[K, V, W], vertex K, v1, v2, edge K) (Graph[K, V, W], error) {
+	return nil, errNotImplement
+}
+
+// page 55
+func Subdivide[K comparable, V any, W number](g Graph[K, V, W], edge K, newVertex K) (Graph[K, V, W], error) {
+	return nil, errNotImplement
 }

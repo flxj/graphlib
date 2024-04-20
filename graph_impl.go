@@ -212,13 +212,13 @@ func (g *graph[K, V, W]) AvgDegree() float64 {
 	if g.avgDe.version == g.version {
 		return g.avgDe.value
 	}
-	d, err := g.adjList.avgDegree()
-	if err != nil {
-		return -1 * 1.0
+	var avg float64
+	if g.Order() != 0 {
+		avg = float64(2*g.Size()) / float64(g.Order())
 	}
 	g.avgDe.version = g.version
-	g.avgDe.value = d
-	return d
+	g.avgDe.value = avg
+	return avg
 }
 
 func (g *graph[K, V, W]) Property(p PropertyName) (GraphProperty[any], error) {
