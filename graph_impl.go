@@ -102,9 +102,43 @@ func (g *graph[K, V, W]) IsSimple() bool {
 		return g.properties.simple.value
 	}
 	//
-	p, _ := g.adjList.property(simple)
+	//p, _ := g.adjList.property(simple)
+	//p.version = g.version
+	//g.properties.simple = p
+
+	simpleFlag := true
+	edges := make(map[K]struct{})
+	for _, v := range g.edges {
+		if v.Head == v.Tail {
+			simpleFlag = false
+			break
+		}
+		e1 := edgeFormat(v.Head, v.Tail)
+		e2 := edgeFormat(v.Tail, v.Head)
+		if _, ok := edges[e1]; ok {
+			simpleFlag = false
+			break
+		}
+		if _, ok := edges[e2]; ok {
+			simpleFlag = false
+			break
+		}
+		edges[e1] = struct{}{}
+		edges[e2] = struct{}{}
+	}
+	g.properties.simple.version = g.version
+	g.properties.simple.value = simpleFlag
+
+	return simpleFlag
+}
+
+func (g *graph[K, V, W]) HasNegativeWeight() bool {
+	if g.properties.negativeWeight.version == g.version {
+		return g.properties.negativeWeight.value
+	}
+	p, _ := g.adjList.property(negativeWeight)
 	p.version = g.version
-	g.properties.simple = p
+	g.properties.negativeWeight = p
 
 	return p.value
 }
@@ -222,7 +256,44 @@ func (g *graph[K, V, W]) AvgDegree() float64 {
 }
 
 func (g *graph[K, V, W]) Property(p PropertyName) (GraphProperty[any], error) {
-	return GraphProperty[any]{}, errNotImplement
+	gp := GraphProperty[any]{Name: p}
+	switch p {
+	case PropertyDigraph:
+		gp.Value = g.IsDigraph()
+	case PropertyAcyclic:
+		gp.Value = g.IsAcyclic()
+	case PropertySimple:
+		gp.Value = g.IsSimple()
+	case PropertyRegular:
+		gp.Value = g.IsRegular()
+	case PropertyConnected:
+		gp.Value = g.IsCompleted()
+	case PropertyForest:
+		gp.Value = g.IsForest()
+	case PropertyLoop:
+		gp.Value = g.HasLoop()
+	case PropertyCompleted:
+		gp.Value = g.IsCompleted()
+	case PropertyTree:
+		gp.Value = g.IsTree()
+	case PropertyNegativeWeight:
+		gp.Value = g.HasNegativeWeight()
+	case PropertyGraphName:
+		gp.Value = g.Name()
+	case PropertyOrder:
+		gp.Value = g.Order()
+	case PropertySize:
+		gp.Value = g.Size()
+	case PropertyMaxDegree:
+		gp.Value = g.MaxDegree()
+	case PropertyMinDegree:
+		gp.Value = g.MinDegree()
+	case PropertyAvgDegree:
+		gp.Value = g.AvgDegree()
+	default:
+		return gp, errUnknownProperty
+	}
+	return gp, nil
 }
 
 func (g *graph[K, V, W]) AllVertexes() ([]Vertex[K, V], error) {

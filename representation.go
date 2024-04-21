@@ -6,6 +6,15 @@ import (
 
 // TODO implement some graph representation methods, for example adjacent matrix
 
+type AdjacencyMatrix struct {
+}
+
+type DegreeMatrix struct {
+}
+
+type WeightMatrix[N number] struct {
+}
+
 type endpoint[K comparable, W number] struct {
 	key    K // vertex key
 	edge   K // edge key
@@ -464,23 +473,130 @@ func (l *adjacencyList[K, W]) isAcyclic() (bool, error) {
 }
 
 func (l *adjacencyList[K, W]) isConnected() (bool, error) {
-	return false, errNotImplement
+	if len(l.outAdj) == 0 {
+		return false, nil
+	}
+	//
+	var start K
+	for k := range l.outAdj {
+		start = k
+		break
+	}
+	visited := make(map[K]struct{})
+	queue := []K{start}
+	head := 0
+	tail := 1
+
+	for head < tail {
+		v := queue[head]
+		head++
+		if _, ok := visited[v]; !ok {
+			visited[v] = struct{}{}
+		}
+		vs, err := l.neighbours(v)
+		if err != nil {
+			return false, err
+		}
+		for _, v := range vs {
+			if _, ok := visited[v]; !ok {
+				if tail < len(queue) {
+					queue[tail] = v
+				} else {
+					queue = append(queue, v)
+				}
+				tail++
+			}
+		}
+	}
+	if len(visited) != len(l.outAdj) {
+		return false, nil
+	}
+	return true, nil
 }
 
 func (l *adjacencyList[K, W]) isSimple() (bool, error) {
-	return false, errNotImplement
+	if l.digraph {
+		edges := make(map[K]struct{})
+		for k, v := range l.outAdj {
+			for p := v; p != nil; p = p.next {
+				if p.key == k {
+					return false, nil
+				}
+				e1 := edgeFormat(k, p.key)
+				e2 := edgeFormat(p.key, k)
+				if _, ok := edges[e1]; ok {
+					return false, nil
+				}
+				if _, ok := edges[e2]; ok {
+					return false, nil
+				}
+				edges[e1] = struct{}{}
+				edges[e2] = struct{}{}
+			}
+		}
+		for k, v := range l.inAdj {
+			for p := v; p != nil; p = p.next {
+				e1 := edgeFormat(k, p.key)
+				e2 := edgeFormat(p.key, k)
+				if _, ok := edges[e1]; ok {
+					return false, nil
+				}
+				if _, ok := edges[e2]; ok {
+					return false, nil
+				}
+				edges[e1] = struct{}{}
+				edges[e2] = struct{}{}
+			}
+		}
+		return true, nil
+	}
+	//
+	for k, v := range l.outAdj {
+		vs := make(map[K]struct{})
+		for p := v; p != nil; p = p.next {
+			if p.key == k {
+				return false, nil
+			}
+			if _, ok := vs[p.key]; ok {
+				return false, nil
+			}
+			vs[p.key] = struct{}{}
+		}
+	}
+	return true, nil
 }
 
 func (l *adjacencyList[K, W]) isRegular() (bool, error) {
-	return false, errNotImplement
+	d := -1
+	for k := range l.outAdj {
+		n, err := l.degree(k)
+		if err != nil {
+			return false, err
+		}
+		if d >= 0 {
+			if n != d {
+				return false, nil
+			}
+		} else {
+			d = n
+		}
+	}
+	return true, nil
 }
 
 func (l *adjacencyList[K, W]) isForest() (bool, error) {
-	return false, errNotImplement
+	return l.isAcyclic()
 }
 
 func (l *adjacencyList[K, W]) hasLoop() (bool, error) {
-	return false, errNotImplement
+	for k, v := range l.outAdj {
+		for p := v; p != nil; p = p.next {
+			if p.key == k {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }
 
 func (l *adjacencyList[K, W]) hasNegativeWeight() (bool, error) {

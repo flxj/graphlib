@@ -127,3 +127,48 @@ func Test4(t *testing.T) {
 	_ = g.AddEdge(e)
 
 }
+
+type G interface {
+	foo()
+}
+type GG interface {
+	G
+	bar()
+}
+
+type g struct {
+}
+
+func (g *g) foo() {
+	fmt.Println("g foo")
+}
+
+type gg struct {
+}
+
+func (g *gg) foo() {
+	fmt.Println("gg bar")
+}
+
+func (g *gg) bar() {
+	fmt.Println("gg bar")
+}
+
+func testG(x G) {
+	gg, ok := x.(GG)
+	if !ok {
+		fmt.Println("error")
+		return
+	}
+	gg.bar()
+}
+
+func Test5(t *testing.T) {
+
+	x := &gg{}
+	testG(x)
+
+	y := &g{}
+	testG(y)
+
+}

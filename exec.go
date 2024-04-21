@@ -226,11 +226,15 @@ func NewExecGraphFromFile[K comparable, J job](r io.Reader) (ExecGraph[K, J], er
 
 // Create an ExecGraph based on an existing DAG object.
 func NewExecGraphFromDAG[K comparable, V any, W number, J job](g Digraph[K, V, W]) (ExecGraph[K, J], error) {
-	if !g.IsAcyclic() {
+	p, err := g.Property(PropertyAcyclic)
+	if err != nil {
+		return nil, err
+	}
+	if !p.Value.(bool) {
 		return nil, errExistsCycle
 	}
+
 	var (
-		err error
 		dag Digraph[K, any, int]
 		vs  []Vertex[K, V]
 		es  []Edge[K, W]
@@ -460,7 +464,11 @@ type execGraph[K comparable, J job] struct {
 }
 
 func (g *execGraph[K, J]) Start() error {
-	if !g.dag.IsAcyclic() {
+	p, err := g.dag.Property(PropertyAcyclic)
+	if err != nil {
+		return err
+	}
+	if !p.Value.(bool) {
 		return errExistsCycle
 	}
 	g.mu.Lock()

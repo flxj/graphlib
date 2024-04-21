@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	ErrRunTimeout = errors.New("function run timeout")
+	errRunTimeout = errors.New("function run timeout")
 )
 
 func runWithTimeout(timeout time.Duration, f func() error) error {
@@ -21,7 +21,7 @@ func runWithTimeout(timeout time.Duration, f func() error) error {
 	}()
 	select {
 	case <-tr.C:
-		return ErrRunTimeout
+		return errRunTimeout
 	case err, ok := <-ch:
 		if !ok {
 			return nil
