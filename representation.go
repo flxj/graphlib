@@ -5,14 +5,71 @@ import (
 )
 
 // TODO implement some graph representation methods, for example adjacent matrix
-
-type AdjacencyMatrix struct {
+func NewWeightMatrix[K comparable, W number](g Graph[K, any, W]) (*WeightMatrix[K, W], error) {
+	return nil, errNotImplement
 }
 
-type DegreeMatrix struct {
+func NewAdjacencytMatrix[K comparable, W number](g Graph[K, any, W]) (*AdjacencyMatrix[K], error) {
+	return nil, errNotImplement
 }
 
-type WeightMatrix[N number] struct {
+func NewDegreeMatrix[K comparable, W number](g Graph[K, any, W]) (*DegreeMatrix[K], error) {
+	return nil, errNotImplement
+}
+
+type AdjacencyMatrix[K comparable] struct {
+	vertexes []K
+	data     [][]int
+}
+
+func (m *AdjacencyMatrix[K]) Matrix() [][]int {
+	return m.data
+}
+
+func (m *AdjacencyMatrix[K]) Columns() []K {
+	return m.vertexes
+}
+
+type DegreeMatrix[K comparable] struct {
+	vertexes []K
+	data     [][]int
+}
+
+func (m *DegreeMatrix[K]) Weight() [][]int {
+	return m.data
+}
+
+func (m *DegreeMatrix[K]) Columns() []K {
+	return m.vertexes
+}
+
+type WeightMatrix[K comparable, W number] struct {
+	vertexes []K
+	data     [][]W
+}
+
+func (m *WeightMatrix[K, W]) Weight() [][]W {
+	return m.data
+}
+
+func (m *WeightMatrix[K, W]) Distance() [][]float64 {
+	w := make([][]float64, len(m.data))
+	for i, d := range m.data {
+		ds := make([]float64, len(d))
+		for j, p := range d {
+			if p == 0 {
+				ds[j] = MaxFloatDistance
+			} else {
+				ds[j] = any(p).(float64)
+			}
+		}
+		w[i] = ds
+	}
+	return w
+}
+
+func (m *WeightMatrix[K, W]) Columns() []K {
+	return m.vertexes
 }
 
 type endpoint[K comparable, W number] struct {
@@ -469,7 +526,67 @@ func (l *adjacencyList[K, W]) avgDegree() (float64, error) {
 }
 
 func (l *adjacencyList[K, W]) isAcyclic() (bool, error) {
-	return false, errNotImplement
+	if len(l.outAdj) == 0 {
+		return true, nil
+	}
+	neighbour := l.neighbours
+	if l.digraph {
+		neighbour = l.outNeighbours
+	}
+
+	var start K
+	for k := range l.outAdj {
+		start = k
+		break
+	}
+	//
+	visited := make(map[K]bool)
+	prev := make(map[K]K)
+
+	stack := []K{start}
+	for top := 1; top > 0; {
+		v := stack[top-1]
+		top--
+		if _, ok := visited[v]; !ok {
+			visited[v] = true
+		}
+		vs, err := neighbour(v)
+		if err != nil {
+			return false, err
+		}
+		for _, k := range vs {
+			// loop
+			if k == v {
+				return false, nil
+			}
+			// exclude the parent vertex that visited just now.
+			if k != prev[v] {
+				// find a back edge
+				if _, ok := visited[k]; ok {
+					return false, nil
+				} else {
+					if top < len(stack) {
+						stack[top] = k
+					} else {
+						stack = append(stack, k)
+					}
+					prev[k] = v
+					top++
+				}
+			}
+		}
+		// to dfs another components.
+		if top == 0 && len(visited) < len(l.outAdj) {
+			for k := range l.outAdj {
+				if _, ok := visited[k]; !ok {
+					stack[top] = k
+					top++
+					break
+				}
+			}
+		}
+	}
+	return true, nil
 }
 
 func (l *adjacencyList[K, W]) isConnected() (bool, error) {

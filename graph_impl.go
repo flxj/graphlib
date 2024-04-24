@@ -1,7 +1,6 @@
 package graphlib
 
 import (
-	"errors"
 	"fmt"
 	"io"
 )
@@ -42,6 +41,7 @@ type basicPropertySet[T any] struct {
 	negativeWeight property[T]
 }
 
+// graph default implement base on adjacency list.
 type graph[K comparable, V any, W number] struct {
 	version    int // start from 1
 	name       string
@@ -72,17 +72,38 @@ func newGraph[K comparable, V any, W number](digraph bool, name string) (*graph[
 	return g, nil
 }
 
-// graph default implement base on adjacency list
+// Create a new graph.
 func NewGraph[K comparable, V any, W number](digraph bool, name string) (Graph[K, V, W], error) {
-	return newGraph[K, V, W](false, name)
+	return newGraph[K, V, W](digraph, name)
 }
 
+// Load graph from text (currently not implemented).
 func NewGraphFromFile[K comparable, V any, W number](r io.Reader) (Graph[K, V, W], error) {
 	return nil, errNotImplement
 }
 
+// Create a new undirected graph
 func NewUnDigraph[K comparable, V any, W number](name string) (Graph[K, V, W], error) {
 	return newGraph[K, V, W](false, name)
+}
+
+// Create a graph using vertex and edge sets.
+func ConstructGraph[K comparable, V any, W number](digraph bool, name string, vertexes []Vertex[K, V], edges []Edge[K, W]) (Graph[K, V, W], error) {
+	g, err := newGraph[K, V, W](digraph, name)
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range vertexes {
+		if err := g.AddVertex(v); err != nil {
+			return nil, err
+		}
+	}
+	for _, e := range edges {
+		if err := g.AddEdge(e); err != nil {
+			return nil, err
+		}
+	}
+	return g, nil
 }
 
 func (g *graph[K, V, W]) Name() string {
@@ -328,7 +349,7 @@ func (g *graph[K, V, W]) AllEdges() ([]Edge[K, W], error) {
 
 func (g *graph[K, V, W]) AddVertex(v Vertex[K, V]) error {
 	if _, ok := g.vertexes[v.Key]; ok {
-		return errors.New("vertex already exists")
+		return errVertexExists
 	}
 	if err := g.adjList.addVertexes(v.Key); err != nil {
 		return err
@@ -364,7 +385,7 @@ func (g *graph[K, V, W]) AddEdge(edge Edge[K, W]) error {
 		edge.Key = edgeFormat(edge.Head, edge.Tail)
 	}
 	if _, ok := g.edges[edge.Key]; ok {
-		return errors.New("edge already exists")
+		return errEdgeExists
 	}
 	if err := g.adjList.addEdge(edge.Head, edge.Tail, edge.Key, edge.Weight); err != nil {
 		return err
@@ -377,7 +398,7 @@ func (g *graph[K, V, W]) AddEdge(edge Edge[K, W]) error {
 func (g *graph[K, V, W]) RemoveEdgeByKey(key K) error {
 	e, ok := g.edges[key]
 	if !ok {
-		return errors.New("edge not exists")
+		return errEdgeNotExists
 	}
 	if err := g.adjList.delEdge(e.Head, e.Tail, e.Key); err != nil {
 		return err

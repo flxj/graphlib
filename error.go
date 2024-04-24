@@ -6,10 +6,17 @@ import (
 )
 
 var (
-	errVertexNotExists = errors.New("vertex not exists")
-	errEdgeNotExists   = errors.New("edge not exists")
-	errUnknownProperty = errors.New("unknown graph property")
-	errNotDigraph      = errors.New("the graph is not digraph")
+	errVertexNotExists  = errors.New("vertex not exists")
+	errVertexExists     = errors.New("vertex already exists")
+	errEdgeNotExists    = errors.New("edge not exists")
+	errEdgeExists       = errors.New("edge already exists")
+	errUnknownProperty  = errors.New("unknown graph property")
+	errNotDigraph       = errors.New("the graph is not digraph")
+	errHasNegativeCycle = errors.New("found negative cycle")
+	errNotDAG           = errors.New("current digraph is not DAG")
+	errNotConnected     = errors.New("current graph is not connected")
+	errEmptyGraph       = errors.New("current graph is empty")
+	errNone             = errors.New("")
 )
 
 var (
