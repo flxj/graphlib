@@ -16,6 +16,7 @@ var (
 	errNotDAG           = errors.New("current digraph is not DAG")
 	errNotConnected     = errors.New("current graph is not connected")
 	errEmptyGraph       = errors.New("current graph is empty")
+	errNotSimple        = errors.New("current graph is not simple")
 	errNone             = errors.New("")
 )
 

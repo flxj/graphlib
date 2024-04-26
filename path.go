@@ -187,6 +187,78 @@ func shortestPathDijkstra[K comparable, W number](g Graph[K, any, W], source K, 
 	return paths, nil
 }
 
+// Implement Dijkstra algorithm using priority queue.
+func shortestPathDijkstraWithPQ[K comparable, W number](g Graph[K, any, W], source K, target K, all bool) ([]Path[K], error) {
+	vertexes, err := g.AllVertexes()
+	if err != nil {
+		return nil, err
+	}
+	trace := make(map[K]*Edge[K, W])
+	unvisited := make(map[K]bool)
+	//
+	dist := newCostQueue[K]()
+	for _, v := range vertexes {
+		cost := &item[K]{
+			key:   v.Key,
+			value: MaxFloatDistance,
+		}
+		if v.Key == source {
+			cost.value = 0.0
+		}
+		dist.Push(cost)
+		unvisited[v.Key] = true
+	}
+
+	for len(unvisited) > 0 {
+		// select a vertex u from unvisited set whith min distance.
+		u := dist.Pop()
+		distU := u.value
+
+		// coloured the vertex u
+		delete(unvisited, u.key)
+		if !all && u.key == target {
+			break
+		}
+		// change all unvisited vertexes distance by u
+		for v := range unvisited {
+			e, w, err := getMinWeightEdge(g, u.key, v)
+			if err != nil {
+				return nil, err
+			}
+			if distU < MaxFloatDistance && w < MaxFloatDistance {
+				if dist.Get(v) > distU+w {
+					dist.Update(v, distU+w)
+					trace[v] = e
+				}
+			}
+		}
+	}
+	//
+	paths := []Path[K]{}
+	for k, e := range trace {
+		if all || (!all && k == target) {
+			var w float64
+			edges := []K{}
+			for p := e; p != nil; {
+				edges = append(edges, p.Key)
+				w += any(p.Weight).(float64)
+				p = trace[p.Head]
+			}
+			if len(edges) == 0 {
+				w = MaxFloatDistance
+			}
+			paths = append(paths, Path[K]{
+				Source: source,
+				Target: k,
+				Edges:  edges,
+				Weight: w,
+			})
+		}
+	}
+
+	return paths, nil
+}
+
 // TODO:
 func shortestPathDijkstraByMatrix[K comparable, W number](g WeightMatrix[K, W], source K, target K, all bool) ([]Path[K], error) {
 	return nil, errNotImplement
@@ -301,7 +373,7 @@ func shortestPathsFloyd[K comparable, W number](g Graph[K, any, W]) ([]Path[K], 
 	if err != nil {
 		return nil, err
 	}
-	D := WM.Distance()
+	D := WM.Distance(MaxFloatDistance)
 	// P is a matrix to record prev vertex of shortest path.
 	// P[i][j] == v ,means the second last vertex of shortest path from i to j is v.
 	// if want to find all vertexes of a path i->j, should

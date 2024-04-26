@@ -41,9 +41,8 @@ func mstPrim[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W], flo
 		cost[v.Key] = MaxFloatDistance
 	}
 	// randomly select a vertex as mst root.
-	root := vertexes[0]
-	prev[root.Key] = root.Key
-	cost[root.Key] = 0.0
+	prev[vertexes[0].Key] = vertexes[0].Key
+	cost[vertexes[0].Key] = 0.0
 
 	// loop until no unselected vertexes.
 	for len(cost) != 0 {
@@ -79,6 +78,72 @@ func mstPrim[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W], flo
 		v := prev[u]
 		if v != u {
 			e, _, err := getMinWeightEdge(g, u, v)
+			if err != nil {
+				return nil, nil, 0.0, err
+			}
+			if e != nil {
+				edges = append(edges, *e)
+			}
+		}
+	}
+
+	return keys, edges, wT, nil
+}
+
+// use priority queue.
+func mstPrimWithPQ[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W], float64, error) {
+	vertexes, err := g.AllVertexes()
+	if err != nil {
+		return nil, nil, 0.0, err
+	}
+	if len(vertexes) == 0 {
+		return nil, nil, 0.0, errEmptyGraph
+	}
+	var (
+		wT    float64
+		keys  []K
+		edges = []Edge[K, W]{}
+	)
+	// record selected vertexes.
+	prev := make(map[K]K)
+	unvisited := make(map[K]bool)
+	// record current costs of uncoloured vertexes.
+	cost := newCostQueue[K]()
+	for _, v := range vertexes {
+		c := &item[K]{
+			key:   v.Key,
+			value: MaxFloatDistance,
+		}
+		cost.Push(c)
+		unvisited[v.Key] = true
+	}
+	cost.Update(vertexes[0].Key, 0.0)
+
+	for cost.Len() != 0 {
+		// find a minimum cost u.
+		u := cost.Pop()
+		if u.value == MaxFloatDistance {
+			return nil, nil, 0.0, errNotConnected
+		}
+		// join the u to tree.
+		keys = append(keys, u.key)
+		delete(unvisited, u.key)
+
+		for v := range unvisited {
+			_, w, err := getMinWeightEdge(g, u.key, v)
+			if err != nil {
+				return nil, nil, 0.0, err
+			}
+			if w < cost.Get(v) {
+				prev[v] = u.key
+				cost.Update(v, w)
+			}
+		}
+		// update weight sum.
+		wT += u.value
+		v := prev[u.key]
+		if v != u.key {
+			e, _, err := getMinWeightEdge(g, u.key, v)
 			if err != nil {
 				return nil, nil, 0.0, err
 			}

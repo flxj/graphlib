@@ -32,7 +32,7 @@ const (
 	PropertyAvgDegree
 )
 
-type Graph[K comparable, V any, W number] interface {
+type Graph[K comparable,V any, W number] interface {
 	//
 	// The name of current graph object.
 	Name() string
@@ -96,14 +96,14 @@ type Graph[K comparable, V any, W number] interface {
 	// The unordered set of all edges in the graph.
 	AllEdges() ([]Edge[K, W], error)
 	//
-	// Add vertices to the graph or update existing vertices.
+	// Add vertices to the graph.
 	AddVertex(vertex Vertex[K, V]) error
 	//
 	// Delete a vertex, and all edges corresponding to that vertex
 	// will also be deleted. If the vertex does not exist, return an error.
 	RemoveVertex(key K) error
 	//
-	// Add or update edges, if the corresponding vertex of the
+	// Add new edge, if the corresponding vertex of the
 	// edge does not exist, return an error.
 	AddEdge(edge Edge[K, W]) error
 	//
@@ -121,10 +121,10 @@ type Graph[K comparable, V any, W number] interface {
 	Degree(vertex K) (int, error)
 	//
 	// Query the adjacent vertices of a specified vertex.
-	Neighbours(vertex K) ([]Vertex[K, V], error)
+	Neighbours(vertex K) ([]Vertex[K,V], error)
 	//
 	// Query specified vertex.
-	GetVertex(key K) (Vertex[K, V], error)
+	GetVertex(key K) (Vertex[K,V], error)
 	//
 	// Query all edges with endpoints 1 and 2 as their respective endpoints.
 	GetEdge(endpoint1, endpoint2 K) ([]Edge[K, W], error)
@@ -135,7 +135,7 @@ type Graph[K comparable, V any, W number] interface {
 	// Filter vertices based on label information,
 	// and eligible vertices need to include all label items in
 	// the label parameter simultaneously.
-	GetVertexesByLabel(labels map[string]string) ([]Vertex[K, V], error)
+	GetVertexesByLabel(labels map[string]string) ([]Vertex[K,V], error)
 	//
 	// Filter edges based on label information,
 	// and eligible edges need to include all label items
@@ -152,7 +152,7 @@ type Graph[K comparable, V any, W number] interface {
 	DeleteVertexLabel(key K, labelKey string) error
 	//
 	// Update edge data.
-	SetEdgeValueByKey(key K, value V) error
+	SetEdgeValueByKey(key K, value any) error
 	//
 	// Update dege label.
 	SetEdgeLabelByKey(key K, labelKey, labelVal string) error
@@ -163,7 +163,7 @@ type Graph[K comparable, V any, W number] interface {
 	// Update edge data. If there are multiple edges associated with
 	// endpoints1 and endpoint2 simultaneously,
 	// the data of these edges will be updated simultaneously.
-	SetEdgeValue(endpoint1, endpoint2 K, value V) error
+	SetEdgeValue(endpoint1, endpoint2 K, value any) error
 	//
 	// Update edge label. If there are multiple edges associated with
 	// endpoints1 and endpoint2 simultaneously,
@@ -179,13 +179,13 @@ type Graph[K comparable, V any, W number] interface {
 	Clone() (Graph[K, V, W], error)
 }
 
-type Vertex[K comparable, V any] struct {
+type Vertex[K comparable,V any] struct {
 	Key    K
-	Value  V
+	Value  V 
 	Labels map[string]string
 }
 
-func (v *Vertex[K, V]) Clone() *Vertex[K, V] {
+func (v *Vertex[K, V]) Clone() *Vertex[K,V] {
 	vv := &Vertex[K, V]{
 		Key:   v.Key,
 		Value: v.Value,

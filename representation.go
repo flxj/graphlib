@@ -4,13 +4,92 @@ import (
 	"fmt"
 )
 
-// TODO implement some graph representation methods, for example adjacent matrix
 func NewWeightMatrix[K comparable, W number](g Graph[K, any, W]) (*WeightMatrix[K, W], error) {
-	return nil, errNotImplement
+	p, err := g.Property(PropertySimple)
+	if err != nil {
+		return nil, err
+	}
+	if !p.Value.(bool) {
+		return nil, errNotSimple
+	}
+
+	var (
+		vs []Vertex[K, any]
+		es []Edge[K, W]
+	)
+
+	if vs, err = g.AllVertexes(); err != nil {
+		return nil, err
+	}
+	if es, err = g.AllEdges(); err != nil {
+		return nil, err
+	}
+
+	none := any(MaxFloatDistance).(W)
+	wm := &WeightMatrix[K, W]{
+		none:     none,
+		vertexes: make([]K, len(vs)),
+		data:     make([][]W, len(vs)),
+	}
+	idx := make(map[K]int)
+	for i, v := range vs {
+		idx[v.Key] = i
+		wm.vertexes[i] = v.Key
+		wm.data[i] = make([]W, len(vs))
+		for j := 0; j < len(vs); j++ {
+			wm.data[i][j] = none
+			if i == j {
+				wm.data[i][j] = any(0).(W)
+			}
+		}
+	}
+	//
+	for _, e := range es {
+		i := idx[e.Head]
+		j := idx[e.Tail]
+		wm.data[i][j] = e.Weight
+		if !g.IsDigraph() {
+			wm.data[j][i] = e.Weight
+		}
+	}
+
+	return wm, nil
 }
 
 func NewAdjacencytMatrix[K comparable, W number](g Graph[K, any, W]) (*AdjacencyMatrix[K], error) {
-	return nil, errNotImplement
+	var (
+		err error
+		vs  []Vertex[K, any]
+		es  []Edge[K, W]
+	)
+	if vs, err = g.AllVertexes(); err != nil {
+		return nil, err
+	}
+	if es, err = g.AllEdges(); err != nil {
+		return nil, err
+	}
+
+	am := &AdjacencyMatrix[K]{
+		vertexes: make([]K, len(vs)),
+		data:     make([][]int, len(vs)),
+	}
+	idx := make(map[K]int)
+	for i, v := range vs {
+		idx[v.Key] = i
+		am.vertexes[i] = v.Key
+		am.data[i] = make([]int, len(vs))
+	}
+	//
+	for _, e := range es {
+		i := idx[e.Head]
+		j := idx[e.Tail]
+		am.data[i][j] = 1
+		if !g.IsDigraph() {
+			am.data[j][i] = 1
+		}
+	}
+
+	return am, nil
 }
 
 func NewDegreeMatrix[K comparable, W number](g Graph[K, any, W]) (*DegreeMatrix[K], error) {
@@ -44,6 +123,7 @@ func (m *DegreeMatrix[K]) Columns() []K {
 }
 
 type WeightMatrix[K comparable, W number] struct {
+	none     W
 	vertexes []K
 	data     [][]W
 }
@@ -52,13 +132,13 @@ func (m *WeightMatrix[K, W]) Weight() [][]W {
 	return m.data
 }
 
-func (m *WeightMatrix[K, W]) Distance() [][]float64 {
+func (m *WeightMatrix[K, W]) Distance(infinite float64) [][]float64 {
 	w := make([][]float64, len(m.data))
 	for i, d := range m.data {
 		ds := make([]float64, len(d))
 		for j, p := range d {
-			if p == 0 {
-				ds[j] = MaxFloatDistance
+			if p == m.none {
+				ds[j] = infinite
 			} else {
 				ds[j] = any(p).(float64)
 			}
@@ -153,8 +233,8 @@ func (l *adjacencyList[K, W]) delVertex(v K) error {
 		delete(adj, v)
 		for k, p := range adj {
 			var head = p
-			var prev *endpoint[K, W]
-			prev.next = head
+			var prev = &endpoint[K, W]{next: head}
+			//prev.next = head
 
 			for q := head; q != nil; {
 				if q.key == v {
@@ -253,9 +333,8 @@ func (l *adjacencyList[K, W]) delEdge(head, tail, key K) error {
 		if p == nil {
 			return fmt.Errorf("edge %v not exists", edge)
 		}
-		var prev *endpoint[K, W]
+		var prev = &endpoint[K, W]{next: p}
 		var q *endpoint[K, W]
-		prev.next = p
 		for e := p; e != nil; e = e.next {
 			if e.key == v2 && e.edge == edge {
 				q = e
@@ -543,10 +622,10 @@ func (l *adjacencyList[K, W]) isAcyclic() (bool, error) {
 	visited := make(map[K]bool)
 	prev := make(map[K]K)
 
-	stack := []K{start}
-	for top := 1; top > 0; {
-		v := stack[top-1]
-		top--
+	stack := newStack[K]()
+	stack.push(start)
+	for !stack.empty() {
+		v, _ := stack.pop()
 		if _, ok := visited[v]; !ok {
 			visited[v] = true
 		}
@@ -565,22 +644,16 @@ func (l *adjacencyList[K, W]) isAcyclic() (bool, error) {
 				if _, ok := visited[k]; ok {
 					return false, nil
 				} else {
-					if top < len(stack) {
-						stack[top] = k
-					} else {
-						stack = append(stack, k)
-					}
+					stack.push(k)
 					prev[k] = v
-					top++
 				}
 			}
 		}
 		// to dfs another components.
-		if top == 0 && len(visited) < len(l.outAdj) {
+		if stack.empty() && len(visited) < len(l.outAdj) {
 			for k := range l.outAdj {
 				if _, ok := visited[k]; !ok {
-					stack[top] = k
-					top++
+					stack.push(k)
 					break
 				}
 			}
@@ -593,22 +666,20 @@ func (l *adjacencyList[K, W]) isConnected() (bool, error) {
 	if len(l.outAdj) == 0 {
 		return false, nil
 	}
-	//
+	// bfs
 	var start K
 	for k := range l.outAdj {
 		start = k
 		break
 	}
-	visited := make(map[K]struct{})
-	queue := []K{start}
-	head := 0
-	tail := 1
+	visited := make(map[K]bool)
+	que := newFIFO[K]()
+	que.push(start)
 
-	for head < tail {
-		v := queue[head]
-		head++
+	for !que.empty() {
+		v, _ := que.pop()
 		if _, ok := visited[v]; !ok {
-			visited[v] = struct{}{}
+			visited[v] = true
 		}
 		vs, err := l.neighbours(v)
 		if err != nil {
@@ -616,12 +687,7 @@ func (l *adjacencyList[K, W]) isConnected() (bool, error) {
 		}
 		for _, v := range vs {
 			if _, ok := visited[v]; !ok {
-				if tail < len(queue) {
-					queue[tail] = v
-				} else {
-					queue = append(queue, v)
-				}
-				tail++
+				que.push(v)
 			}
 		}
 	}
@@ -633,36 +699,26 @@ func (l *adjacencyList[K, W]) isConnected() (bool, error) {
 
 func (l *adjacencyList[K, W]) isSimple() (bool, error) {
 	if l.digraph {
-		edges := make(map[K]struct{})
 		for k, v := range l.outAdj {
+			tails := make(map[K]int)
 			for p := v; p != nil; p = p.next {
+				// loop
 				if p.key == k {
 					return false, nil
 				}
-				e1 := edgeFormat(k, p.key)
-				e2 := edgeFormat(p.key, k)
-				if _, ok := edges[e1]; ok {
+				//
+				t := tails[p.key]
+				if t >= 1 {
 					return false, nil
+				} else {
+					tails[p.key] = t + 1
+					in := l.inAdj[k]
+					for q := in; q != nil; q = q.next {
+						if q.key == p.key {
+							return false, nil
+						}
+					}
 				}
-				if _, ok := edges[e2]; ok {
-					return false, nil
-				}
-				edges[e1] = struct{}{}
-				edges[e2] = struct{}{}
-			}
-		}
-		for k, v := range l.inAdj {
-			for p := v; p != nil; p = p.next {
-				e1 := edgeFormat(k, p.key)
-				e2 := edgeFormat(p.key, k)
-				if _, ok := edges[e1]; ok {
-					return false, nil
-				}
-				if _, ok := edges[e2]; ok {
-					return false, nil
-				}
-				edges[e1] = struct{}{}
-				edges[e2] = struct{}{}
 			}
 		}
 		return true, nil

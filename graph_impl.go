@@ -123,34 +123,11 @@ func (g *graph[K, V, W]) IsSimple() bool {
 		return g.properties.simple.value
 	}
 	//
-	//p, _ := g.adjList.property(simple)
-	//p.version = g.version
-	//g.properties.simple = p
+	p, _ := g.adjList.property(simple)
+	p.version = g.version
+	g.properties.simple = p
 
-	simpleFlag := true
-	edges := make(map[K]struct{})
-	for _, v := range g.edges {
-		if v.Head == v.Tail {
-			simpleFlag = false
-			break
-		}
-		e1 := edgeFormat(v.Head, v.Tail)
-		e2 := edgeFormat(v.Tail, v.Head)
-		if _, ok := edges[e1]; ok {
-			simpleFlag = false
-			break
-		}
-		if _, ok := edges[e2]; ok {
-			simpleFlag = false
-			break
-		}
-		edges[e1] = struct{}{}
-		edges[e2] = struct{}{}
-	}
-	g.properties.simple.version = g.version
-	g.properties.simple.value = simpleFlag
-
-	return simpleFlag
+	return p.value
 }
 
 func (g *graph[K, V, W]) HasNegativeWeight() bool {
@@ -288,7 +265,7 @@ func (g *graph[K, V, W]) Property(p PropertyName) (GraphProperty[any], error) {
 	case PropertyRegular:
 		gp.Value = g.IsRegular()
 	case PropertyConnected:
-		gp.Value = g.IsCompleted()
+		gp.Value = g.IsConnected()
 	case PropertyForest:
 		gp.Value = g.IsForest()
 	case PropertyLoop:
@@ -594,7 +571,7 @@ func (g *graph[K, V, W]) DeleteVertexLabel(key K, labelKey string) error {
 	return nil
 }
 
-func (g *graph[K, V, W]) SetEdgeValueByKey(key K, value V) error {
+func (g *graph[K, V, W]) SetEdgeValueByKey(key K, value any) error {
 	e, ok := g.edges[key]
 	if !ok {
 		return errEdgeNotExists
@@ -626,7 +603,7 @@ func (g *graph[K, V, W]) DeleteEdgeLabelByKey(key K, labelKey string) error {
 	return nil
 }
 
-func (g *graph[K, V, W]) SetEdgeValue(endpoint1, endpoint2 K, value V) error {
+func (g *graph[K, V, W]) SetEdgeValue(endpoint1, endpoint2 K, value any) error {
 	edges, err := g.GetEdge(endpoint1, endpoint2)
 	if err != nil {
 		return err

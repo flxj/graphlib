@@ -53,10 +53,6 @@ const (
 	DefaultMaxConcurrencyJob = 1000000
 )
 
-func edgeFormat[K comparable](v1, v2 K) K {
-	return any(fmt.Sprintf("%v-%v", v1, v2)).(K)
-}
-
 // JobInfo record the job's status of the ExecGraph node.
 type JobInfo[K comparable] struct {
 	// The unique identifier of the job.
@@ -256,7 +252,7 @@ func NewExecGraphFromDAG[K comparable, V any, W number, J job](g Digraph[K, V, W
 	}
 	for _, e := range es {
 		ne := Edge[K, int]{
-			Key:  edgeFormat(e.Head, e.Tail),
+			Key:  e.Key,
 			Head: e.Head,
 			Tail: e.Tail,
 		}
