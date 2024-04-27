@@ -108,42 +108,38 @@ func mstPrimWithPQ[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W
 	prev := make(map[K]K)
 	unvisited := make(map[K]bool)
 	// record current costs of uncoloured vertexes.
-	cost := newCostQueue[K]()
+	cost := newPriorityQueue[K, int, float64](func(p1, p2 float64) bool { return p1 < p2 })
 	for _, v := range vertexes {
-		c := &item[K]{
-			key:   v.Key,
-			value: MaxFloatDistance,
-		}
-		cost.Push(c)
+		cost.Push(v.Key, 0, MaxFloatDistance)
 		unvisited[v.Key] = true
 	}
 	cost.Update(vertexes[0].Key, 0.0)
 
 	for cost.Len() != 0 {
 		// find a minimum cost u.
-		u := cost.Pop()
-		if u.value == MaxFloatDistance {
+		u, _, c, _ := cost.Pop()
+		if c == MaxFloatDistance {
 			return nil, nil, 0.0, errNotConnected
 		}
 		// join the u to tree.
-		keys = append(keys, u.key)
-		delete(unvisited, u.key)
+		keys = append(keys, u)
+		delete(unvisited, u)
 
 		for v := range unvisited {
-			_, w, err := getMinWeightEdge(g, u.key, v)
+			_, w, err := getMinWeightEdge(g, u, v)
 			if err != nil {
 				return nil, nil, 0.0, err
 			}
 			if w < cost.Get(v) {
-				prev[v] = u.key
+				prev[v] = u
 				cost.Update(v, w)
 			}
 		}
 		// update weight sum.
-		wT += u.value
-		v := prev[u.key]
-		if v != u.key {
-			e, _, err := getMinWeightEdge(g, u.key, v)
+		wT += c
+		v := prev[u]
+		if v != u {
+			e, _, err := getMinWeightEdge(g, u, v)
 			if err != nil {
 				return nil, nil, 0.0, err
 			}

@@ -1,7 +1,6 @@
 package graphlib
 
 import (
-	"container/heap"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -77,6 +76,7 @@ type item[K comparable] struct {
 	index int // The index of the item in the heap.
 }
 
+/*
 type costHeap[K comparable] []*item[K]
 
 func (h costHeap[K]) Len() int { return len(h) }
@@ -130,7 +130,6 @@ func (pq *costQueue[K]) Update(k K, priority float64) {
 	}
 }
 
-// update modifies the priority and value of an Item in the queue.
 func (pq *costQueue[K]) Push(item *item[K]) {
 	v, ok := pq.items[item.key]
 	if ok {
@@ -144,7 +143,6 @@ func (pq *costQueue[K]) Push(item *item[K]) {
 	heap.Fix(&pq.priority, item.index)
 }
 
-// update modifies the priority and value of an Item in the queue.
 func (pq *costQueue[K]) Pop() *item[K] {
 	if len(pq.items) != 0 {
 		v := pq.priority.Pop().(*item[K])
@@ -171,6 +169,7 @@ func (pq *costQueue[K]) Len() int {
 func (pq *costQueue[K]) Init() {
 	heap.Init(&pq.priority)
 }
+*/
 
 type stack[K comparable] struct {
 	elems []K
@@ -244,13 +243,4 @@ func (f *fifo[K]) pop() (K, bool) {
 		return k, true
 	}
 	return k, false
-}
-
-func (f *fifo[K]) contains(k K) bool {
-	for i := f.head; i < f.tail; i++ {
-		if f.elems[i] == k {
-			return true
-		}
-	}
-	return false
 }

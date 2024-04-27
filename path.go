@@ -196,32 +196,28 @@ func shortestPathDijkstraWithPQ[K comparable, W number](g Graph[K, any, W], sour
 	trace := make(map[K]*Edge[K, W])
 	unvisited := make(map[K]bool)
 	//
-	dist := newCostQueue[K]()
+	dist := newPriorityQueue[K, int, float64](func(p1, p2 float64) bool { return p1 < p2 })
 	for _, v := range vertexes {
-		cost := &item[K]{
-			key:   v.Key,
-			value: MaxFloatDistance,
-		}
+		p := MaxFloatDistance
 		if v.Key == source {
-			cost.value = 0.0
+			p = 0.0
 		}
-		dist.Push(cost)
+		dist.Push(v.Key, 0, p)
 		unvisited[v.Key] = true
 	}
 
 	for len(unvisited) > 0 {
 		// select a vertex u from unvisited set whith min distance.
-		u := dist.Pop()
-		distU := u.value
+		u, _, distU, _ := dist.Pop()
 
 		// coloured the vertex u
-		delete(unvisited, u.key)
-		if !all && u.key == target {
+		delete(unvisited, u)
+		if !all && u == target {
 			break
 		}
 		// change all unvisited vertexes distance by u
 		for v := range unvisited {
-			e, w, err := getMinWeightEdge(g, u.key, v)
+			e, w, err := getMinWeightEdge(g, u, v)
 			if err != nil {
 				return nil, err
 			}
