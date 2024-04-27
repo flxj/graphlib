@@ -3,9 +3,21 @@ package graphlib
 import (
 	"errors"
 	"fmt"
+	"io"
 	"math/rand"
+	"os"
 	"time"
 )
+
+func readFile(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = f.Close() }()
+
+	return io.ReadAll(f)
+}
 
 func edgeFormat[K comparable](v1, v2 K) K {
 	switch any(v1).(type) {

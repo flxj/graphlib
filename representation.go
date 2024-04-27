@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// Create weight matrix for graph.
 func NewWeightMatrix[K comparable, W number](g Graph[K, any, W]) (*WeightMatrix[K, W], error) {
 	p, err := g.Property(PropertySimple)
 	if err != nil {
@@ -56,6 +57,7 @@ func NewWeightMatrix[K comparable, W number](g Graph[K, any, W]) (*WeightMatrix[
 	return wm, nil
 }
 
+// Create adjacency matrix for graph.
 func NewAdjacencytMatrix[K comparable, W number](g Graph[K, any, W]) (*AdjacencyMatrix[K], error) {
 	var (
 		err error

@@ -2,7 +2,6 @@ package graphlib
 
 import (
 	"fmt"
-	"io"
 )
 
 const (
@@ -77,14 +76,18 @@ func NewGraph[K comparable, V any, W number](digraph bool, name string) (Graph[K
 	return newGraph[K, V, W](digraph, name)
 }
 
-// Load graph from text (currently not implemented).
-func NewGraphFromFile[K comparable, V any, W number](r io.Reader) (Graph[K, V, W], error) {
-	return nil, errNotImplement
-}
-
 // Create a new undirected graph
 func NewUnDigraph[K comparable, V any, W number](name string) (Graph[K, V, W], error) {
 	return newGraph[K, V, W](false, name)
+}
+
+// Load graph from json or yaml file.
+func NewGraphFromFile[K comparable, V any, W number](path string) (Graph[K, V, W], error) {
+	s, err := readFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return UnmarshalGraph[K, V, W](s)
 }
 
 // Create a graph using vertex and edge sets.

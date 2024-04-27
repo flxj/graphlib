@@ -2,28 +2,54 @@ package graphlib
 
 import (
 	"fmt"
-	"io"
 )
 
+// This interface represents a directed graph.
+//
+// The concept of directed graphs can be referenced:
+// https://mathworld.wolfram.com/DirectedGraph.html
 type Digraph[K comparable, V any, W number] interface {
 	Graph[K, V, W]
-	InDegree(vertex K) (int, error)
-	OutDegree(vertex K) (int, error)
-	InNeighbours(vertex K) ([]Vertex[K, V], error)
-	OutNeighbours(vertex K) ([]Vertex[K, V], error)
-	InEdges(vertex K) ([]Edge[K, W], error)
-	OutEdges(vertex K) ([]Edge[K, W], error)
+	//
+	// indegree of vertex v.
+	InDegree(v K) (int, error)
+	//
+	// outdegree of vertex v.
+	OutDegree(v K) (int, error)
+	//
+	// The set composed of head vertexes of all v's inedges.
+	InNeighbours(v K) ([]Vertex[K, V], error)
+	//
+	// The set composed of tail vertexes of all v's outedges.
+	OutNeighbours(v K) ([]Vertex[K, V], error)
+	//
+	// All arcs with v as the tail vertex.
+	// For example [a->v, b->v,...,x->v].
+	InEdges(v K) ([]Edge[K, W], error)
+	//
+	// All arcs with v as the head vertex.
+	// For example [v->a, v->b,...,v->x].
+	OutEdges(v K) ([]Edge[K, W], error)
+	//
+	// All vertices with an in degree of 0.
 	Sources() ([]Vertex[K, V], error)
+	//
+	// All vertices with degree 0.
 	Sinks() ([]Vertex[K, V], error)
 	DetectCycle() ([][]K, error)
 }
 
+// Create a new directed graph.
 func NewDigraph[K comparable, V any, W number](name string) (Digraph[K, V, W], error) {
 	return newGraph[K, V, W](true, name)
 }
 
-func NewDigraphFromFile[K comparable, V any, W number](r io.Reader) (Digraph[K, V, W], error) {
-	return nil, errNotImplement
+func NewDigraphFromFile[K comparable, V any, W number](path string) (Digraph[K, V, W], error) {
+	s, err := readFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return UnmarshalDigraph[K, V, W](s)
 }
 
 func (g *graph[K, V, W]) InDegree(vertex K) (int, error) {

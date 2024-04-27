@@ -3,7 +3,6 @@ package graphlib
 import (
 	"context"
 	"fmt"
-	"io"
 	"sync"
 	"time"
 )
@@ -67,8 +66,8 @@ type JobInfo[K comparable] struct {
 	EndAt time.Time
 }
 
-// DAG
-type ExecGraph[K comparable, J job] interface { // TODO: change the name as GoGraph
+// ExecGraph represents a workflow object for a task arranged in DAG order.
+type ExecGraph[K comparable, J job] interface {
 	//
 	// The Start method will attempt to run ExecGraph. If it is currently
 	// in a Waiting, Stopped, or Failed state, the entire Graph will be run
@@ -197,8 +196,8 @@ type ExecGraph[K comparable, J job] interface { // TODO: change the name as GoGr
 }
 
 // Create an empty ExecGraph.
-func NewExecGraph[K comparable, J job]() (ExecGraph[K, J], error) {
-	dag, err := NewDigraph[K, any, int]("exec")
+func NewExecGraph[K comparable, J job](name string) (ExecGraph[K, J], error) {
+	dag, err := NewDigraph[K, any, int](name)
 	if err != nil {
 		return nil, err
 	}
@@ -216,8 +215,16 @@ func NewExecGraph[K comparable, J job]() (ExecGraph[K, J], error) {
 }
 
 // Load a DAG from text data and create an ExecGraph based on it.
-func NewExecGraphFromFile[K comparable, J job](r io.Reader) (ExecGraph[K, J], error) {
-	return nil, errNotImplement
+func NewExecGraphFromFile[K comparable, V any, W number, J job](path string) (ExecGraph[K, J], error) {
+	s, err := readFile(path)
+	if err != nil {
+		return nil, err
+	}
+	dg, err := UnmarshalDigraph[K, V, W](s)
+	if err != nil {
+		return nil, err
+	}
+	return NewExecGraphFromDAG[K, V, W, J](dg)
 }
 
 // Create an ExecGraph based on an existing DAG object.
@@ -304,8 +311,8 @@ func newExecNode[K comparable, J job](key K, jb J, d time.Duration, n int) *exec
 }
 
 func (e *execNode[K, J]) getInfo() JobInfo[K] {
-	//e.mu.RLock()
-	//defer e.mu.RUnlock()
+	e.mu.RLock()
+	defer e.mu.RUnlock()
 
 	return JobInfo[K]{
 		Key:     e.info.Key,

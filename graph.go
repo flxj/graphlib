@@ -32,7 +32,21 @@ const (
 	PropertyAvgDegree
 )
 
-type Graph[K comparable,V any, W number] interface {
+// Graph [K, V, W] represents the graph object,
+// K represents the identification type of vertices and edges,
+// V represents the data type of vertices,
+// and W represents the weight data type of edges.
+//
+// In a mathematician's terminology, a graph is a collection of points
+// and lines connecting some (possibly empty) subset of them.
+// The points of a graph are most commonly known as graph vertices,
+// but may also be called "nodes" or simply "points."
+// Similarly, the lines connecting the vertices of a graph
+// are most commonly known as graph edges, but may also be called "arcs" or "lines."
+//
+// The concept of graph can be referenced:
+// https://mathworld.wolfram.com/Graph.html
+type Graph[K comparable, V any, W number] interface {
 	//
 	// The name of current graph object.
 	Name() string
@@ -81,12 +95,19 @@ type Graph[K comparable,V any, W number] interface {
 	// please refer to https://mathworld.wolfram.com/Tree.html
 	//
 	// PropertyLoop: Does it include a loop.
+	//
 	// PropertyNegativeWeight: Does it contain negative weight edges
+	//
 	// PropertyGraphName: Graph name
+	//
 	// PropertyOrder: The number of vertices in the graph
+	//
 	// PropertySize: The number of edges in a graph
+	//
 	// PropertyMaxDegree: Maximum Degree
+	//
 	// PropertyMinDegree: Minimum Read
+	//
 	// PropertyAvgDegree: Average degree (float64)
 	Property(p PropertyName) (GraphProperty[any], error)
 	//
@@ -121,10 +142,10 @@ type Graph[K comparable,V any, W number] interface {
 	Degree(vertex K) (int, error)
 	//
 	// Query the adjacent vertices of a specified vertex.
-	Neighbours(vertex K) ([]Vertex[K,V], error)
+	Neighbours(vertex K) ([]Vertex[K, V], error)
 	//
 	// Query specified vertex.
-	GetVertex(key K) (Vertex[K,V], error)
+	GetVertex(key K) (Vertex[K, V], error)
 	//
 	// Query all edges with endpoints 1 and 2 as their respective endpoints.
 	GetEdge(endpoint1, endpoint2 K) ([]Edge[K, W], error)
@@ -135,7 +156,7 @@ type Graph[K comparable,V any, W number] interface {
 	// Filter vertices based on label information,
 	// and eligible vertices need to include all label items in
 	// the label parameter simultaneously.
-	GetVertexesByLabel(labels map[string]string) ([]Vertex[K,V], error)
+	GetVertexesByLabel(labels map[string]string) ([]Vertex[K, V], error)
 	//
 	// Filter edges based on label information,
 	// and eligible edges need to include all label items
@@ -179,13 +200,16 @@ type Graph[K comparable,V any, W number] interface {
 	Clone() (Graph[K, V, W], error)
 }
 
-type Vertex[K comparable,V any] struct {
-	Key    K
-	Value  V 
-	Labels map[string]string
+type Vertex[K comparable, V any] struct {
+	// The unique identifier of this vertex.
+	Key K `json:"key" yaml:"key"`
+	// The data object of this vertex .
+	Value V `json:"value" yaml:"value"`
+	// The label of this vertex.
+	Labels map[string]string `json:"labels" yaml:"labels"`
 }
 
-func (v *Vertex[K, V]) Clone() *Vertex[K,V] {
+func (v *Vertex[K, V]) Clone() *Vertex[K, V] {
 	vv := &Vertex[K, V]{
 		Key:   v.Key,
 		Value: v.Value,
@@ -200,12 +224,21 @@ func (v *Vertex[K, V]) Clone() *Vertex[K,V] {
 }
 
 type Edge[K comparable, W number] struct {
-	Key    K // use a key to distinguish edge, because maybe exists multiedge in graph
-	Head   K
-	Tail   K
-	Weight W
-	Value  any
-	Labels map[string]string
+	// The unique identifier of this edge.
+	// use a key to distinguish edge,
+	// because maybe exists multiedge in graph
+	Key K `json:"key" yaml:"key"`
+	// One endpoint of an edge.
+	Head K `json:"head" yaml:"head"`
+	// The other endpoint of an edge.
+	// For a directed graph, the direction of the edge is head ->tail.
+	Tail K `json:"tail" yaml:"tail"`
+	// Edge weight.
+	Weight W `json:"weight" yaml:"weight"`
+	// Edge data.
+	Value any `json:"value" yaml:"value"`
+	// Edge labels.
+	Labels map[string]string `json:"labels" yaml:"labels"`
 }
 
 func (e *Edge[K, W]) Clone() *Edge[K, W] {
