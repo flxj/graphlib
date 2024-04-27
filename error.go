@@ -17,6 +17,8 @@ var (
 	errNotConnected     = errors.New("current graph is not connected")
 	errEmptyGraph       = errors.New("current graph is empty")
 	errNotSimple        = errors.New("current graph is not simple")
+	errViolateBipartite = errors.New("violate the definition of bipartite")
+	errCloneFailed      = errors.New("clone current graph failed")
 	errNone             = errors.New("")
 )
 
