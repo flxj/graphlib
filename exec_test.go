@@ -16,174 +16,125 @@ limitations under the License.
 package graphlib
 
 import (
-	"context"
+	//"context"
 	"fmt"
 	"testing"
 	"time"
 )
 
-type intORStr interface {
-	int | string
-}
+/*
+job1--->job2_
+             \
+              \
+job3--->job4------->job5
 
-type A[T intORStr] struct {
-	Data T
-	Mp   map[int]int
-}
+*/
+func TestExecJob1(t *testing.T){
+	g,err:= NewExecGraph[int,Job]("exec")
+	if err!=nil{
+		fmt.Printf("[ERR] create exec graph error: %v\n",err)
+		return 
+	}
+    var (
+		v1 int
+		v2 int 
+		v3 int 
+	)
+	// input:  v1 <- x, v2 <- y
+	// output: v3 <- 2*(x+100) + 3*x-10
 
-func (a *A[T]) update(d T) {
-	a.Data = d
-}
+	job1:=func() error {
+		fmt.Println("job1 start...")
+		v1 += 100
+		time.Sleep(5*time.Second)
+		fmt.Println("job1 completed")
+		return nil 
+	}
+	job2:=func() error {
+		fmt.Println("job2 start...")
+		v1 = 2*v1 
+		time.Sleep(2*time.Second)
+		fmt.Println("job2 completed")
+		return nil 
+	}
+	job3:=func() error {
+		fmt.Println("job3 start...")
+		v2 = 3*v2
+		time.Sleep(time.Second)
+		fmt.Println("job3 completed")
+		return nil 
+	}
+	job4:=func() error {
+		fmt.Println("job4 start...")
+		v2 = v2-10
+		time.Sleep(3*time.Second)
+		fmt.Println("job4 completed")
+		return nil 
+	}
+	job5:=func() error {
+		fmt.Println("job5 start...")
+		v3 = v1+v2
+		time.Sleep(2*time.Second)
+		fmt.Println("job6 completed")
+		return nil
+	}
 
-func (a *A[T]) print() {
-	n, ok := any(a.Data).(int)
-	if ok {
-		fmt.Println("data is int: ", n)
-	} else {
-		s, ok := any(a.Data).(string)
-		if ok {
-			fmt.Println("data is string: ", s)
-		} else {
-			fmt.Println("unknown")
+	jobs:=map[int]Job{
+		1:job1,
+		2:job2,
+		3:job3,
+		4:job4,
+		5:job5,
+	}
+
+	for k,j:=range jobs {
+		if err:=g.AddJob(k,j);err!=nil{
+			fmt.Printf("[ERR] add job error: %v\n",err)
+			return 
 		}
 	}
-}
 
-func Test1(t *testing.T) {
-	a := &A[int]{Data: 5}
-
-	a.print()
-
-	a.update(7)
-
-}
-
-func Test2(t *testing.T) {
-	ctx := context.Background()
-
-	ctx1, cal1 := context.WithCancel(ctx)
-
-	go func() {
-		<-ctx1.Done()
-		fmt.Println("ctx1 done 1")
-	}()
-
-	fmt.Println("cal1")
-	time.Sleep(2 * time.Second)
-	cal1()
-	time.Sleep(2 * time.Second)
-	go func() {
-		<-ctx1.Done()
-		fmt.Println("ctx1 done 2")
-	}()
-	time.Sleep(2 * time.Second)
-	fmt.Println("cal2")
-	cal1()
-	go func() {
-		<-ctx1.Done()
-		fmt.Println("ctx1 done 3")
-	}()
-	time.Sleep(2 * time.Second)
-}
-
-func Test3(t *testing.T) {
-	ap := make(map[int]*A[string])
-	ap[1] = &A[string]{Data: "a"}
-	ap[2] = &A[string]{Data: "b", Mp: make(map[int]int)}
-	ap[3] = &A[string]{Data: "c", Mp: make(map[int]int)}
-	ap[2].Mp[2] = 200
-	ap[3].Mp[3] = 300
-
-	bp := make(map[int]*A[string])
-	for k, v := range ap {
-		//var p A[string]
-		p := *v
-		bp[k] = &p
+	deps:=[][]int{
+		{1,2},
+		{3,4},
+		{2,5},
+		{4,5},
 	}
-	fmt.Println("copy bp =============")
-	for k, v := range bp {
-		fmt.Printf("(%d,%s,%v)\n", k, v.Data, v.Mp)
-	}
-	fmt.Println("change ap =============")
-	ap[2].Data = "bbbbb"
-	ap[2].Mp[2] = 222
-	for k, v := range bp {
-		fmt.Printf("(%d,%s,%v)\n", k, v.Data, v.Mp)
+	for _,d:=range deps {
+		if err:=g.AddDependency(d[0],d[1]);err!=nil{
+			fmt.Printf("[ERR] add dep error: %v\n",err)
+			return 
+		}
 	}
 
-	fmt.Println("change bp =============")
-	bp[2].Data = "dddddd"
-	bp[3].Mp[3] = 2333
-	for k, v := range bp {
-		fmt.Printf("(%d,%s,%v)\n", k, v.Data, v.Mp)
+	v1 = 100
+	v2 = 200 
+
+	var val = 2*(v1+100) + 3*v2-10
+
+	fmt.Println("expectation result is: ",val)
+
+	fmt.Println("exec graph status=>",g.Status())
+
+	if err:=g.Start();err!=nil{
+		fmt.Printf("[ERR] start graph error: %v\n",err)
+		return 
 	}
-}
+	fmt.Println("exec graph status=>",g.Status())
 
-func Test4(t *testing.T) {
-	g, _ := NewGraph[int, string, float32](false, "test")
-
-	v1 := Vertex[int, string]{
-		Key:   1,
-		Value: "v1",
+	if err:=g.Wait();err!=nil{
+		fmt.Printf("[ERR] wait graph error: %v\n",err)
+		fmt.Println("exec graph status=>",g.Status())
+		_ = g.Stop()
+		return 
 	}
-	v2 := Vertex[int, string]{
-		Key:   2,
-		Value: "v2",
+
+	fmt.Println("exec graph status=>",g.Status())
+
+	if v3 != val {
+		fmt.Printf("exec err: expect %d, actual get %d\n",val,v3)
+	}else{
+		fmt.Println("success")
 	}
-	_ = g.AddVertex(v1)
-	_ = g.AddVertex(v2)
-
-	e := Edge[int, float32]{
-		Key:   1,
-		Head:  1,
-		Tail:  2,
-		Value: "e1",
-	}
-	_ = g.AddEdge(e)
-
-}
-
-type G interface {
-	foo()
-}
-type GG interface {
-	G
-	bar()
-}
-
-type g struct {
-}
-
-func (g *g) foo() {
-	fmt.Println("g foo")
-}
-
-type gg struct {
-}
-
-func (g *gg) foo() {
-	fmt.Println("gg bar")
-}
-
-func (g *gg) bar() {
-	fmt.Println("gg bar")
-}
-
-func testG(x G) {
-	gg, ok := x.(GG)
-	if !ok {
-		fmt.Println("error")
-		return
-	}
-	gg.bar()
-}
-
-func Test5(t *testing.T) {
-
-	x := &gg{}
-	testG(x)
-
-	y := &g{}
-	testG(y)
 
 }

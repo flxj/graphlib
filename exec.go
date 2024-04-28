@@ -884,12 +884,23 @@ func (g *execGraph[K, J]) AddDependency(source, target K) error {
 		return errJobNotExists
 	}
 
-	edge := Edge[K, int]{
-		Key:  edgeFormat(source, target),
-		Head: source,
-		Tail: target,
+	var err error
+	for i := 0; i < 50; i++ {
+		edge := Edge[K, int]{
+			Key:  edgeFormat(source, target),
+			Head: source,
+			Tail: target,
+		}
+		err = g.dag.AddEdge(edge)
+		if err == nil {
+			return nil
+		}
+		if !IsAlreadyExists(err) {
+			return err
+		}
 	}
-	return g.dag.AddEdge(edge)
+
+	return err
 }
 
 func (g *execGraph[K, J]) RemoveDependency(source, target K) error {
@@ -907,7 +918,7 @@ func (g *execGraph[K, J]) RemoveDependency(source, target K) error {
 		return errJobNotExists
 	}
 
-	return g.dag.RemoveEdgeByKey(edgeFormat(source, target))
+	return g.dag.RemoveEdge(source, target)
 }
 
 func (g *execGraph[K, J]) SetMaxConcurrencyJob(n int) {}

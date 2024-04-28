@@ -52,6 +52,12 @@ func TestBasicOp(t *testing.T) {
 		{Key: 4, Head: 4, Tail: 5},
 		{Key: 5, Head: 5, Tail: 6},
 	}
+	gs := `
+v1---v2
+|   /
+|  /   
+v3     v4-----v5----v6
+`
 
 	for _, e := range es {
 		if err := g.AddEdge(e); err != nil {
@@ -61,7 +67,7 @@ func TestBasicOp(t *testing.T) {
 	}
 	//
 	fmt.Println("=================>[0] init property")
-	fmt.Printf("name:%s\n", g.Name())
+	fmt.Println(gs)
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 
@@ -86,11 +92,18 @@ func TestBasicOp(t *testing.T) {
 
 	fmt.Println("=====================>[1] delete vertex")
 
+	gs = `
+   v2
+  /
+ /   
+v3     v4-----v5----v6
+`
+
 	if err := g.RemoveVertex(1); err != nil {
 		fmt.Printf("delete vertex error:%v\n", err)
 		return
 	}
-	fmt.Printf("name:%s\n", g.Name())
+	fmt.Println(gs)
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 
@@ -115,11 +128,19 @@ func TestBasicOp(t *testing.T) {
 
 	fmt.Println("=====================>[2] add vertex")
 
+	gs = `
+    v2
+   /
+  /   
+v3    v4-----v5----v6  v7
+`
+
 	v := Vertex[int, int]{Key: 7, Value: 7}
 	if err := g.AddVertex(v); err != nil {
 		fmt.Printf("add vertex error:%v\n", err)
 		return
 	}
+	fmt.Println(gs)
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 
@@ -140,7 +161,12 @@ func TestBasicOp(t *testing.T) {
 	fmt.Printf("acyclic:%v\n", pa.Value)
 
 	fmt.Println("=====================>[3] add edges")
-
+	gs = `
+v2---v5----v6---v7
+|    |
+|    |
+v3---v4 
+`
 	es = []Edge[int, int]{
 		{Key: 6, Head: 2, Tail: 5},
 		{Key: 7, Head: 3, Tail: 4},
@@ -152,6 +178,7 @@ func TestBasicOp(t *testing.T) {
 			return
 		}
 	}
+	fmt.Println(gs)
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 
@@ -171,7 +198,75 @@ func TestBasicOp(t *testing.T) {
 	}
 	fmt.Printf("acyclic:%v\n", pa.Value)
 
-	fmt.Println("========================")
+	fmt.Println("=====================>[4] delete edge v3-v4")
+	gs = `
+v2---v5----v6---v7
+|    |
+|    |
+v3   v4 
+`
+	if err := g.RemoveEdge(3, 4); err != nil {
+		fmt.Printf("delete edge error:%v\n", err)
+		return
+	}
+	fmt.Println(gs)
+	fmt.Printf("order:%d\n", g.Order())
+	fmt.Printf("size:%d\n", g.Size())
+
+	if ps, err = g.Property(PropertySimple); err != nil {
+		fmt.Printf("get property simple error:%v\n", err)
+		return
+	}
+	fmt.Printf("simple:%v\n", ps.Value)
+	if pc, err = g.Property(PropertyConnected); err != nil {
+		fmt.Printf("get property connected error:%v\n", err)
+		return
+	}
+	fmt.Printf("connected:%v\n", pc.Value)
+	if pa, err = g.Property(PropertyAcyclic); err != nil {
+		fmt.Printf("get property acyclic error:%v\n", err)
+		return
+	}
+	fmt.Printf("acyclic:%v\n", pa.Value)
+
+	fmt.Println("=====================>[4] add edge v4-v7,v4-v5")
+	gs = `
+v2---v5----v6---v7
+|    ||         /
+|    ||        /
+v3   v4------/ 
+`
+	es = []Edge[int, int]{
+		{Key: 100, Head: 4, Tail: 7},
+		{Key: 101, Head: 4, Tail: 5},
+	}
+	if err := g.AddEdge(es[0]); err != nil {
+		fmt.Printf("add edge error:%v\n", err)
+		return
+	}
+	if err := g.AddEdge(es[1]); err != nil {
+		fmt.Printf("add edge error:%v\n", err)
+		return
+	}
+	fmt.Println(gs)
+	fmt.Printf("order:%d\n", g.Order())
+	fmt.Printf("size:%d\n", g.Size())
+
+	if ps, err = g.Property(PropertySimple); err != nil {
+		fmt.Printf("get property simple error:%v\n", err)
+		return
+	}
+	fmt.Printf("simple:%v\n", ps.Value)
+	if pc, err = g.Property(PropertyConnected); err != nil {
+		fmt.Printf("get property connected error:%v\n", err)
+		return
+	}
+	fmt.Printf("connected:%v\n", pc.Value)
+	if pa, err = g.Property(PropertyAcyclic); err != nil {
+		fmt.Printf("get property acyclic error:%v\n", err)
+		return
+	}
+	fmt.Printf("acyclic:%v\n", pa.Value)
 
 }
 

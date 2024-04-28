@@ -77,7 +77,7 @@ func (g *graph[K, V, W]) OutDegree(vertex K) (int, error) {
 }
 
 func (g *graph[K, V, W]) InNeighbours(vertex K) ([]Vertex[K, V], error) {
-	vs, err := g.adjList.inNeighbours(vertex)
+	vs, err := g.adjList.inNeighbours(vertex,false)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (g *graph[K, V, W]) InNeighbours(vertex K) ([]Vertex[K, V], error) {
 }
 
 func (g *graph[K, V, W]) OutNeighbours(vertex K) ([]Vertex[K, V], error) {
-	vs, err := g.adjList.outNeighbours(vertex)
+	vs, err := g.adjList.outNeighbours(vertex,false)
 	if err != nil {
 		return nil, err
 	}

@@ -29,6 +29,7 @@ const (
 	forest
 	loop
 	negativeWeight
+	unidirectionalConnected
 )
 
 type property[T any] struct {
@@ -46,14 +47,15 @@ func (p property[T]) clone() property[T] {
 }
 
 type basicPropertySet[T any] struct {
-	digraph        bool
-	acyclic        property[T] // no cycle and no loop
-	simple         property[T] // no loop and no multi edge
-	regular        property[T] // every vertex has same order
-	connected      property[T] // for digraph, which means strong connection
-	forest         property[T]
-	loop           property[T]
-	negativeWeight property[T]
+	digraph                 bool
+	acyclic                 property[T] // no cycle and no loop
+	simple                  property[T] // no loop and no multi edge
+	regular                 property[T] // every vertex has same order
+	connected               property[T] // for digraph, which means strong connection
+	forest                  property[T]
+	loop                    property[T]
+	negativeWeight          property[T]
+	unidirectionalConnected property[T]
 }
 
 // graph default implement base on adjacency list.
@@ -181,7 +183,17 @@ func (g *graph[K, V, W]) IsAcyclic() bool {
 
 	return p.value
 }
-func (g *graph[K, V, W]) IsConnected() bool {
+func (g *graph[K, V, W]) IsConnected(unidirectional bool) bool {
+	if unidirectional && g.IsDigraph() {
+		if g.properties.unidirectionalConnected.version == g.version {
+			return g.properties.unidirectionalConnected.value
+		}
+		p, _ := g.adjList.property(unidirectionalConnected)
+		p.version = g.version
+		g.properties.unidirectionalConnected = p
+
+		return p.value
+	}
 	if g.properties.connected.version == g.version {
 		return g.properties.connected.value
 	}
@@ -200,7 +212,7 @@ func (g *graph[K, V, W]) IsCompleted() bool {
 }
 
 func (g *graph[K, V, W]) IsTree() bool {
-	return g.IsConnected() && g.IsForest()
+	return g.IsConnected(false) && g.IsForest()
 }
 
 func (g *graph[K, V, W]) IsForest() bool {
@@ -284,7 +296,9 @@ func (g *graph[K, V, W]) Property(p PropertyName) (GraphProperty[any], error) {
 	case PropertyRegular:
 		gp.Value = g.IsRegular()
 	case PropertyConnected:
-		gp.Value = g.IsConnected()
+		gp.Value = g.IsConnected(false)
+	case PropertyUnidirectionalConnected:
+		gp.Value = g.IsConnected(true)
 	case PropertyForest:
 		gp.Value = g.IsForest()
 	case PropertyLoop:
@@ -372,6 +386,7 @@ func (g *graph[K, V, W]) RemoveVertex(key K) error {
 	for _, k := range edges {
 		delete(g.edges, k)
 	}
+	delete(g.vertexes, key)
 	g.version++
 	return nil
 }
@@ -437,7 +452,7 @@ func (g *graph[K, V, W]) Degree(key K) (int, error) {
 }
 
 func (g *graph[K, V, W]) Neighbours(v K) ([]Vertex[K, V], error) {
-	vs, err := g.adjList.neighbours(v)
+	vs, err := g.adjList.neighbours(v, false)
 	if err != nil {
 		return nil, err
 	}

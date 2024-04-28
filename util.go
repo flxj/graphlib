@@ -5,7 +5,7 @@
 	you may not use this file except in compliance with the License.
 	You may obtain a copy of the License at
 
-		http://www.apache.org/licenses/LICENSE-2.0
+        http://www.apache.org/licenses/LICENSE-2.0
 
 	Unless required by applicable law or agreed to in writing, software
 	distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,10 +41,24 @@ func edgeFormat[K comparable](v1, v2 K) K {
 		return any(fmt.Sprintf("%v-%v", v1, v2)).(K)
 	case int:
 		return any(rand.Int()).(K)
+	case int8:
+		return any(int8(rand.Int())).(K)
+	case int16:
+		return any(int16(rand.Int())).(K)
 	case int32:
 		return any(rand.Int31()).(K)
 	case int64:
 		return any(rand.Int63()).(K)
+	case uint:
+		return any(uint(rand.Uint64())).(K)
+	case uint8:
+		return any(uint8(rand.Uint32())).(K)
+	case uint16:
+		return any(uint16(rand.Uint32())).(K)
+	case uint32:
+		return any(rand.Uint32()).(K)
+	case uint64:
+		return any(rand.Uint64()).(K)
 	default:
 		return v1
 	}
