@@ -47,8 +47,8 @@ Create an undirected graph using the following example 👇
 
 ```shell
 v1---v2
-|       /
-|     /   
+|   /
+|  /   
 v3         v4-----v5----v6
 ```
 
@@ -134,8 +134,8 @@ Create a directed graph using the following example 👇
 
 ```shell
 1----> 2 ---> 3
-            |
-            v
+       |
+       v
 4----> 5 ---> 6
 ```
 
@@ -222,10 +222,10 @@ Users can add tasks to the ExecGraph object and set dependencies between tasks. 
 The following example shows how to create, run, and wait for ExecGraph:
 
 ```shell
-job1---->job2 --.
-                                 \
-                                  \
-                                   V
+job1---->job2--.
+                \
+                 \
+                  v
 job3---->job4--->job5
 ```
 
