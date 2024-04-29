@@ -1,6 +1,6 @@
 # graphlib
 
-`Graphlib` is a graph data structure generic library implemented in Golang, providing definitions and basic operations for undirected/directed graphs, as well as built-in common graph algorithms. Additionally, as a feature, graphlib also comes with a DAG based goroutinue workflow engine (ExecGraph).😀
+`Graphlib` is a graph data structure generic library implemented by Golang, providing definitions and basic operations for undirected/directed graphs, as well as built-in common graph algorithms. Additionally, as a feature, graphlib also comes with a DAG based goroutinue workflow engine (ExecGraph).😀
 
 ### Features
 
