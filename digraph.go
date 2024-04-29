@@ -52,7 +52,11 @@ type Digraph[K comparable, V any, W number] interface {
 	//
 	// All vertices with degree 0.
 	Sinks() ([]Vertex[K, V], error)
+	//
 	DetectCycle() ([][]K, error)
+	//
+	// Reverse all edges in a directed graph.
+	Reverse() error
 }
 
 // Create a new directed graph.
@@ -77,7 +81,7 @@ func (g *graph[K, V, W]) OutDegree(vertex K) (int, error) {
 }
 
 func (g *graph[K, V, W]) InNeighbours(vertex K) ([]Vertex[K, V], error) {
-	vs, err := g.adjList.inNeighbours(vertex,false)
+	vs, err := g.adjList.inNeighbours(vertex, false)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +89,7 @@ func (g *graph[K, V, W]) InNeighbours(vertex K) ([]Vertex[K, V], error) {
 }
 
 func (g *graph[K, V, W]) OutNeighbours(vertex K) ([]Vertex[K, V], error) {
-	vs, err := g.adjList.outNeighbours(vertex,false)
+	vs, err := g.adjList.outNeighbours(vertex, false)
 	if err != nil {
 		return nil, err
 	}
@@ -126,6 +130,20 @@ func (g *graph[K, V, W]) Sinks() ([]Vertex[K, V], error) {
 
 func (g *graph[K, V, W]) DetectCycle() ([][]K, error) {
 	return nil, errNotImplement
+}
+
+func (g *graph[K, V, W]) Reverse() error {
+	if !g.IsDigraph() {
+		return nil
+	}
+	//
+	if err := g.adjList.reverse(); err != nil {
+		return err
+	}
+	for _, e := range g.edges {
+		e.Head, e.Tail = e.Tail, e.Head
+	}
+	return nil
 }
 
 func (g *graph[K, V, W]) getVertexes(vs []K) ([]Vertex[K, V], error) {

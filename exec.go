@@ -135,6 +135,9 @@ type ExecGraph[K comparable, J job] interface {
 	// If the job does not exist, return NotExists error.
 	Job(key K) (JobInfo[K], error)
 	//
+	// Get current all jobs info in the graph.
+	AllJobs() []JobInfo[K]
+	//
 	// Add a new job to the Graph, and if the same key value already exists,
 	// update the Job.
 	//
@@ -339,6 +342,10 @@ func (e *execNode[K, J]) getInfo() JobInfo[K] {
 	}
 }
 
+func (e *execNode[K, J]) key() K {
+	return e.info.Key
+}
+
 func (e *execNode[K, J]) updateJob(runner J) {
 	e.runner = runner
 }
@@ -371,17 +378,23 @@ func (e *execNode[K, J]) run(ch chan *execResult[K]) error {
 		e.info.Status = Running
 		e.info.StartAt = time.Now()
 		if e.runner != nil {
-			job, ok := any(e.runner).(func() error)
+			job, ok := any(e.runner).(Job)
 			if !ok {
-				ctxJob, _ := any(e.runner).(func(context.Context) error)
-				e.ctx, e.cancel = context.WithCancel(e.ctx)
-				job = func() error {
-					return ctxJob(e.ctx)
+				ctxJob, ok := any(e.runner).(ContextJob)
+				if !ok {
+					err = errJobType
+				} else {
+					e.ctx, e.cancel = context.WithCancel(e.ctx)
+					job = func() error {
+						return ctxJob(e.ctx)
+					}
 				}
 			}
 			e.mu.Unlock()
 
-			err = runWithRetry(e.retryLimit, e.timeout, job)
+			if err == nil {
+				err = runWithRetry(e.retryLimit, e.timeout, job)
+			}
 		} else {
 			e.mu.Unlock()
 			err = errJobIsNull
@@ -480,6 +493,8 @@ type execGraph[K comparable, J job] struct {
 	// This collection is used to cache all ready jobs,
 	// and this field is used to control the number of concurrent executed jobs。
 	//ready map[K]bool
+	//
+	running map[K]bool
 }
 
 func (g *execGraph[K, J]) Start() error {
@@ -538,11 +553,11 @@ func (g *execGraph[K, J]) start() {
 		hasReady := true
 		for {
 			select {
-			case <-g.complete: // Stop() maybe close the channel.
+			case <-g.complete: // Stop() will close the channel.
 				return
 			case res, ok := <-g.resCh:
 				if !ok {
-					// TODO: teardown
+					return
 				}
 				if res != nil {
 					g.mu.Lock()
@@ -604,6 +619,7 @@ func (g *execGraph[K, J]) start() {
 						}
 					}
 					g.finishes[res.key] = struct{}{}
+					delete(g.running, res.key)
 					g.mu.Unlock()
 				}
 			default:
@@ -623,6 +639,7 @@ func (g *execGraph[K, J]) start() {
 								node := g.nodes[key]
 								if node != nil {
 									_ = node.run(g.resCh)
+									g.running[key] = true
 								}
 							}
 							// move it from candicates
@@ -636,13 +653,7 @@ func (g *execGraph[K, J]) start() {
 					// i) there aren't any jobs running
 					// ii) there aren't any jobs that are ready
 					g.mu.RLock()
-					finish = true
-					for _, node := range g.nodes {
-						if node.isRunning() {
-							finish = false
-							break
-						}
-					}
+					finish = len(g.running) == 0
 					for _, v := range g.candicates {
 						if v == 0 {
 							finish = false
@@ -672,6 +683,7 @@ func (g *execGraph[K, J]) reset() {
 	for _, node := range g.nodes {
 		node.reset()
 	}
+	g.running = make(map[K]bool)
 	g.candicates = make(map[K]int)
 	g.finishes = make(map[K]struct{})
 	g.complete = make(chan struct{})
@@ -728,7 +740,7 @@ func (g *execGraph[K, J]) Stop() error {
 // stop all running jobs.
 func (g *execGraph[K, J]) stop() error {
 	for _, node := range g.nodes {
-		if node.isRunning() {
+		if node.isRunning() || g.running[node.key()] {
 			_ = node.stop(false)
 		}
 	}
@@ -779,6 +791,17 @@ func (g *execGraph[K, J]) Job(key K) (JobInfo[K], error) {
 		return job.getInfo(), nil
 	}
 	return JobInfo[K]{}, errJobNotExists
+}
+
+func (g *execGraph[K, J]) AllJobs() []JobInfo[K] {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
+	var jobs []JobInfo[K]
+	for _, job := range g.nodes {
+		jobs = append(jobs, job.getInfo())
+	}
+	return jobs
 }
 
 func (g *execGraph[K, J]) Reset() error {

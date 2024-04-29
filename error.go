@@ -35,6 +35,7 @@ var (
 	errNotSimple        = errors.New("current graph is not simple")
 	errViolateBipartite = errors.New("violate the definition of bipartite")
 	errCloneFailed      = errors.New("clone current graph failed")
+	errNotSameType      = errors.New("g1 and g2 are not the same type of graph")
 	errNone             = errors.New("")
 )
 
@@ -48,6 +49,7 @@ var (
 	errForbidModify   = errors.New("current status is not waiting,cannot modify execgraph structure")
 	errJobIsNull      = errors.New("the job is null")
 	errNoEntrypoint   = errors.New("not found entrypoint node in current execgraph object")
+	errJobType        = errors.New("unsupported job type")
 )
 
 func IsNotExists(err error) bool {

@@ -40,7 +40,7 @@ const (
 	PropertyCompleted
 	PropertyTree
 	PropertyNegativeWeight
-	PropertyUnidirectionalConnected
+	PropertyUnilateralConnected
 	PropertyGraphName
 	PropertyOrder
 	PropertySize

@@ -16,14 +16,134 @@
 
 package graphlib
 
-// TODO implement some algebra operations about graph
+import (
+	"fmt"
+)
 
+// Calculate the intersection of two graphs.
 func Union[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K, V, W], error) {
-	return nil, errNotImplement
+	if g1.IsDigraph() != g2.IsDigraph() {
+		return nil, errNotSameType
+	}
+	var (
+		err      error
+		vs1, vs2 []Vertex[K, V]
+		es1, es2 []Edge[K, W]
+	)
+	if vs1, err = g1.AllVertexes(); err != nil {
+		return nil, err
+	}
+	if es1, err = g1.AllEdges(); err != nil {
+		return nil, err
+	}
+	if vs2, err = g2.AllVertexes(); err != nil {
+		return nil, err
+	}
+	if es2, err = g2.AllEdges(); err != nil {
+		return nil, err
+	}
+
+	uv := make(map[K]*Vertex[K, V])
+	ue := make(map[K]*Edge[K, W])
+	for _, v := range vs1 {
+		vv := v
+		uv[vv.Key] = &vv
+	}
+	for _, v := range vs2 {
+		vv := v
+		uv[vv.Key] = &vv
+	}
+	for _, e := range es1 {
+		ee := e
+		ue[ee.Key] = &ee
+	}
+	for _, e := range es2 {
+		ee := e
+		ue[ee.Key] = &ee
+	}
+
+	ug, err := NewGraph[K, V, W](g1.IsDigraph(), fmt.Sprintf("%s-union-%s", g1.Name(), g2.Name()))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, v := range uv {
+		if err = ug.AddVertex(*v); err != nil {
+			return nil, err
+		}
+	}
+	for _, e := range ue {
+		if err = ug.AddEdge(*e); err != nil {
+			return nil, err
+		}
+	}
+
+	return ug, nil
 }
 
+// Calculate the union of two graphs.
 func Intersection[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K, V, W], error) {
-	return nil, errNotImplement
+	if g1.IsDigraph() != g2.IsDigraph() {
+		return nil, errNotSameType
+	}
+	var (
+		err      error
+		vs1, vs2 []Vertex[K, V]
+		es1, es2 []Edge[K, W]
+	)
+	if vs1, err = g1.AllVertexes(); err != nil {
+		return nil, err
+	}
+	if es1, err = g1.AllEdges(); err != nil {
+		return nil, err
+	}
+	if vs2, err = g2.AllVertexes(); err != nil {
+		return nil, err
+	}
+	if es2, err = g2.AllEdges(); err != nil {
+		return nil, err
+	}
+
+	iv := make(map[K]bool)
+	ie := make(map[K]bool)
+
+	uv := make(map[K]*Vertex[K, V])
+	ue := make(map[K]*Edge[K, W])
+	for _, v := range vs1 {
+		iv[v.Key] = true
+	}
+	for _, v := range vs2 {
+		if iv[v.Key] {
+			vv := v
+			uv[vv.Key] = &vv
+		}
+	}
+	for _, e := range es1 {
+		ie[e.Key] = true
+	}
+	for _, e := range es2 {
+		if ie[e.Key] {
+			ee := e
+			ue[ee.Key] = &ee
+		}
+	}
+	ug, err := NewGraph[K, V, W](g1.IsDigraph(), fmt.Sprintf("%s-intersection-%s", g1.Name(), g2.Name()))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, v := range uv {
+		if err = ug.AddVertex(*v); err != nil {
+			return nil, err
+		}
+	}
+	for _, e := range ue {
+		if err = ug.AddEdge(*e); err != nil {
+			return nil, err
+		}
+	}
+
+	return ug, nil
 }
 
 func CartesianProduct[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K, V, W], error) {

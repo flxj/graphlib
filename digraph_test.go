@@ -74,7 +74,7 @@ V4---> V5 ---> V6
 		return
 	}
 	fmt.Printf("connected:%v\n", p.Value)
-	if p, err = g.Property(PropertyUnidirectionalConnected); err != nil {
+	if p, err = g.Property(PropertyUnilateralConnected); err != nil {
 		fmt.Printf("get property connected error:%v\n", err)
 		return
 	}
@@ -104,7 +104,7 @@ V1---> V2 ---> V3
 		return
 	}
 	fmt.Printf("connected:%v\n", p.Value)
-	if p, err = g.Property(PropertyUnidirectionalConnected); err != nil {
+	if p, err = g.Property(PropertyUnilateralConnected); err != nil {
 		fmt.Printf("get property connected error:%v\n", err)
 		return
 	}
@@ -135,7 +135,38 @@ V1---> V2 ---> V3
 		return
 	}
 	fmt.Printf("connected:%v\n", p.Value)
-	if p, err = g.Property(PropertyUnidirectionalConnected); err != nil {
+	if p, err = g.Property(PropertyUnilateralConnected); err != nil {
+		fmt.Printf("get property connected error:%v\n", err)
+		return
+	}
+	fmt.Printf("unidirectional connected:%v\n", p.Value)
+	if p, err = g.Property(PropertyAcyclic); err != nil {
+		fmt.Printf("get property acyclic error:%v\n", err)
+		return
+	}
+	fmt.Printf("acyclic:%v\n", p.Value)
+
+	fmt.Println("===================>[2] add edge v3->v6")
+	ed = Edge[int, int]{Key: 11, Head: 3, Tail: 6}
+	if err := g.AddEdge(ed); err != nil {
+		fmt.Printf("add edge error:%v\n", err)
+		return
+	}
+	gs = `
+V1---> V2 ---> V3
+^      |       |
+|      v       v
+ \---  V5 ---> V6
+`
+	fmt.Println(gs)
+	fmt.Printf("order:%d\n", g.Order())
+	fmt.Printf("size:%d\n", g.Size())
+	if p, err = g.Property(PropertyConnected); err != nil {
+		fmt.Printf("get property connected error:%v\n", err)
+		return
+	}
+	fmt.Printf("connected:%v\n", p.Value)
+	if p, err = g.Property(PropertyUnilateralConnected); err != nil {
 		fmt.Printf("get property connected error:%v\n", err)
 		return
 	}

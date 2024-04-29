@@ -260,3 +260,7 @@ func (bg *Bipartite[K, V, W]) Sinks() ([]Vertex[K, V], error) {
 func (bg *Bipartite[K, V, W]) DetectCycle() ([][]K, error) {
 	return nil, errNotImplement
 }
+
+func (bg *Bipartite[K, V, W]) Recerse() error {
+	return bg.g.Reverse()
+}

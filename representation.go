@@ -232,6 +232,13 @@ func newAdjacencyListFromGraph[K comparable, V any, W number](g Graph[K, V, W]) 
 	return adj, nil
 }
 
+func (l *adjacencyList[K, W]) reverse() error {
+	var out = l.outAdj
+	l.outAdj = l.inAdj
+	l.inAdj = out
+	return nil
+}
+
 func (l *adjacencyList[K, W]) addVertexes(vs ...K) error {
 	for _, v := range vs {
 		if _, ok := l.outAdj[v]; !ok {
@@ -459,7 +466,7 @@ func (l *adjacencyList[K, W]) inDegree(v K) (int, error) {
 	return d, nil
 }
 
-func (l *adjacencyList[K, W]) neighbours(v K,multiple bool) ([]K, error) {
+func (l *adjacencyList[K, W]) neighbours(v K, multiple bool) ([]K, error) {
 	ks := make(map[K]struct{})
 	p, ok := l.outAdj[v]
 	if !ok {
@@ -485,28 +492,7 @@ func (l *adjacencyList[K, W]) neighbours(v K,multiple bool) ([]K, error) {
 	return ns, nil
 }
 
-func (l *adjacencyList[K, W]) inNeighbours(v K,multiple bool) ([]K, error) {
-	/*
-	var adj map[K]*endpoint[K, W]
-	if l.digraph {
-		adj = l.inAdj
-	} else {
-		adj = l.outAdj
-	}
-	ks := make(map[K]struct{})
-	p, ok := adj[v]
-	if !ok {
-		return nil, fmt.Errorf("vertex %v not exists", v)
-	}
-	for q := p; q != nil; q = q.next {
-		ks[q.key] = struct{}{}
-	}
-	var ns []K
-	for k := range ks {
-		ns = append(ns, k)
-	}
-	return ns, nil
-	*/
+func (l *adjacencyList[K, W]) inNeighbours(v K, multiple bool) ([]K, error) {
 	var adj map[K]*endpoint[K, W]
 	if l.digraph {
 		adj = l.inAdj
@@ -519,52 +505,37 @@ func (l *adjacencyList[K, W]) inNeighbours(v K,multiple bool) ([]K, error) {
 		return nil, fmt.Errorf("vertex %v not exists", v)
 	}
 	for q := p; q != nil; q = q.next {
-		ks[q.key] = ks[q.key]+1
+		ks[q.key] = ks[q.key] + 1
 	}
 	var ns []K
-	for k,n := range ks {
+	for k, n := range ks {
 		if multiple {
-			for i:=0;i<n;i++{
+			for i := 0; i < n; i++ {
 				ns = append(ns, k)
 			}
-		}else{
+		} else {
 			ns = append(ns, k)
 		}
 	}
 	return ns, nil
 }
 
-func (l *adjacencyList[K, W]) outNeighbours(v K,multiple bool) ([]K, error) {
-	/*
-	ks := make(map[K]struct{})
-	p, ok := l.outAdj[v]
-	if !ok {
-		return nil, fmt.Errorf("vertex %v not exists", v)
-	}
-	for q := p; q != nil; q = q.next {
-		ks[q.key] = struct{}{}
-	}
-	var ns []K
-	for k := range ks {
-		ns = append(ns, k)
-	}
-	return ns, nil
-	*/
+func (l *adjacencyList[K, W]) outNeighbours(v K, multiple bool) ([]K, error) {
 	ks := make(map[K]int)
 	p, ok := l.outAdj[v]
 	if !ok {
 		return nil, fmt.Errorf("vertex %v not exists", v)
 	}
 	for q := p; q != nil; q = q.next {
-		ks[q.key] = ks[q.key]+1
+		ks[q.key] = ks[q.key] + 1
 	}
 	var ns []K
-	for k,n := range ks {
+	for k, n := range ks {
 		if multiple {
-			for i:=0;i<n;i++{
+			for i := 0; i < n; i++ {
 				ns = append(ns, k)
 			}
-		}else{
+		} else {
 			ns = append(ns, k)
 		}
 	}
@@ -670,46 +641,46 @@ func (l *adjacencyList[K, W]) avgDegree() (float64, error) {
 	return float64(sumD) / float64(len(l.outAdj)), nil
 }
 
-func(l *adjacencyList[K,W])isDAG()(bool,error){
+func (l *adjacencyList[K, W]) isDAG() (bool, error) {
 	if len(l.outAdj) == 0 {
 		return true, nil
 	}
-	inDegrees:=make(map[K]int)
-	for k:=range l.outAdj {
-		dk,err:=l.inDegree(k)
-		if err!=nil{
-			return false,err 
+	inDegrees := make(map[K]int)
+	for k := range l.outAdj {
+		dk, err := l.inDegree(k)
+		if err != nil {
+			return false, err
 		}
-		inDegrees[k] = dk 
+		inDegrees[k] = dk
 	}
-    //
-	for len(inDegrees)!=0 {
-		var ks []K 
-		for k,d:=range inDegrees {
+	//
+	for len(inDegrees) != 0 {
+		var ks []K
+		for k, d := range inDegrees {
 			if d == 0 {
-				ks = append(ks,k)
+				ks = append(ks, k)
 			}
 		}
 		if len(ks) == 0 {
-			return false,nil 
+			return false, nil
 		}
-		for _,k:=range ks {
-			vs,err := l.outNeighbours(k,true)
-			if err!=nil{
-				return false,err 
+		for _, k := range ks {
+			vs, err := l.outNeighbours(k, true)
+			if err != nil {
+				return false, err
 			}
-			for _,v:=range vs {
+			for _, v := range vs {
 				// loop
 				if v == k {
-					return false,nil 
+					return false, nil
 				}
 				inDegrees[v] = inDegrees[v] - 1
 			}
 
-			delete(inDegrees,k)
+			delete(inDegrees, k)
 		}
 	}
-	return true,nil 
+	return true, nil
 }
 
 func (l *adjacencyList[K, W]) isAcyclic() (bool, error) {
@@ -737,7 +708,7 @@ func (l *adjacencyList[K, W]) isAcyclic() (bool, error) {
 		if _, ok := visited[v]; !ok {
 			visited[v] = true
 		}
-		vs, err := l.neighbours(v,false)
+		vs, err := l.neighbours(v, false)
 		if err != nil {
 			return false, err
 		}
@@ -750,7 +721,7 @@ func (l *adjacencyList[K, W]) isAcyclic() (bool, error) {
 			// (undigraph need this)
 			if v != prev[k] && prev[v] != k {
 				// if v has a prev,and k already visited,which means find a back edge.
-				_,pv := prev[v]
+				_, pv := prev[v]
 				_, vk := visited[k]
 				if vk && pv {
 					return false, nil
@@ -773,8 +744,23 @@ func (l *adjacencyList[K, W]) isAcyclic() (bool, error) {
 	return true, nil
 }
 
-func(l *adjacencyList[K,W]) isUC()(bool,error){ // TODO TTTTTTTTTTTT
-	return false,errNotImplement
+func (l *adjacencyList[K, W]) isUC() (bool, error) {
+	if len(l.outAdj) == 0 {
+		return false, nil
+	}
+	var (
+		err    error
+		source []K
+		sink   []K
+	)
+	if source, err = l.sources(); err != nil {
+		return false, err
+	}
+	if sink, err = l.sinks(); err != nil {
+		return false, err
+	}
+
+	return len(source) <= 1 && len(sink) <= 1, nil
 }
 
 func (l *adjacencyList[K, W]) isConnected(unidirectional bool) (bool, error) {
@@ -799,7 +785,7 @@ func (l *adjacencyList[K, W]) isConnected(unidirectional bool) (bool, error) {
 		if _, ok := visited[v]; !ok {
 			visited[v] = true
 		}
-		vs, err := l.neighbours(v,false)
+		vs, err := l.neighbours(v, false)
 		if err != nil {
 			return false, err
 		}
@@ -918,8 +904,8 @@ func (l *adjacencyList[K, W]) property(p int) (property[bool], error) {
 		r, err = l.isAcyclic()
 	case connected:
 		r, err = l.isConnected(false)
-	case unidirectionalConnected:
-		r,err = l.isConnected(true)
+	case unilateralConnected:
+		r, err = l.isConnected(true)
 	case simple:
 		r, err = l.isSimple()
 	case regular:
