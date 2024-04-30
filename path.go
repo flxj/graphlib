@@ -16,22 +16,15 @@
 
 package graphlib
 
-import "math"
-
-const (
-	MaxFloatDistance = math.MaxFloat64
-	MaxIntDistance   = math.MaxInt64
-)
-
 // Path represents a path on the graph,
 // starting from Source and ending at Target.
 // It contains edges (the key for recording edges),
 // and the weighted sum of path lengths is Weight.
-type Path[K comparable] struct {
+type Path[K comparable, W number] struct {
 	Source K
 	Target K
 	Edges  []K
-	Weight float64
+	Weight W
 }
 
 // Calculate the shortest path from the source vertex to the target vertex in the graph.
@@ -39,23 +32,23 @@ type Path[K comparable] struct {
 // g can be an undirected graph or a directed graph, and negative weights are allowed
 // (but if negative loops are detected during the calculation process, an error will be returned).
 // If the source and target are not connected, the shortest path does not exist,
-// and the corresponding length is MaxFloatDistance.
-func ShortestPath[K comparable, W number](g Graph[K, any, W], source K, target K) (Path[K], error) {
+// and the corresponding length is MaxDistance.
+func ShortestPath[K comparable, V any, W number](g Graph[K, V, W], source K, target K) (Path[K, W], error) {
 	p, err := g.Property(PropertyNegativeWeight)
 	if err != nil {
-		return Path[K]{}, err
+		return Path[K, W]{}, err
 	}
-	var paths []Path[K]
+	var paths []Path[K, W]
 	if p.Value.(bool) {
 		paths, err = shortestPathBellmanFord(g, source, target, false)
 	} else {
-		paths, err = shortestPathDijkstra(g, source, target, false)
+		paths, err = shortestPathDijkstraWithPQ(g, source, target, false)
 	}
 	if err != nil {
-		return Path[K]{}, err
+		return Path[K, W]{}, err
 	}
 	if len(paths) == 0 {
-		return Path[K]{}, errVertexNotExists
+		return Path[K, W]{}, errVertexNotExists
 	}
 	return paths[0], nil
 }
@@ -63,7 +56,7 @@ func ShortestPath[K comparable, W number](g Graph[K, any, W], source K, target K
 // Calculate the shortest path from the source vertex to all other vertices in the graph,
 // where g can be an undirected or directed graph, with negative weights allowed
 // (however, if negative loops are detected during the calculation process, an error will be returned)。
-func ShortestPaths[K comparable, W number](g Graph[K, any, W], source K) ([]Path[K], error) {
+func ShortestPaths[K comparable, V any, W number](g Graph[K, V, W], source K) ([]Path[K, W], error) {
 	p, err := g.Property(PropertyNegativeWeight)
 	if err != nil {
 		return nil, err
@@ -71,10 +64,10 @@ func ShortestPaths[K comparable, W number](g Graph[K, any, W], source K) ([]Path
 	if p.Value.(bool) {
 		return shortestPathBellmanFord(g, source, source, true)
 	}
-	return shortestPathDijkstra(g, source, source, true)
+	return shortestPathDijkstraWithPQ(g, source, source, true)
 }
 
-func getMinWeightEdge[K comparable, W number](g Graph[K, any, W], v1, v2 K) (*Edge[K, W], float64, error) {
+func getMinWeightEdge[K comparable, V any, W number](g Graph[K, V, W], v1, v2 K) (*Edge[K, W], W, error) {
 	es, err := g.GetEdge(v1, v2)
 	if err != nil {
 		if !IsNotExists(err) {
@@ -82,21 +75,22 @@ func getMinWeightEdge[K comparable, W number](g Graph[K, any, W], v1, v2 K) (*Ed
 		}
 	}
 	var edge *Edge[K, W]
-	w := MaxFloatDistance
+	var n W
+	w := getMaxValue(n)
 	for _, e := range es {
 		if g.IsDigraph() {
 			if e.Head == v1 && e.Tail == v2 {
-				if any(e.Weight).(float64) < w {
-					w = any(e.Weight).(float64)
+				if e.Weight < w {
+					w = e.Weight
 					edge = &e
 				}
 			}
 			continue
 		}
-		if any(e.Weight).(float64) < w {
+		if e.Weight < w {
 			e.Head = v1
 			e.Tail = v2
-			w = any(e.Weight).(float64)
+			w = e.Weight
 			edge = &e
 		}
 	}
@@ -115,7 +109,7 @@ func getMinWeightEdge[K comparable, W number](g Graph[K, any, W], v1, v2 K) (*Ed
 // 7:     end for
 // 8: end while
 // 9: return (p, L)
-func shortestPathDijkstra[K comparable, W number](g Graph[K, any, W], source K, target K, all bool) ([]Path[K], error) {
+func shortestPathDijkstra[K comparable, V any, W number](g Graph[K, V, W], source K, target K, all bool) ([]Path[K, W], error) {
 	vertexes, err := g.AllVertexes()
 	if err != nil {
 		return nil, err
@@ -131,20 +125,23 @@ func shortestPathDijkstra[K comparable, W number](g Graph[K, any, W], source K, 
 	// "source-....-prev[i]-vertexes[i]".
 	//prev := make([]K,len(vertexes))
 	//
-	dist := make([]float64, len(vertexes))
+	var n W
+	maxDist := getMaxValue(n)
+	//
+	dist := make([]W, len(vertexes))
 	for i, v := range vertexes {
 		if v.Key == source {
 			dist[i] = 0
 			trace[v.Key] = nil
 			continue
 		}
-		dist[i] = MaxFloatDistance
+		dist[i] = maxDist
 	}
 	//
 	visited := make(map[K]bool)
 	for len(visited) < g.Order() {
 		// select a vertex u from unvisited set whith min distance.
-		distU := MaxFloatDistance
+		distU := maxDist
 		var u K
 		for i, v := range vertexes {
 			if _, ok := visited[v.Key]; !ok {
@@ -166,7 +163,7 @@ func shortestPathDijkstra[K comparable, W number](g Graph[K, any, W], source K, 
 				if err != nil {
 					return nil, err
 				}
-				if distU < MaxFloatDistance && w < MaxFloatDistance { // to avoid overflow
+				if distU < maxDist && w < maxDist { // to avoid overflow
 					if dist[i] > distU+w {
 						dist[i] = distU + w
 						trace[v.Key] = e
@@ -176,7 +173,7 @@ func shortestPathDijkstra[K comparable, W number](g Graph[K, any, W], source K, 
 		}
 	}
 	//
-	paths := []Path[K]{}
+	paths := []Path[K, W]{}
 	for k, e := range trace {
 		if all || (!all && k == target) {
 			edges := []K{}
@@ -184,14 +181,14 @@ func shortestPathDijkstra[K comparable, W number](g Graph[K, any, W], source K, 
 				edges = append(edges, p.Key)
 				p = trace[p.Head]
 			}
-			var w = MaxFloatDistance
+			var w = getMaxValue(n)
 			for i, d := range dist {
 				if vertexes[i].Key == k {
-					w = any(d).(float64)
+					w = d
 					break
 				}
 			}
-			paths = append(paths, Path[K]{
+			paths = append(paths, Path[K, W]{
 				Source: source,
 				Target: k,
 				Edges:  edges,
@@ -204,7 +201,7 @@ func shortestPathDijkstra[K comparable, W number](g Graph[K, any, W], source K, 
 }
 
 // Implement Dijkstra algorithm using priority queue.
-func shortestPathDijkstraWithPQ[K comparable, W number](g Graph[K, any, W], source K, target K, all bool) ([]Path[K], error) {
+func shortestPathDijkstraWithPQ[K comparable, V any, W number](g Graph[K, V, W], source K, target K, all bool) ([]Path[K, W], error) {
 	vertexes, err := g.AllVertexes()
 	if err != nil {
 		return nil, err
@@ -212,9 +209,12 @@ func shortestPathDijkstraWithPQ[K comparable, W number](g Graph[K, any, W], sour
 	trace := make(map[K]*Edge[K, W])
 	unvisited := make(map[K]bool)
 	//
-	dist := newPriorityQueue[K, int, float64](func(p1, p2 float64) bool { return p1 < p2 })
+	var n W
+	maxDist := getMaxValue(n)
+	//
+	dist := newPriorityQueue[K, int, W](func(p1, p2 W) bool { return p1 < p2 })
 	for _, v := range vertexes {
-		p := MaxFloatDistance
+		p := maxDist
 		if v.Key == source {
 			p = 0.0
 		}
@@ -237,7 +237,7 @@ func shortestPathDijkstraWithPQ[K comparable, W number](g Graph[K, any, W], sour
 			if err != nil {
 				return nil, err
 			}
-			if distU < MaxFloatDistance && w < MaxFloatDistance {
+			if distU < maxDist && w < maxDist {
 				if dist.Get(v) > distU+w {
 					dist.Update(v, distU+w)
 					trace[v] = e
@@ -246,20 +246,20 @@ func shortestPathDijkstraWithPQ[K comparable, W number](g Graph[K, any, W], sour
 		}
 	}
 	//
-	paths := []Path[K]{}
+	paths := []Path[K, W]{}
 	for k, e := range trace {
 		if all || (!all && k == target) {
-			var w float64
+			var w W
 			edges := []K{}
 			for p := e; p != nil; {
 				edges = append(edges, p.Key)
-				w += any(p.Weight).(float64)
+				w += p.Weight
 				p = trace[p.Head]
 			}
 			if len(edges) == 0 {
-				w = MaxFloatDistance
+				w = maxDist
 			}
-			paths = append(paths, Path[K]{
+			paths = append(paths, Path[K, W]{
 				Source: source,
 				Target: k,
 				Edges:  edges,
@@ -271,9 +271,62 @@ func shortestPathDijkstraWithPQ[K comparable, W number](g Graph[K, any, W], sour
 	return paths, nil
 }
 
-// TODO:
-func shortestPathDijkstraByMatrix[K comparable, W number](g WeightMatrix[K, W], source K, target K, all bool) ([]Path[K], error) {
-	return nil, errNotImplement
+func shortestPathDijkstraByMatrix[K comparable, W number](g WeightMatrix[K, W], source K, target K, all bool) ([][]*Edge[K, W], error) {
+	vertexes := g.Columns()
+	var n W
+	maxDist := getMaxValue(n)
+
+	w := g.Weight(maxDist)
+	trace := make(map[K]*Edge[K, W])
+	unvisited := make(map[int]bool)
+	//
+	dist := newPriorityQueue[int, int, W](func(p1, p2 W) bool { return p1 < p2 })
+	for i, v := range vertexes {
+		p := maxDist
+		if v == source {
+			p = 0.0
+		}
+		dist.Push(i, 0, p)
+		unvisited[i] = true
+	}
+
+	for len(unvisited) > 0 {
+		// select a vertex u from unvisited set whith min distance.
+		u, _, distU, _ := dist.Pop()
+
+		// coloured the vertex u
+		delete(unvisited, u)
+		if !all && vertexes[u] == target {
+			break
+		}
+		// change all unvisited vertexes distance by u
+		for v := range unvisited {
+			if distU < maxDist && w[u][v] < maxDist {
+				if dist.Get(v) > distU+w[u][v] {
+					dist.Update(v, distU+w[u][v])
+					trace[vertexes[v]] = &Edge[K, W]{
+						Head:   vertexes[u],
+						Tail:   vertexes[v],
+						Weight: any(w[u][v]).(W),
+					}
+				}
+			}
+		}
+	}
+	//
+	paths := [][]*Edge[K, W]{}
+	for k, e := range trace {
+		if all || (!all && k == target) {
+			edges := []*Edge[K, W]{}
+			for p := e; p != nil; {
+				edges = append(edges, p)
+				p = trace[p.Head]
+			}
+			paths = append(paths, edges)
+		}
+	}
+
+	return paths, nil
 }
 
 /*
@@ -298,7 +351,7 @@ BELLMAN-FORD(G,w,s)
 7         return FALSE
 8 return TRUE
 */
-func shortestPathBellmanFord[K comparable, W number](g Graph[K, any, W], source K, target K, all bool) ([]Path[K], error) {
+func shortestPathBellmanFord[K comparable, V any, W number](g Graph[K, V, W], source K, target K, all bool) ([]Path[K, W], error) {
 	vertexes, err := g.AllVertexes()
 	if err != nil {
 		return nil, err
@@ -313,29 +366,32 @@ func shortestPathBellmanFord[K comparable, W number](g Graph[K, any, W], source 
 	// "edge1-....-e".
 	trace := make(map[K]*Edge[K, W])
 	//
-	dist := make(map[K]float64)
+	var n W
+	maxDist := getMaxValue(n)
+	//
+	dist := make(map[K]W)
 	for _, v := range vertexes {
 		if v.Key == source {
 			dist[v.Key] = 0
 			trace[v.Key] = nil
 			continue
 		}
-		dist[v.Key] = MaxFloatDistance
+		dist[v.Key] = maxDist
 	}
 	//
 	for i := 0; i < g.Order(); i++ {
 		for _, e := range edges {
 			edge := e
 			var ok bool
-			var du, dv float64
+			var du, dv W
 			if du, ok = dist[edge.Head]; !ok {
 				return nil, errVertexNotExists
 			}
 			if dv, ok = dist[edge.Tail]; ok {
 				return nil, errVertexNotExists
 			}
-			uv := any(edge.Weight).(float64)
-			if du < MaxFloatDistance && uv < MaxFloatDistance {
+			uv := edge.Weight
+			if du < maxDist && uv < maxDist {
 				if dv > du+uv {
 					dist[edge.Tail] = du + uv
 					trace[edge.Tail] = &edge
@@ -344,12 +400,12 @@ func shortestPathBellmanFord[K comparable, W number](g Graph[K, any, W], source 
 		}
 	}
 	for _, e := range edges {
-		if dist[e.Tail] > dist[e.Head]+any(e.Weight).(float64) {
+		if dist[e.Tail] > dist[e.Head]+e.Weight {
 			return nil, errHasNegativeCycle
 		}
 	}
 	//
-	paths := []Path[K]{}
+	paths := []Path[K, W]{}
 	for k, e := range trace {
 		if all || (!all && k == target) {
 			edges := []K{}
@@ -357,7 +413,7 @@ func shortestPathBellmanFord[K comparable, W number](g Graph[K, any, W], source 
 				edges = append(edges, p.Key)
 				p = trace[p.Head]
 			}
-			paths = append(paths, Path[K]{
+			paths = append(paths, Path[K, W]{
 				Source: source,
 				Target: k,
 				Edges:  edges,
@@ -380,12 +436,15 @@ FLOYD-WARSHALL(W)
 7            d(ij)(k) = min{d(ij)(k-1); d(ik)(k-1)+d(kj)(k-1)}
 8 return D(n)
 */
-func shortestPathsFloyd[K comparable, W number](g Graph[K, any, W]) ([]Path[K], error) {
+func shortestPathsFloyd[K comparable, V any, W number](g Graph[K, V, W]) ([]Path[K, W], error) {
 	WM, err := NewWeightMatrix(g)
 	if err != nil {
 		return nil, err
 	}
-	D := WM.Distance(MaxFloatDistance)
+	var n W
+	maxDist := getMaxValue(n)
+	//
+	D := WM.Weight(maxDist)
 	// P is a matrix to record prev vertex of shortest path.
 	// P[i][j] == v ,means the second last vertex of shortest path from i to j is v.
 	// if want to find all vertexes of a path i->j, should
@@ -394,7 +453,7 @@ func shortestPathsFloyd[K comparable, W number](g Graph[K, any, W]) ([]Path[K], 
 	for i := range D {
 		p := make([]int, len(D))
 		for j := 0; j < len(D); j++ {
-			if D[i][j] < MaxFloatDistance {
+			if D[i][j] < maxDist {
 				p[j] = i
 			}
 		}
@@ -408,7 +467,7 @@ func shortestPathsFloyd[K comparable, W number](g Graph[K, any, W]) ([]Path[K], 
 				// D[i][j] means the current shortest path from i to j.
 				// if we can find a vertex k, that exists a path from i->k->j with a smaller distance.
 				// then we can relax the D[i][j] and update path.
-				if D[i][k] < MaxFloatDistance && D[k][j] < MaxFloatDistance {
+				if D[i][k] < maxDist && D[k][j] < maxDist {
 					if D[i][j] > D[i][k]+D[k][j] {
 						D[i][j] = D[i][k] + D[k][j]
 						P[i][j] = P[k][j]
@@ -419,7 +478,7 @@ func shortestPathsFloyd[K comparable, W number](g Graph[K, any, W]) ([]Path[K], 
 	}
 
 	vs := WM.Columns()
-	var paths []Path[K]
+	var paths []Path[K, W]
 	for i := 0; i < len(D); i++ {
 		var j int
 		if !g.IsDigraph() {
@@ -444,7 +503,7 @@ func shortestPathsFloyd[K comparable, W number](g Graph[K, any, W]) ([]Path[K], 
 				t = h
 				h = P[i][h]
 			}
-			paths = append(paths, Path[K]{
+			paths = append(paths, Path[K, W]{
 				Source: vs[i],
 				Target: vs[j],
 				Weight: D[i][j],
@@ -458,7 +517,7 @@ func shortestPathsFloyd[K comparable, W number](g Graph[K, any, W]) ([]Path[K], 
 
 // Solve the shortest path between all vertex pairs in the graph
 // If a pair of vertices are unreachable between them,
-// the corresponding shortest path value is MaxFloatDistance.
-func AllShortestPaths[K comparable, W number](g Graph[K, any, W]) ([]Path[K], error) {
+// the corresponding shortest path value is MaxDistance.
+func AllShortestPaths[K comparable, V any, W number](g Graph[K, V, W]) ([]Path[K, W], error) {
 	return shortestPathsFloyd(g)
 }

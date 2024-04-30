@@ -17,10 +17,10 @@
 package graphlib
 
 //
-func IsCutvertex[K comparable, W number](g Graph[K, any, W], vertex K) (bool, error) {
+func IsCutvertex[K comparable, V any, W number](g Graph[K, V, W], vertex K) (bool, error) {
 	return false, errNotImplement
 }
 
-func IsBridge[K comparable, W number](g Graph[K, any, W], edge K) (bool, error) {
+func IsBridge[K comparable, V any, W number](g Graph[K, V, W], edge K) (bool, error) {
 	return false, errNotImplement
 }

@@ -18,6 +18,7 @@ package graphlib
 
 import (
 	"fmt"
+	"math"
 	"testing"
 )
 
@@ -42,7 +43,7 @@ func TestCostQueue(t *testing.T) {
 	}
 	c5 := &item[int]{
 		key:   5,
-		value: MaxFloatDistance,
+		value: math.MaxFloat64,
 	}
 	c6 := &item[int]{
 		key:   6,
@@ -97,7 +98,7 @@ func TestPriorityQueue(t *testing.T) {
 	}
 	c5 := &item[int]{
 		key:   5,
-		value: MaxFloatDistance,
+		value: math.MaxFloat64,
 	}
 	c6 := &item[int]{
 		key:   6,

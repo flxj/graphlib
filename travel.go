@@ -212,7 +212,7 @@ Procedure TOPSORT (G; topnr,acyclic)：
 	(14) od;
 	(15) if N = n+1 then acyclic ← true else acyclic ← false fi
 */
-func topologicalSort[K comparable, W number](g Digraph[K, any, W]) ([]Vertex[K, any], error) {
+func topologicalSort[K comparable, V any, W number](g Digraph[K, V, W]) ([]Vertex[K, V], error) {
 	vertexes, err := g.AllVertexes()
 	if err != nil {
 		return nil, err
@@ -227,7 +227,7 @@ func topologicalSort[K comparable, W number](g Digraph[K, any, W]) ([]Vertex[K, 
 		inDegree[v.Key] = d
 	}
 
-	var vs []Vertex[K, any]
+	var vs []Vertex[K, V]
 	for len(inDegree) > 0 {
 		var d0 []K
 		for k, d := range inDegree {
@@ -261,7 +261,7 @@ func topologicalSort[K comparable, W number](g Digraph[K, any, W]) ([]Vertex[K, 
 
 // Perform topological sorting on a directed graph and return a sequence of vertices.
 // If there is a cycle in the graph, return an error.
-func TopologicalSort[K comparable, W number](g Digraph[K, any, W]) ([]Vertex[K, any], error) {
+func TopologicalSort[K comparable, V any, W number](g Digraph[K, V, W]) ([]Vertex[K, V], error) {
 	return topologicalSort(g)
 }
 
@@ -294,7 +294,7 @@ Procedure STRONGCOMP(G,s)
 	(6)     remove all vertices in Ck and all the edges incident with them;
 	(7) until the vertex set of H is empty
 */
-func sccKosaraju[K comparable, W number](g Digraph[K, any, W]) ([][]K, error) {
+func sccKosaraju[K comparable, V any, W number](g Digraph[K, V, W]) ([][]K, error) {
 	return nil, errNotImplement
 }
 
@@ -317,7 +317,7 @@ func sccKosaraju[K comparable, W number](g Digraph[K, any, W]) ([][]K, error) {
 // low[v]: as the minimum timestamp that vertex v can reach,that is, the minimum timestamp that the subtrees of v and v can reach,
 // and also describe it as the minimum timestamp that v can trace in the dfs stack.
 // If the low of a vertex v is equal to its timestamp, then that vertex must be the "root" of its strongly connected component.
-func tarjan[K comparable, W number](g Digraph[K, any, W], u K, stack *stack[K], num *int, dfn, low map[K]int, scc map[K][]K) error {
+func tarjan[K comparable, V any, W number](g Digraph[K, V, W], u K, stack *stack[K], num *int, dfn, low map[K]int, scc map[K][]K) error {
 	*num++
 	dfn[u] = *num
 	low[u] = *num
@@ -365,7 +365,7 @@ func tarjan[K comparable, W number](g Digraph[K, any, W], u K, stack *stack[K], 
 	return nil
 }
 
-func sccTarjan[K comparable, W number](g Digraph[K, any, W]) ([][]K, error) {
+func sccTarjan[K comparable, V any, W number](g Digraph[K, V, W]) ([][]K, error) {
 	vertexes, err := g.AllVertexes()
 	if err != nil {
 		return nil, err
@@ -400,6 +400,6 @@ func sccTarjan[K comparable, W number](g Digraph[K, any, W]) ([][]K, error) {
 
 // Calculate the strongly connected components of a directed graph and
 // return the set of vertices for each strongly connected component.
-func StronglyConnectedComponent[K comparable, W number](g Digraph[K, any, W]) ([][]K, error) {
+func StronglyConnectedComponent[K comparable, V any, W number](g Digraph[K, V, W]) ([][]K, error) {
 	return sccTarjan(g)
 }

@@ -36,7 +36,7 @@ import "sort"
 // 10:    replace w(T) by w(T) + c(u)
 // 11: end while
 // 12: return (p, w(T))
-func mstPrim[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W], float64, error) {
+func mstPrim[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K, W], W, error) {
 	vertexes, err := g.AllVertexes()
 	if err != nil {
 		return nil, nil, 0.0, err
@@ -45,16 +45,17 @@ func mstPrim[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W], flo
 		return nil, nil, 0.0, errEmptyGraph
 	}
 	var (
-		wT    float64
+		wT    W
 		keys  []K
 		edges = []Edge[K, W]{}
+		maxW  = getMaxValue(wT)
 	)
 	// record selected vertexes.
 	prev := make(map[K]K)
 	// record current costs of uncoloured vertexes.
-	cost := make(map[K]float64)
+	cost := make(map[K]W)
 	for _, v := range vertexes {
-		cost[v.Key] = MaxFloatDistance
+		cost[v.Key] = maxW
 	}
 	// randomly select a vertex as mst root.
 	prev[vertexes[0].Key] = vertexes[0].Key
@@ -64,14 +65,14 @@ func mstPrim[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W], flo
 	for len(cost) != 0 {
 		// find a minimum cost u.
 		var u K
-		cU := MaxFloatDistance
+		cU := maxW
 		for k, cK := range cost { // TODO: use a priority queue
 			if cK < cU {
 				cU = cK
 				u = k
 			}
 		}
-		if cU == MaxFloatDistance {
+		if cU == maxW {
 			return nil, nil, 0.0, errNotConnected
 		}
 		// join the u to tree.
@@ -107,7 +108,7 @@ func mstPrim[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W], flo
 }
 
 // use priority queue.
-func mstPrimWithPQ[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W], float64, error) {
+func mstPrimWithPQ[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W], W, error) {
 	vertexes, err := g.AllVertexes()
 	if err != nil {
 		return nil, nil, 0.0, err
@@ -116,17 +117,18 @@ func mstPrimWithPQ[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W
 		return nil, nil, 0.0, errEmptyGraph
 	}
 	var (
-		wT    float64
+		wT    W
 		keys  []K
 		edges = []Edge[K, W]{}
+		maxW  = getMaxValue(wT)
 	)
 	// record selected vertexes.
 	prev := make(map[K]K)
 	unvisited := make(map[K]bool)
 	// record current costs of uncoloured vertexes.
-	cost := newPriorityQueue[K, int, float64](func(p1, p2 float64) bool { return p1 < p2 })
+	cost := newPriorityQueue[K, int, W](func(p1, p2 W) bool { return p1 < p2 })
 	for _, v := range vertexes {
-		cost.Push(v.Key, 0, MaxFloatDistance)
+		cost.Push(v.Key, 0, maxW)
 		unvisited[v.Key] = true
 	}
 	cost.Update(vertexes[0].Key, 0.0)
@@ -134,7 +136,7 @@ func mstPrimWithPQ[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W
 	for cost.Len() != 0 {
 		// find a minimum cost u.
 		u, _, c, _ := cost.Pop()
-		if c == MaxFloatDistance {
+		if c == maxW {
 			return nil, nil, 0.0, errNotConnected
 		}
 		// join the u to tree.
@@ -168,7 +170,7 @@ func mstPrimWithPQ[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W
 	return keys, edges, wT, nil
 }
 
-func msfPrim[K comparable, W number](g Graph[K, any, W]) ([][]K, [][]Edge[K, W], []float64, error) {
+func msfPrim[K comparable, V any, W number](g Graph[K, V, W]) ([][]K, [][]Edge[K, W], []W, error) {
 	vertexes, err := g.AllVertexes()
 	if err != nil {
 		return nil, nil, nil, err
@@ -177,16 +179,18 @@ func msfPrim[K comparable, W number](g Graph[K, any, W]) ([][]K, [][]Edge[K, W],
 		return nil, nil, nil, errEmptyGraph
 	}
 	var (
-		wTs   []float64
+		n     W
+		wTs   []W
 		trees [][]K
 		edges [][]Edge[K, W]
+		maxW  = getMaxValue(n)
 	)
 	// record selected vertexes.
 	prev := make(map[K]K)
 	// record current costs of uncoloured vertexes.
-	cost := make(map[K]float64)
+	cost := make(map[K]W)
 	for _, v := range vertexes {
-		cost[v.Key] = MaxFloatDistance
+		cost[v.Key] = maxW
 	}
 	// randomly select a vertex as mst root.
 	root := vertexes[0]
@@ -194,7 +198,7 @@ func msfPrim[K comparable, W number](g Graph[K, any, W]) ([][]K, [][]Edge[K, W],
 	cost[root.Key] = 0.0
 
 	var (
-		wT     float64
+		wT     W
 		tree   []K
 		branch []Edge[K, W]
 	)
@@ -202,14 +206,14 @@ func msfPrim[K comparable, W number](g Graph[K, any, W]) ([][]K, [][]Edge[K, W],
 	for len(cost) != 0 {
 		// find a minimum cost u.
 		var u K
-		cU := MaxFloatDistance
+		cU := maxW
 		for k, cK := range cost { // TODO: use a priority queue
 			if cK < cU {
 				cU = cK
 				u = k
 			}
 		}
-		if cU == MaxFloatDistance {
+		if cU == maxW {
 			if len(tree) != 0 {
 				trees = append(trees, tree)
 				edges = append(edges, branch)
@@ -272,7 +276,7 @@ func msfPrim[K comparable, W number](g Graph[K, any, W]) ([][]K, [][]Edge[K, W],
 // 7         A = A Union {(u,v)}
 // 8         UNION(u,v)
 // 9 return A
-func mstKruskal[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W], float64, error) {
+func mstKruskal[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K, W], W, error) {
 	vertexes, err := g.AllVertexes()
 	if err != nil {
 		return nil, nil, 0.0, err
@@ -312,7 +316,7 @@ func mstKruskal[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W], 
 
 	var (
 		idx   int
-		wT    float64
+		wT    W
 		edges = []Edge[K, W]{}
 	)
 	// Repeat until there are (V-1) edges in the spanning tree.
@@ -331,7 +335,7 @@ func mstKruskal[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W], 
 				prev[e.Tail] = e.Head
 				edges = append(edges, e)
 				// update weight sum.
-				wT += any(e.Weight).(float64)
+				wT += e.Weight
 			}
 		}
 		idx++
@@ -348,7 +352,7 @@ func mstKruskal[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W], 
 // Generate the minimum spanning tree of a weighted connected graph,
 // return the set of edges of the tree, and the sum of tree weights.
 // If the graph is non connected, an error will be returned.
-func MinWeightSpanningTree[K comparable, W number](g Graph[K, any, W]) ([]Edge[K, W], float64, error) {
+func MinWeightSpanningTree[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W], W, error) {
 	_, es, w, err := mstPrim(g)
 	return es, w, err
 }
@@ -356,6 +360,6 @@ func MinWeightSpanningTree[K comparable, W number](g Graph[K, any, W]) ([]Edge[K
 // Generate the minimum spanning forest of a weighted graph,
 // which generates a corresponding minimum spanning tree for each connected component,
 // returns the set of vertices and edges for each tree, as well as the sum of tree weights.
-func MinWeightSpanningForest[K comparable, W number](g Graph[K, any, W]) ([][]K, [][]Edge[K, W], []float64, error) {
+func MinWeightSpanningForest[K comparable, V any, W number](g Graph[K, V, W]) ([][]K, [][]Edge[K, W], []W, error) {
 	return msfPrim(g)
 }

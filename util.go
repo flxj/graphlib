@@ -5,7 +5,7 @@
 	you may not use this file except in compliance with the License.
 	You may obtain a copy of the License at
 
-        http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
 	Unless required by applicable law or agreed to in writing, software
 	distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"math/rand"
 	"os"
 	"time"
@@ -33,6 +34,37 @@ func readFile(path string) ([]byte, error) {
 	defer func() { _ = f.Close() }()
 
 	return io.ReadAll(f)
+}
+
+func getMaxValue[W number](n W) W {
+	switch any(n).(type) {
+	case int:
+		return any(math.MaxInt).(W)
+	case int8:
+		return any(math.MaxInt8).(W)
+	case int16:
+		return any(math.MaxInt16).(W)
+	case int32:
+		return any(math.MaxInt32).(W)
+	case int64:
+		return any(math.MaxInt64).(W)
+	case uint:
+		return any(math.MaxInt).(W)
+	case uint8:
+		return any(math.MaxUint8).(W)
+	case uint16:
+		return any(math.MaxUint16).(W)
+	case uint32:
+		return any(math.MaxUint32).(W)
+	case uint64:
+		return any(math.MaxInt64).(W)
+	case float32:
+		return any(math.MaxFloat32).(W)
+	case float64:
+		return any(math.MaxFloat64).(W)
+	default:
+		return n
+	}
 }
 
 func edgeFormat[K comparable](v1, v2 K) K {

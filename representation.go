@@ -21,7 +21,7 @@ import (
 )
 
 // Create weight matrix for graph.
-func NewWeightMatrix[K comparable, W number](g Graph[K, any, W]) (*WeightMatrix[K, W], error) {
+func NewWeightMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*WeightMatrix[K, W], error) {
 	p, err := g.Property(PropertySimple)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func NewWeightMatrix[K comparable, W number](g Graph[K, any, W]) (*WeightMatrix[
 	}
 
 	var (
-		vs []Vertex[K, any]
+		vs []Vertex[K, V]
 		es []Edge[K, W]
 	)
 
@@ -41,8 +41,8 @@ func NewWeightMatrix[K comparable, W number](g Graph[K, any, W]) (*WeightMatrix[
 	if es, err = g.AllEdges(); err != nil {
 		return nil, err
 	}
-
-	none := any(MaxFloatDistance).(W)
+	var n W
+	none := getMaxValue(n)
 	wm := &WeightMatrix[K, W]{
 		none:     none,
 		vertexes: make([]K, len(vs)),
@@ -146,8 +146,20 @@ type WeightMatrix[K comparable, W number] struct {
 	data     [][]W
 }
 
-func (m *WeightMatrix[K, W]) Weight() [][]W {
-	return m.data
+func (m *WeightMatrix[K, W]) Weight(none W) [][]W {
+	w := make([][]W, len(m.data))
+	for i, d := range m.data {
+		ds := make([]W, len(d))
+		for j, p := range d {
+			if p == m.none {
+				ds[j] = none
+			} else {
+				ds[j] = p
+			}
+		}
+		w[i] = ds
+	}
+	return w
 }
 
 func (m *WeightMatrix[K, W]) Distance(infinite float64) [][]float64 {

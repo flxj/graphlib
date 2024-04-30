@@ -17,13 +17,13 @@
 package graphlib
 
 // Does g1 include g2 as a subgraph.
-func Contains[K comparable, W number](g1 Graph[K, any, W], g2 Graph[K, any, W]) (bool, error) {
+func Contains[K comparable, V any, W number](g1 Graph[K, V, W], g2 Graph[K, V, W]) (bool, error) {
 	if g1.IsDigraph() != g2.IsDigraph() {
 		return false, errNotSameType
 	}
 	var (
 		err error
-		vs1 []Vertex[K, any]
+		vs1 []Vertex[K, V]
 		es1 []Edge[K, W]
 	)
 	if vs1, err = g2.AllVertexes(); err != nil {
@@ -62,7 +62,7 @@ func Contains[K comparable, W number](g1 Graph[K, any, W], g2 Graph[K, any, W]) 
 
 // Generate a spanning subgraph of g, and the new graph will not include edges in the edges list.
 // The format of the edges list is [] [] K {head1, tail1} {headN, tailN}}.
-func SpanningSubgraph[K comparable, W number](g Graph[K, any, W], edges [][]K) (Graph[K, any, W], error) {
+func SpanningSubgraph[K comparable, V any, W number](g Graph[K, V, W], edges [][]K) (Graph[K, V, W], error) {
 	ng, err := g.Clone()
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func SpanningSubgraph[K comparable, W number](g Graph[K, any, W], edges [][]K) (
 }
 
 // Generate a spanning supergraph of g, and add edges to the edges list in the new graph.
-func SpanningSupergraph[K comparable, W number](g Graph[K, any, W], edges []*Edge[K, W]) (Graph[K, any, W], error) {
+func SpanningSupergraph[K comparable, V any, W number](g Graph[K, V, W], edges []*Edge[K, W]) (Graph[K, V, W], error) {
 	ng, err := g.Clone()
 	if err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func SpanningSupergraph[K comparable, W number](g Graph[K, any, W], edges []*Edg
 }
 
 // Generate an induced subgraph of g, where the new graph will not contain vertices in vertices.
-func InducedSubgraph[K comparable, W number](g Graph[K, any, W], vertexes []K) (Graph[K, any, W], error) {
+func InducedSubgraph[K comparable, V any, W number](g Graph[K, V, W], vertexes []K) (Graph[K, V, W], error) {
 	ng, err := g.Clone()
 	if err != nil {
 		return nil, err
