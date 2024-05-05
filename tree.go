@@ -108,7 +108,7 @@ func mstPrim[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K, W]
 }
 
 // use priority queue.
-func mstPrimWithPQ[K comparable, W number](g Graph[K, any, W]) ([]K, []Edge[K, W], W, error) {
+func mstPrimWithPQ[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K, W], W, error) {
 	vertexes, err := g.AllVertexes()
 	if err != nil {
 		return nil, nil, 0.0, err
@@ -353,7 +353,7 @@ func mstKruskal[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K,
 // return the set of edges of the tree, and the sum of tree weights.
 // If the graph is non connected, an error will be returned.
 func MinWeightSpanningTree[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W], W, error) {
-	_, es, w, err := mstPrim(g)
+	_, es, w, err := mstPrimWithPQ(g)
 	return es, w, err
 }
 

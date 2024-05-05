@@ -16,10 +16,10 @@
 
 package graphlib
 
-func VertexColour[K comparable, W number](g Digraph[K, any, W], colours uint) error {
+func VertexColour[K comparable, V any, W number](g Digraph[K, V, W], colours uint) error {
 	return errNotImplement
 }
 
-func EdgeColour[K comparable, W number](g Digraph[K, any, W], colours uint) error {
+func EdgeColour[K comparable, V any, W number](g Digraph[K, V, W], colours uint) error {
 	return errNotImplement
 }

@@ -74,10 +74,10 @@ func NewWeightMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*WeightMa
 }
 
 // Create adjacency matrix for graph.
-func NewAdjacencytMatrix[K comparable, W number](g Graph[K, any, W]) (*AdjacencyMatrix[K], error) {
+func NewAdjacencytMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*AdjacencyMatrix[K], error) {
 	var (
 		err error
-		vs  []Vertex[K, any]
+		vs  []Vertex[K, V]
 		es  []Edge[K, W]
 	)
 	if vs, err = g.AllVertexes(); err != nil {
@@ -110,7 +110,7 @@ func NewAdjacencytMatrix[K comparable, W number](g Graph[K, any, W]) (*Adjacency
 	return am, nil
 }
 
-func NewDegreeMatrix[K comparable, W number](g Graph[K, any, W]) (*DegreeMatrix[K], error) {
+func NewDegreeMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*DegreeMatrix[K], error) {
 	return nil, errNotImplement
 }
 

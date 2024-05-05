@@ -49,13 +49,13 @@ func dfs[K comparable, V any, W number](g Graph[K, V, W], start K, in bool, visi
 		return err
 	}
 	visited := make(map[K]struct{})
-	stack := []Vertex[K, V]{startV}
+	stack := newStack[*Vertex[K, V]]()
+	stack.push(&startV)
 
-	for top := 1; top > 0; {
-		v := stack[top-1]
-		top--
+	for !stack.empty() {
+		v, _ := stack.pop()
 		if _, ok := visited[v.Key]; !ok {
-			if err := visitor(v); err != nil {
+			if err := visitor(*v); err != nil {
 				return err
 			}
 			visited[v.Key] = struct{}{}
@@ -66,12 +66,8 @@ func dfs[K comparable, V any, W number](g Graph[K, V, W], start K, in bool, visi
 		}
 		for _, v := range vs {
 			if _, ok := visited[v.Key]; !ok {
-				if top < len(stack) {
-					stack[top] = v
-				} else {
-					stack = append(stack, v)
-				}
-				top++
+				var vv = v
+				stack.push(&vv)
 			}
 		}
 	}
@@ -79,7 +75,7 @@ func dfs[K comparable, V any, W number](g Graph[K, V, W], start K, in bool, visi
 }
 
 // Start depth first search from the specified source vertex, where g can be a directed or undirected graph.
-func DFS[K comparable, W number](g Graph[K, any, W], start K, visitor func(v Vertex[K, any]) error) error {
+func DFS[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(v Vertex[K, V]) error) error {
 	return dfs(g, start, false, visitor)
 }
 
@@ -119,16 +115,14 @@ func bfs[K comparable, V any, W number](g Graph[K, V, W], start K, in bool, visi
 	}
 	visited := make(map[K]struct{})
 	// use a fifo queue.
-	queue := []Vertex[K, V]{startV}
-	head := 0
-	tail := 1
+	queue := newFIFO[*Vertex[K, V]]()
+	queue.push(&startV)
 
 	// visit current vertex,and push all neighbours of it to queue.
-	for head < tail {
-		v := queue[head]
-		head++
+	for !queue.empty() {
+		v, _ := queue.pop()
 		if _, ok := visited[v.Key]; !ok {
-			if err := visitor(v); err != nil {
+			if err := visitor(*v); err != nil {
 				return err
 			}
 			visited[v.Key] = struct{}{}
@@ -139,12 +133,8 @@ func bfs[K comparable, V any, W number](g Graph[K, V, W], start K, in bool, visi
 		}
 		for _, v := range vs {
 			if _, ok := visited[v.Key]; !ok {
-				if tail < len(queue) {
-					queue[tail] = v
-				} else {
-					queue = append(queue, v)
-				}
-				tail++
+				var vv = v
+				queue.push(&vv)
 			}
 		}
 	}
@@ -152,7 +142,7 @@ func bfs[K comparable, V any, W number](g Graph[K, V, W], start K, in bool, visi
 }
 
 // Start breadth first search from the specified source vertex, where g can be a directed or undirected graph.
-func BFS[K comparable, W number](g Graph[K, any, W], start K, visitor func(v Vertex[K, any]) error) error {
+func BFS[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(v Vertex[K, V]) error) error {
 	return bfs(g, start, false, visitor)
 }
 
@@ -166,9 +156,9 @@ func BFSDigraph[K comparable, V any, W number](dg Digraph[K, V, W], start K, in 
 
 // Determine whether the start and end vertices in graph g are connected.
 // If it is a directed graph, determine if there is a directed path from start to end.
-func Connected[K comparable, W number](g Graph[K, any, W], start, end K) (bool, error) {
+func Connected[K comparable, V any, W number](g Graph[K, V, W], start, end K) (bool, error) {
 	var connected bool
-	visitor := func(v Vertex[K, any]) error {
+	visitor := func(v Vertex[K, V]) error {
 		if v.Key == end {
 			connected = true
 			return errNone

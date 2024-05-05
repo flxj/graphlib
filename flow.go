@@ -17,14 +17,14 @@
 package graphlib
 
 // page 163
-func MaxNetworkFlow[K comparable, W number](g Digraph[K, any, W]) (W, error) {
+func MaxNetworkFlow[K comparable, V any, W number](g Digraph[K, V, W]) (W, error) {
 	return 0, errNotImplement
 }
 
-func MaxMatching[K comparable, W number](g Bipartite[K, any, W]) ([]Edge[K, W], error) {
+func MaxMatching[K comparable, V any, W number](g Bipartite[K, V, W]) ([]Edge[K, W], error) {
 	return nil, errNotImplement
 }
 
-func PerfectMatching[K comparable, W number](g Bipartite[K, any, W]) ([]Edge[K, W], error) {
+func PerfectMatching[K comparable, V any, W number](g Bipartite[K, V, W]) ([]Edge[K, W], error) {
 	return nil, errNotImplement
 }
