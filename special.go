@@ -19,6 +19,7 @@ package graphlib
 import "math/rand"
 
 type Bipartite[K comparable, V any, W number] struct {
+	Graph[K, V, W]
 	g     *graph[K, V, W]
 	partA map[K]bool
 	partB map[K]bool
@@ -263,4 +264,71 @@ func (bg *Bipartite[K, V, W]) DetectCycle() ([][]K, error) {
 
 func (bg *Bipartite[K, V, W]) Recerse() error {
 	return bg.g.Reverse()
+}
+
+/*
+Following is a simple algorithm to find out whether a given graph is Bipartite or not using Breadth First Search (BFS).
+1. Assign RED color to the source vertex (putting into set U).
+2. Color all the neighbors with BLUE color (putting into set V).
+3. Color all neighbor’s neighbor with RED color (putting into set U).
+4. This way, assign color to all vertices such that it satisfies all the
+   constraints of m way coloring problem where m = 2.
+5. While assigning colors, if we find a neighbor which is colored with same color as current vertex,
+   then the graph cannot be colored with 2 vertices (or graph is not Bipartite).
+*/
+
+// Determine whether the given graph is a bipartite graph.
+func IsBipartite[K comparable, V any, W number](g Graph[K, V, W]) (bool, error) {
+	vertexes, err := g.AllVertexes()
+	if err != nil {
+		return false, err
+	}
+	switch len(vertexes) {
+	case 0, 1:
+		return false, nil
+	case 2:
+		return true, nil
+	default:
+	}
+
+	// red:0,blue:1
+	color := make(map[K]int)
+
+	que := newFIFO[K]()
+	que.push(vertexes[0].Key)
+	color[vertexes[0].Key] = 0
+	//
+	for !que.empty() {
+		u, _ := que.pop()
+		cu := color[u]
+
+		vs, err := g.Neighbours(u)
+		if err != nil {
+			return false, err
+		}
+		for _, v := range vs {
+			if v.Key == u { // loop
+				return false, nil
+			}
+			cv, ok := color[v.Key]
+			if !ok {
+				color[v.Key] = (cu + 1) % 2
+				que.push(v.Key)
+			} else {
+				if cu == cv {
+					return false, nil
+				}
+			}
+		}
+		if que.empty() && len(color) != len(vertexes) {
+			for _, v := range vertexes {
+				if _, ok := color[v.Key]; !ok {
+					color[v.Key] = 0
+					que.push(v.Key)
+					break
+				}
+			}
+		}
+	}
+	return true, nil
 }
