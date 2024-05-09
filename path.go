@@ -521,3 +521,102 @@ func shortestPathsFloyd[K comparable, V any, W number](g Graph[K, V, W]) ([]Path
 func AllShortestPaths[K comparable, V any, W number](g Graph[K, V, W]) ([]Path[K, W], error) {
 	return shortestPathsFloyd(g)
 }
+
+//
+func CountCycles[K comparable, V any, W number](g Graph[K, V, W], length int) (int, error) {
+	if length <= 0 {
+		return 0, nil
+	} else if length == 1 {
+		edges, err := g.AllEdges()
+		if err != nil {
+			return 0, err
+		}
+		var count int
+		for _, e := range edges {
+			if e.Head == e.Tail {
+				count++
+			}
+		}
+		return count, nil
+	} else if length == 2 {
+		// find multi number of a edge.
+		edges, err := g.AllEdges()
+		if err != nil {
+			return 0, err
+		}
+		counts := make(map[K]map[K]int)
+		for _, e := range edges {
+			ts, ok1 := counts[e.Head]
+			if !ok1 {
+				counts[e.Head] = make(map[K]int)
+			}
+			counts[e.Head][e.Tail] = ts[e.Tail] + 1
+
+			hs, ok2 := counts[e.Tail]
+			if !ok2 {
+				counts[e.Tail] = make(map[K]int)
+			}
+			counts[e.Tail][e.Head] = hs[e.Head] + 1
+		}
+		var count int
+		for _, v := range counts {
+			for _, n := range v {
+				if n >= 2 {
+					count += n * (n - 1) / 2
+				}
+			}
+		}
+
+		return count / 2, nil
+	}
+	var count int
+	visited := make(map[K]bool)
+
+	vertexes, err := g.AllVertexes()
+	if err != nil {
+		return 0, err
+	}
+	for i := 0; i < len(vertexes)-length+1; i++ {
+		cp, err := countPaths(g, vertexes[i].Key, vertexes[i].Key, length-1, visited)
+		if err != nil {
+			return 0, err
+		}
+		count += cp
+		visited[vertexes[i].Key] = true
+	}
+	return count / 2, nil
+}
+
+// n is the vertexes number in search path.
+func countPaths[K comparable, V any, W number](g Graph[K, V, W], start, end K, n int, visited map[K]bool) (int, error) {
+	visited[start] = true
+	defer func() { delete(visited, start) }()
+
+	if n == 0 {
+		// check edge start->end exists.
+		if _, err := g.GetEdge(start, end); err != nil {
+			if !IsNotExists(err) {
+				return 0, err
+			}
+			return 0, nil
+		}
+		return 1, nil
+	}
+
+	var count int
+	vs, err := g.Neighbours(start)
+	if err != nil {
+		return 0, err
+	}
+	for _, v := range vs {
+		if _, ok := visited[v.Key]; !ok {
+			cp, err := countPaths(g, v.Key, end, n-1, visited)
+			if err != nil {
+				return 0, err
+			}
+			count += cp
+		}
+	}
+
+	return count, nil
+}
