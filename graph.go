@@ -215,6 +215,21 @@ type Graph[K comparable, V any, W number] interface {
 	//
 	// Copy the current graph.
 	Clone() (Graph[K, V, W], error)
+	//
+	// Randomly select a vertex from the graph.
+	RandomVertex() (Vertex[K, V], error)
+	//
+	// Randomly select a edge from the graph
+	RandomEdge() (Edge[K, W], error)
+	//
+	// Query the adjacent edges of a specified edge.
+	NeighbourEdgesByKey(edge K) ([]Edge[K, W], error)
+	//
+	// Query the adjacent edges of a specified edge endpoint1-endpoint2 or endpoint2-endpoint11.
+	NeighbourEdges(endpoint1, endpoint2 K) ([]Edge[K, W], error)
+	//
+	// Query all edges associated with a specified vertex.
+	IncidentEdges(vertex K) ([]Edge[K, W], error)
 }
 
 type Vertex[K comparable, V any] struct {

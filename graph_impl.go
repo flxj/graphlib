@@ -18,6 +18,7 @@ package graphlib
 
 import (
 	"fmt"
+	"math/rand"
 )
 
 const (
@@ -710,4 +711,70 @@ func (g *graph[K, V, W]) Clone() (Graph[K, V, W], error) {
 		}
 	}
 	return &ng, nil
+}
+
+func (g *graph[K, V, W]) RandomVertex() (Vertex[K, V], error) {
+	n := rand.Intn(len(g.vertexes))
+	i := 0
+	for _, v := range g.vertexes {
+		if n == i {
+			return *v, nil
+		}
+		i++
+	}
+	return Vertex[K, V]{}, errVertexNotExists
+}
+
+func (g *graph[K, V, W]) RandomEdge() (Edge[K, W], error) {
+	n := rand.Intn(len(g.edges))
+	i := 0
+	for _, e := range g.edges {
+		if n == i {
+			return *e, nil
+		}
+		i++
+	}
+	return Edge[K, W]{}, errEdgeNotExists
+}
+
+func (g *graph[K, V, W]) NeighbourEdgesByKey(edge K) ([]Edge[K, W], error) {
+	e, ok := g.edges[edge]
+	if !ok {
+		return nil, errEdgeNotExists
+	}
+	var res []Edge[K, W]
+	for _, ee := range g.edges {
+		if ee.Key != e.Key {
+			if ee.Tail == e.Head || ee.Tail == e.Tail || ee.Head == e.Tail || ee.Head == e.Head {
+				res = append(res, *ee)
+			}
+		}
+	}
+	return res, nil
+}
+
+func (g *graph[K, V, W]) NeighbourEdges(endpoint1, endpoint2 K) ([]Edge[K, W], error) {
+	es, err := g.GetEdge(endpoint1, endpoint2)
+	if err != nil {
+		return es, nil
+	}
+	if len(es) == 0 {
+		return []Edge[K, W]{}, nil
+	}
+	return g.NeighbourEdgesByKey(es[0].Key)
+}
+
+func (g *graph[K, V, W]) IncidentEdges(vertex K) ([]Edge[K, W], error) {
+	if _, ok := g.vertexes[vertex]; !ok {
+		return nil, errVertexNotExists
+	}
+
+	var res []Edge[K, W]
+	for _, e := range g.edges {
+		if e.Tail == vertex || e.Head == vertex {
+			res = append(res, *e)
+		}
+	}
+
+	return res, nil
 }

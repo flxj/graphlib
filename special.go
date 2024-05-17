@@ -266,6 +266,29 @@ func (bg *Bipartite[K, V, W]) Recerse() error {
 	return bg.g.Reverse()
 }
 
+func (bg *Bipartite[K, V, W]) RandomVertex() (Vertex[K, V], error) {
+	return bg.g.RandomVertex()
+}
+
+//
+func (bg *Bipartite[K, V, W]) RandomEdge() (Edge[K, W], error) {
+	return bg.g.RandomEdge()
+}
+
+//
+func (bg *Bipartite[K, V, W]) NeighbourEdgesByKey(edge K) ([]Edge[K, W], error) {
+	return bg.g.NeighbourEdgesByKey(edge)
+}
+
+//
+func (bg *Bipartite[K, V, W]) NeighbourEdges(endpoint1, endpoint2 K) ([]Edge[K, W], error) {
+	return bg.g.NeighbourEdges(endpoint1, endpoint2)
+}
+
+func (bg *Bipartite[K, V, W]) IncidentEdges(vertex K) ([]Edge[K, W], error) {
+	return bg.g.IncidentEdges(vertex)
+}
+
 /*
 Following is a simple algorithm to find out whether a given graph is Bipartite or not using Breadth First Search (BFS).
 1. Assign RED color to the source vertex (putting into set U).
