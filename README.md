@@ -1,12 +1,12 @@
 # graphlib
 
-`Graphlib` is a graph data structure generic library implemented by Golang, providing definitions and basic operations for undirected/directed graphs, as well as built-in common graph algorithms. Additionally, as a feature, graphlib also comes with a DAG based goroutine workflow engine (ExecGraph).😀
+`Graphlib` is a graph data structure generic library implemented in Golang, providing definitions and basic operations for undirected/directed graphs, as well as built-in common graph algorithms. Additionally, as a feature, graphlib also comes with a DAG based goroutine workflow engine (ExecGraph/Workflow).😀
 
 ### Features
 
 ✔️ **Basic operation of the graph:**
 
-* Create undirected/directed graphs (supports simple and multiple graphs)
+* Create undirected/directed graphs
 * Serialization and Deserialization of Graph Objects (JSON/YAML Format)
 * Dynamically adjust vertex (increase/decrease/modify attributes)
 * Dynamically adjust edge (increase/decrease/modify attributes)
@@ -34,6 +34,10 @@
 
 * Support for a directed acyclic graph based goroutine workflow engine
 
+✔️ **Visualization:**
+
+* Support graphical display of Graph objects (based on [D3](https://d3js.org))
+
 
 ### Getting started
 
@@ -41,16 +45,16 @@
 go get github.com/flxj/graphlib
 ```
 
-> Currently, Graphlib is in the process of development and testing, and some features are not yet fully developed. Please do not use versions below 1.0 for production environments
+> Currently, Graphlib is in the process of development and testing, and some features are not yet fully developed. Please do not use for production environments now.
 
 Create an undirected graph using the following example 👇
 
-```shell
+
 v1---v2
 |   /
 |  /   
-v3         v4-----v5----v6
-```
+v3      v4-----v5----v6
+
 
 ```golang
 import(
@@ -74,12 +78,8 @@ func main() {
 		{Key: "v5", Value: 5},
 		{Key: "v6", Value: 6},
 	}
-
 	for _, v := range vs {
-		if err := g.AddVertex(v); err != nil {
-			fmt.Printf("add vertex error:%v\n", err)
-			return
-		}
+		_ = g.AddVertex(v)
 	}
 
 	es := []graphlib.Edge[int, int]{
@@ -89,34 +89,20 @@ func main() {
 		{Key: 4, Head: "v4", Tail: "v5"},
 		{Key: 5, Head: "v5", Tail: "v6"},
 	}
-
 	for _, e := range es {
-		if err := g.AddEdge(e); err != nil {
-			fmt.Printf("add edge error:%v\n", err)
-			return
-		}
+		_ = g.AddEdge(e)
 	}
 	
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 
-	ps, err := g.Property(graphlib.PropertySimple)
-	if err != nil {
-		fmt.Printf("get property simple error:%v\n", err)
-		return
-	}
+	ps, _ := g.Property(graphlib.PropertySimple)
 	fmt.Printf("simple:%v\n", ps.Value)
-	pc, err := g.Property(graphlib.PropertyConnected)
-	if err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
-		return
-	}
+
+	pc, _ := g.Property(graphlib.PropertyConnected)
 	fmt.Printf("connected:%v\n", pc.Value)
-	pa, err := g.Property(graphlib.PropertyAcyclic)
-	if err != nil {
-		fmt.Printf("get property acyclic error:%v\n", err)
-		return
-	}
+
+	pa, _ := g.Property(graphlib.PropertyAcyclic)
 	fmt.Printf("acyclic:%v\n", pa.Value)
 }
 ```
@@ -134,8 +120,8 @@ Create a directed graph using the following example 👇
 
 ```shell
 1----> 2 ---> 3
-       |
-       v
+            |
+            v
 4----> 5 ---> 6
 ```
 
@@ -162,10 +148,7 @@ func main(){
 		{Key: 6, Value: 6},
 	}
 	for _, v := range vs {
-		if err := g.AddVertex(v); err != nil {
-			fmt.Printf("add vertex error:%v\n", err)
-			return
-		}
+		_ = g.AddVertex(v)
 	}
 	
 	es := []Edge[int, int]{
@@ -176,30 +159,20 @@ func main(){
 		{Key: 5, Head: 2, Tail: 5},
 	}
 	for _, e := range es {
-		if err := g.AddEdge(e); err != nil {
-			fmt.Printf("add edge error:%v\n", err)
-			return
-		}
+		_ = g.AddEdge(e)
 	}
 
 	fmt.Println(gs)
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
-	p, err := g.Property(PropertyConnected)
-	if err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
-		return
-	}
+
+	p, _ := g.Property(PropertyConnected)
 	fmt.Printf("connected:%v\n", p.Value)
-	if p, err = g.Property(PropertyUnilateralConnected); err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
-		return
-	}
+
+	p, _ = g.Property(PropertyUnilateralConnected)
 	fmt.Printf("unidirectional connected:%v\n", p.Value)
-	if p, err = g.Property(PropertyAcyclic);err != nil {
-		fmt.Printf("get property acyclic error:%v\n", err)
-		return
-	}
+
+	p, _ = g.Property(PropertyAcyclic)
 	fmt.Printf("acyclic:%v\n", p.Value)
 }
 ```
@@ -221,13 +194,17 @@ Users can add tasks to the ExecGraph object and set dependencies between tasks. 
 
 The following example shows how to create, run, and wait for ExecGraph:
 
-```shell
-job1---->job2--.
-                \
-                 \
-                  v
-job3---->job4--->job5
-```
+
+
++----------------------------+
+|  job1---->job2 --.         |
+|                   \        |
+|                    \       |
+|                     V      |
+|  job3---->job4---> job5    |
+|                            |
++----------------------------+
+
 
 ```golang
 import(
@@ -279,10 +256,7 @@ func main() {
 		5:job5,
 	}
 	for k,j:=range jobs {
-		if err:=g.AddJob(k,j);err!=nil{
-			fmt.Printf("[ERR] add job error: %v\n",err)
-			return 
-		}
+		_ =g.AddJob(k,j)
 	}
 
 	deps:=[][]int{
@@ -292,20 +266,14 @@ func main() {
 		{4,5},
 	}
 	for _,d:=range deps {
-		if err:=g.AddDependency(d[0],d[1]);err!=nil{
-			fmt.Printf("[ERR] add dep error: %v\n",err)
-			return 
-		}
+		_ =g.AddDependency(d[0],d[1])
 	}
 
 	v1 = 100
 	v2 = 200 
 	var val = 2*(v1+100) + 3*v2-10
 
-	if err:=g.Start();err!=nil{
-		fmt.Printf("[ERR] start graph error: %v\n",err)
-		return 
-	}
+	_=g.Start()
 
 	if err:=g.Wait();err!=nil{
 		fmt.Printf("[ERR] wait graph error: %v\n",err)
@@ -319,3 +287,59 @@ func main() {
 	}
 }
 ```
+
+### Visualization
+
+Support graphical display of Graph objects (based on [D3](https://d3js.org)). 
+
+Calling the RenderHTML method will generate an HTML file about the given Graph in the specified directory, with the file name consistent with the Graph name. Open the file in the browser to view the graphical graph object.
+
+```golang
+import(
+	"fmt"
+    
+	"github.com/flxj/graphlib"
+)
+
+func main(){
+    g, err := graphlib.NewGraph[int, int, int](false,"test-g")
+	if err != nil {
+		fmt.Printf("new graph error:%v\n", err)
+		return
+	}
+
+	vs := []graphlib.Vertex[int, int]{
+		{Key: 1, Value: 1},
+		{Key: 2, Value: 2},
+		{Key: 3, Value: 3},
+		{Key: 4, Value: 4},
+		{Key: 5, Value: 5},
+		{Key: 6, Value: 6},
+	}
+	for _, v := range vs {
+		_ = g.AddVertex(v)
+	}
+	_ = g.SetVertexLabel(1,"color","green")
+	_ = g.SetVertexLabel(6,"color","red")
+	
+	es := []graphlib.Edge[int, int]{
+		{Key: 1, Head: 1, Tail: 2,Weight:5},
+		{Key: 2, Head: 2, Tail: 3,Weight:6},
+		{Key: 3, Head: 5, Tail: 6,Weight:7},
+		{Key: 4, Head: 4, Tail: 5,Weight:8},
+		{Key: 5, Head: 2, Tail: 5,Weight:9},
+	}
+	for _, e := range es {
+		_ = g.AddEdge(e)
+	}
+	_ = g.SetEdgeLabelByKey(3,"color","red")
+
+	file,err:=RenderHTML(g,false,"/tmp")
+	if err!=nil{
+		fmt.Printf("draw error:%v\n", err)
+		return
+	}
+	fmt.Println(file)
+}
+```
+
