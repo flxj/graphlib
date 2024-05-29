@@ -351,6 +351,7 @@ func (g *graph[K, V, W]) AllEdges() ([]Edge[K, W], error) {
 			Head:   e.Head,
 			Tail:   e.Tail,
 			Value:  e.Value,
+			Weight: e.Weight,
 			Labels: e.Labels,
 		}
 		i++

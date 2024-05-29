@@ -30,13 +30,13 @@
 * Topological sorting
 * Vertex colouring/edge colouring
   
-✔️ **DAG:**
+✔️ **Workflow:**
 
 * Support for a directed acyclic graph based goroutine workflow engine
 
 ✔️ **Visualization:**
 
-* Support graphical display of Graph objects (based on [D3](https://d3js.org))
+* Support graphical display of Graph objects (based on [D3](https://d3js.org) and [Graphviz](https://graphviz.org/))
 
 
 ### Getting started
@@ -188,6 +188,8 @@ acyclic:true
 
 ### Workflow 
 
+#### ExecGraph
+
 Graphlib also provides an ExecGraph object that represents a goroutine (Job) execution process arranged in a directed acyclic graph logic, conceptually similar to any other workflow system, such as [argo-workflows](https://argo-workflows.readthedocs.io/en/latest/).
 
 Users can add tasks to the ExecGraph object and set dependencies between tasks. Users can manage the entire workflow declaration cycle through the ExecGraph interface method.
@@ -288,9 +290,13 @@ func main() {
 }
 ```
 
+#### Workflow 
+
+[graphlib workflow](./workflow/README.md)
+
 ### Visualization
 
-Support graphical display of Graph objects (based on [D3](https://d3js.org)). 
+Support graphical display of Graph objects (based on [D3](https://d3js.org) and [Graphviz](https://graphviz.org/)). 
 
 Calling the RenderHTML method will generate an HTML file about the given Graph in the specified directory, with the file name consistent with the Graph name. Open the file in the browser to view the graphical graph object.
 

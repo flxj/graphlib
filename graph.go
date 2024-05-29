@@ -275,10 +275,11 @@ type Edge[K comparable, W number] struct {
 
 func (e *Edge[K, W]) Clone() *Edge[K, W] {
 	ee := &Edge[K, W]{
-		Key:   e.Key,
-		Head:  e.Head,
-		Tail:  e.Tail,
-		Value: e.Value,
+		Key:    e.Key,
+		Head:   e.Head,
+		Tail:   e.Tail,
+		Value:  e.Value,
+		Weight: e.Weight,
 	}
 	if e.Labels != nil {
 		ee.Labels = make(map[string]string)

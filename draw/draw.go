@@ -1,12 +1,29 @@
+/*
+	Copyright (C) 2023 flxj(https://github.com/flxj)
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+		http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
+
 package draw
 
-// TODO: draw graph by d3
 import (
+	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
+	"strings"
 	"text/template"
 
 	"github.com/flxj/graphlib"
@@ -146,17 +163,96 @@ func RenderHTML[K comparable, V any, W number](g graphlib.Graph[K, V, W], showWe
 	return f.Name(), nil
 }
 
-func getDOT[K comparable, V any, W number](g graphlib.Graph[K, V, W]) ([]byte, error) {
-	return nil, errors.New("not implement")
+type graphDOT struct {
+	Digraph  bool
+	Attr     []string
+	NodeAttr []string
+	EdgeAttr []string
+	Nodes    []string
+	Edges    []string
 }
 
-func GetDOT[K comparable, V any, W number](g graphlib.Graph[K, V, W], dir string) (string, error) {
+func getDOT[K comparable, V any, W number](g graphlib.Graph[K, V, W], vertexShape string, attr []string, showWeight bool) ([]byte, error) {
+	var (
+		err error
+		vs  []graphlib.Vertex[K, V]
+		es  []graphlib.Edge[K, W]
+	)
+
+	if vs, err = g.AllVertexes(); err != nil {
+		return nil, err
+	}
+	if es, err = g.AllEdges(); err != nil {
+		return nil, err
+	}
+
+	dot := &graphDOT{
+		Digraph: g.IsDigraph(),
+		Attr:    attr,
+	}
+	for _, v := range vs {
+		attrs := []string{
+			"shape=ellipse",
+			fmt.Sprintf("label=%v", v.Key),
+		}
+		if vertexShape != "" {
+			attrs[0] = "shape=" + vertexShape
+		}
+		if v.Labels != nil {
+			c := v.Labels["color"]
+			if c != "" {
+				attrs = append(attrs, "color="+c)
+			}
+		}
+		node := fmt.Sprintf("%v [%s]", v.Key, strings.Join(attrs, ","))
+		dot.Nodes = append(dot.Nodes, node)
+	}
+	for _, e := range es {
+		attrs := []string{}
+		if e.Labels != nil {
+			c := e.Labels["color"]
+			if c != "" {
+				attrs = append(attrs, "color="+c)
+			}
+		}
+		if showWeight {
+			fmt.Println("Weight: ", e.Weight)
+			attrs = append(attrs, fmt.Sprintf("label=%v", e.Weight))
+		}
+		var edge string
+		if dot.Digraph {
+			edge = fmt.Sprintf("%v->%v [%s]", e.Head, e.Tail, strings.Join(attrs, ","))
+		} else {
+			edge = fmt.Sprintf("%v--%v [%s]", e.Head, e.Tail, strings.Join(attrs, ","))
+		}
+		dot.Edges = append(dot.Edges, edge)
+	}
+
+	tpl, err := template.New(g.Name()).Parse(dotTemplate)
+	if err != nil {
+		return nil, err
+	}
+
+	var bs []byte
+	var buf = bytes.NewBuffer(bs)
+	if err = tpl.Execute(buf, dot); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+func GetDOT[K comparable, V any, W number](g graphlib.Graph[K, V, W], vertexShape string, attr []string, showWeight bool) ([]byte, error) {
+	return getDOT(g, vertexShape, attr, showWeight)
+}
+
+func RenderSVG[K comparable, V any, W number](g graphlib.Graph[K, V, W], vertexShape string, attr []string, showEdgeWeight bool, dir string) (string, error) {
 	var (
 		f   *os.File
 		err error
 		dot []byte
 	)
-	if dot, err = getDOT(g); err != nil {
+	if dot, err = getDOT(g, vertexShape, attr, showEdgeWeight); err != nil {
 		return "", err
 	}
 
@@ -170,11 +266,11 @@ func GetDOT[K comparable, V any, W number](g graphlib.Graph[K, V, W], dir string
 	}
 	_ = f.Sync()
 
-	return f.Name(), nil
-}
+	svg := fmt.Sprintf("%s/%s.svg", dir, g.Name())
+	cmd := exec.Command("bash", "-c", "dot", "-Tsvg", f.Name(), ">", svg)
 
-func RenderSVG[K comparable, V any, W number](g graphlib.Graph[K, V, W], showEdgeWeight bool, dir string) (string, error) {
-	// TODO: generate dot of graph.
-	// TODO: generate svg file to dir/name.svg
-	return "", errors.New("not implement")
+	if err := cmd.Run(); err != nil {
+		return "", err
+	}
+	return svg, nil
 }
