@@ -110,8 +110,26 @@ func NewAdjacencytMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*Adja
 	return am, nil
 }
 
-func NewDegreeMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*DegreeMatrix[K], error) {
-	return nil, errNotImplement
+func NewDegreeMatrix[K comparable, W number](g Graph[K, any, W]) (*DegreeMatrix[K], error) {
+	vs, err := g.AllVertexes()
+	if err != nil {
+		return nil, err
+	}
+	dm := &DegreeMatrix[K]{
+		vertexes: make([]K, len(vs)),
+		data:     make([][]int, len(vs)),
+	}
+	for i, v := range vs {
+		dm.vertexes[i] = v.Key
+		dm.data[i] = make([]int, len(vs))
+		d, err := g.Degree(v.Key)
+		if err != nil {
+			return nil, err
+		}
+		dm.data[i][i] = d
+	}
+
+	return dm, nil
 }
 
 type AdjacencyMatrix[K comparable] struct {
@@ -132,7 +150,7 @@ type DegreeMatrix[K comparable] struct {
 	data     [][]int
 }
 
-func (m *DegreeMatrix[K]) Weight() [][]int {
+func (m *DegreeMatrix[K]) Degree() [][]int {
 	return m.data
 }
 
