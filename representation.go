@@ -64,9 +64,9 @@ func NewWeightMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*WeightMa
 	for _, e := range es {
 		i := idx[e.Head]
 		j := idx[e.Tail]
-		wm.data[i][j] = e.Weight
+		wm.data[j][i] = e.Weight
 		if !g.IsDigraph() {
-			wm.data[j][i] = e.Weight
+			wm.data[i][j] = e.Weight
 		}
 	}
 
@@ -101,9 +101,9 @@ func NewAdjacencytMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*Adja
 	for _, e := range es {
 		i := idx[e.Head]
 		j := idx[e.Tail]
-		am.data[i][j] = 1
+		am.data[j][i] = 1
 		if !g.IsDigraph() {
-			am.data[j][i] = 1
+			am.data[i][j] = 1
 		}
 	}
 
@@ -363,16 +363,16 @@ func (l *adjacencyList[K, W]) addEdge(head, tail, key K, weight W) error {
 		return nil
 	}
 	// insert to outAdj
-	if err := insert(head, tail, key, weight, l.outAdj); err != nil {
+	if err := insert(tail, head, key, weight, l.outAdj); err != nil {
 		return err
 	}
 	if l.digraph {
 		// insert to inAdj
-		if err := insert(tail, head, key, weight, l.inAdj); err != nil {
+		if err := insert(head, tail, key, weight, l.inAdj); err != nil {
 			return err
 		}
 	} else {
-		if err := insert(tail, head, key, weight, l.outAdj); err != nil {
+		if err := insert(head, tail, key, weight, l.outAdj); err != nil {
 			return err
 		}
 	}
@@ -410,15 +410,15 @@ func (l *adjacencyList[K, W]) delEdge(head, tail, key K) error {
 		return fmt.Errorf("edge %v not exists", edge)
 	}
 	//
-	if err := del(head, tail, key, l.outAdj); err != nil {
+	if err := del(tail, head, key, l.outAdj); err != nil {
 		return err
 	}
 	if l.digraph {
-		if err := del(tail, head, key, l.inAdj); err != nil {
+		if err := del(head, tail, key, l.inAdj); err != nil {
 			return err
 		}
 	} else {
-		if err := del(tail, head, key, l.outAdj); err != nil {
+		if err := del(head, tail, key, l.outAdj); err != nil {
 			return err
 		}
 	}
@@ -427,11 +427,11 @@ func (l *adjacencyList[K, W]) delEdge(head, tail, key K) error {
 
 func (l *adjacencyList[K, W]) addEdges(es ...*edge[K, W]) error {
 	for _, e := range es {
-		if _, ok := l.outAdj[e.head]; !ok {
-			return fmt.Errorf("vertex %v not exists", e.head)
-		}
 		if _, ok := l.outAdj[e.tail]; !ok {
 			return fmt.Errorf("vertex %v not exists", e.tail)
+		}
+		if _, ok := l.outAdj[e.head]; !ok {
+			return fmt.Errorf("vertex %v not exists", e.head)
 		}
 	}
 	for _, e := range es {
@@ -834,18 +834,18 @@ func (l *adjacencyList[K, W]) isConnected(unidirectional bool) (bool, error) {
 func (l *adjacencyList[K, W]) isSimple() (bool, error) {
 	if l.digraph {
 		for k, v := range l.outAdj {
-			tails := make(map[K]int)
+			heads := make(map[K]int)
 			for p := v; p != nil; p = p.next {
 				// loop
 				if p.key == k {
 					return false, nil
 				}
 				//
-				t := tails[p.key]
+				t := heads[p.key]
 				if t >= 1 {
 					return false, nil
 				} else {
-					tails[p.key] = t + 1
+					heads[p.key] = t + 1
 					in := l.inAdj[k]
 					for q := in; q != nil; q = q.next {
 						if q.key == p.key {

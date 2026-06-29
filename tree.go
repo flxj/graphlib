@@ -334,7 +334,7 @@ func mstKruskal[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K,
 				// join the edge to mst.
 				prev[e.Tail] = e.Head
 				edges = append(edges, e)
-				// update weight sum.
+				// update weight sum
 				wT += e.Weight
 			}
 		}

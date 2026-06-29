@@ -116,8 +116,8 @@ func RenderHTML[K comparable, V any, W number](g graphlib.Graph[K, V, W], showWe
 	for _, e := range es {
 		l := &d3Link{
 			ID:     fmt.Sprintf("%v", e.Key),
-			Source: fmt.Sprintf("%v", e.Head),
-			Target: fmt.Sprintf("%v", e.Tail),
+			Source: fmt.Sprintf("%v", e.Tail),
+			Target: fmt.Sprintf("%v", e.Head),
 			Weight: fmt.Sprintf("%v", e.Weight),
 		}
 		if e.Labels != nil {
@@ -221,7 +221,7 @@ func getDOT[K comparable, V any, W number](g graphlib.Graph[K, V, W], vertexShap
 		}
 		var edge string
 		if dot.Digraph {
-			edge = fmt.Sprintf("%v->%v [%s]", e.Head, e.Tail, strings.Join(attrs, ","))
+			edge = fmt.Sprintf("%v->%v [%s]", e.Tail, e.Head, strings.Join(attrs, ","))
 		} else {
 			edge = fmt.Sprintf("%v--%v [%s]", e.Head, e.Tail, strings.Join(attrs, ","))
 		}

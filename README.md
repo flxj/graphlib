@@ -152,11 +152,11 @@ func main(){
 	}
 	
 	es := []Edge[int, int]{
-		{Key: 1, Head: 1, Tail: 2},
-		{Key: 2, Head: 2, Tail: 3},
-		{Key: 3, Head: 5, Tail: 6},
-		{Key: 4, Head: 4, Tail: 5},
-		{Key: 5, Head: 2, Tail: 5},
+		{Key: 1, Tail: 1, Head: 2},
+		{Key: 2, Tail: 2, Head: 3},
+		{Key: 3, Tail: 5, Head: 6},
+		{Key: 4, Tail: 4, Head: 5},
+		{Key: 5, Tail: 2, Head: 5},
 	}
 	for _, e := range es {
 		_ = g.AddEdge(e)

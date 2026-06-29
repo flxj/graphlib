@@ -67,6 +67,7 @@ func ShortestPaths[K comparable, V any, W number](g Graph[K, V, W], source K) ([
 	return shortestPathDijkstraWithPQ(g, source, source, true)
 }
 
+// get edge from v1 to v2(or v2 to v1) with the minimum weight.
 func getMinWeightEdge[K comparable, V any, W number](g Graph[K, V, W], v1, v2 K) (*Edge[K, W], W, error) {
 	es, err := g.GetEdge(v1, v2)
 	if err != nil {
@@ -79,7 +80,7 @@ func getMinWeightEdge[K comparable, V any, W number](g Graph[K, V, W], v1, v2 K)
 	w := getMaxValue(n)
 	for _, e := range es {
 		if g.IsDigraph() {
-			if e.Head == v1 && e.Tail == v2 {
+			if e.Tail == v1 && e.Head == v2 {
 				if e.Weight < w {
 					w = e.Weight
 					edge = &e
@@ -179,7 +180,7 @@ func shortestPathDijkstra[K comparable, V any, W number](g Graph[K, V, W], sourc
 			edges := []K{}
 			for p := e; p != nil; {
 				edges = append(edges, p.Key)
-				p = trace[p.Head]
+				p = trace[p.Tail]
 			}
 			var w = getMaxValue(n)
 			for i, d := range dist {
@@ -254,7 +255,7 @@ func shortestPathDijkstraWithPQ[K comparable, V any, W number](g Graph[K, V, W],
 			for p := e; p != nil; {
 				edges = append(edges, p.Key)
 				w += p.Weight
-				p = trace[p.Head]
+				p = trace[p.Tail]
 			}
 			if len(edges) == 0 {
 				w = maxDist
@@ -305,8 +306,8 @@ func shortestPathDijkstraByMatrix[K comparable, W number](g WeightMatrix[K, W], 
 				if dist.Get(v) > distU+w[u][v] {
 					dist.Update(v, distU+w[u][v])
 					trace[vertexes[v]] = &Edge[K, W]{
-						Head:   vertexes[u],
-						Tail:   vertexes[v],
+						Head:   vertexes[v],
+						Tail:   vertexes[u],
 						Weight: any(w[u][v]).(W),
 					}
 				}
@@ -320,7 +321,7 @@ func shortestPathDijkstraByMatrix[K comparable, W number](g WeightMatrix[K, W], 
 			edges := []*Edge[K, W]{}
 			for p := e; p != nil; {
 				edges = append(edges, p)
-				p = trace[p.Head]
+				p = trace[p.Tail]
 			}
 			paths = append(paths, edges)
 		}
@@ -384,23 +385,23 @@ func shortestPathBellmanFord[K comparable, V any, W number](g Graph[K, V, W], so
 			edge := e
 			var ok bool
 			var du, dv W
-			if du, ok = dist[edge.Head]; !ok {
+			if du, ok = dist[edge.Tail]; !ok {
 				return nil, errVertexNotExists
 			}
-			if dv, ok = dist[edge.Tail]; ok {
+			if dv, ok = dist[edge.Head]; ok {
 				return nil, errVertexNotExists
 			}
 			uv := edge.Weight
 			if du < maxDist && uv < maxDist {
 				if dv > du+uv {
-					dist[edge.Tail] = du + uv
-					trace[edge.Tail] = &edge
+					dist[edge.Head] = du + uv
+					trace[edge.Head] = &edge
 				}
 			}
 		}
 	}
 	for _, e := range edges {
-		if dist[e.Tail] > dist[e.Head]+e.Weight {
+		if dist[e.Head] > dist[e.Tail]+e.Weight {
 			return nil, errHasNegativeCycle
 		}
 	}
@@ -411,7 +412,7 @@ func shortestPathBellmanFord[K comparable, V any, W number](g Graph[K, V, W], so
 			edges := []K{}
 			for p := e; p != nil; {
 				edges = append(edges, p.Key)
-				p = trace[p.Head]
+				p = trace[p.Tail]
 			}
 			paths = append(paths, Path[K, W]{
 				Source: source,

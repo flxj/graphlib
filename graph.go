@@ -263,7 +263,7 @@ type Edge[K comparable, W number] struct {
 	// One endpoint of an edge.
 	Head K `json:"head" yaml:"head"`
 	// The other endpoint of an edge.
-	// For a directed graph, the direction of the edge is head ->tail.
+	// For a directed graph, the direction of the edge is tail -> head.
 	Tail K `json:"tail" yaml:"tail"`
 	// Edge weight.
 	Weight W `json:"weight" yaml:"weight"`
