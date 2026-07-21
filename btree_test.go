@@ -286,3 +286,209 @@ func TestBTree(t *testing.T) {
 func BenchmarkBTree(b *testing.B) {
 	// TODO
 }
+
+func testSkipListRW(n int, randKey bool) {
+	fmt.Println("===========> testBTreeReadWrite")
+	k, v := generateIntStr(0, n, randKey, 20)
+	t := NewSkipList[int, string](&SkipListConfig{}, func(a, b int) int {
+		if a > b {
+			return 1
+		} else if a == b {
+			return 0
+		}
+		return -1
+	})
+	for i := 0; i < n; i++ {
+		t.Insert(k[i], v[i])
+	}
+	oldLen := t.Len()
+	fmt.Printf("==========> 0 init date, size=%d\n", oldLen)
+	fmt.Println("=========> 1 test random read...")
+	// random read
+	for i := 0; i < n/2; i++ {
+		// read
+		j := rand.Intn(n)
+		_, val, ok := t.Search(k[j])
+		if !ok || val != v[j] {
+			panic(fmt.Sprintf("[ERROR] key=%d,expected_value=%s, actual_value=%s", k[j], v[j], val))
+		}
+	}
+
+	fmt.Println("=========> 2 test scan...")
+	var cnt int
+	_ = t.Scan(func(a int, b string) error {
+		cnt++
+		return nil
+	})
+	if cnt != t.Len() {
+		panic(fmt.Sprintf("[ERROR] scan count %d elements, but expected value=%d", cnt, t.Len()))
+	}
+
+	fmt.Println("===========> 3 test insert...")
+	minK, _, _ := t.First()
+	maxK, _, _ := t.Last()
+	kk, vv := generateIntStr(maxK+1, n, !randKey, 10)
+	for i := 0; i < n/2; i++ {
+		kk[i] = minK - kk[i]
+	}
+	for i := 0; i < n; i++ {
+		t.Insert(kk[i], vv[i])
+	}
+	if t.Len() != oldLen+n {
+		panic(fmt.Sprintf("[ERROR] insert err size=%d,expected_size=%d", t.Len(), oldLen+n))
+	}
+	oldLen += n
+	fmt.Printf("===========> insert %d date, now size=%d\n", n, t.Len())
+
+	fmt.Println("===========> 4 test update...")
+	for i := 1; i <= n/2; i++ {
+		j := rand.Intn(n)
+		v[j] = seqStr("value-update-", i)
+		if ok := t.Update(k[j], v[j]); !ok {
+			panic("update failure")
+		}
+		_, val, ok := t.Search(k[j])
+		if !ok || val != v[j] {
+			panic(fmt.Sprintf("[ERROR] update failure key=%d, expected_value=%s, but actual_value=%s", k[j], v[j], val))
+		}
+	}
+
+	fmt.Println("===========> 5 test delete1...")
+	for i := 0; i < n/4; i++ {
+		_, ok := t.Delete(k[i])
+		if !ok {
+			panic("[ERROR] delete failure")
+		}
+	}
+	if t.Len() != oldLen-n/4 {
+		panic(fmt.Sprintf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), oldLen-n/4))
+	}
+	fmt.Printf("===========> delete %d date, now size=%d\n", n/4, t.Len())
+
+	fmt.Println("===========> 6 test delete2...")
+	for i := n / 4; i < n; i++ {
+		_, ok := t.Delete(k[i])
+		if !ok {
+			panic("[ERROR] delete failure")
+		}
+	}
+	if t.Len() != n {
+		panic(fmt.Sprintf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), n))
+	}
+	fmt.Printf("===========> delete %d date, now size=%d\n", n-n/4, t.Len())
+
+	fmt.Println("==========> test complete")
+}
+
+func testSkipListCursor(n int, randKey bool) {
+	fmt.Printf("========> testBTreeCursor")
+	ks, vs := generateIntStr(0, n, randKey, 5)
+	t := NewSkipList[int, string](&SkipListConfig{}, func(a, b int) int {
+		if a > b {
+			return 1
+		} else if a == b {
+			return 0
+		}
+		return -1
+	})
+	for i := 0; i < n; i++ {
+		t.Insert(ks[i], vs[i])
+	}
+	fmt.Printf("============> insert date, size=%d\n", t.Len())
+	k := make([]int, n)
+	copy(k, ks)
+	slices.Sort(k)
+	cur := t.Cursor()
+	fmt.Println("============> 1 test asc...")
+	kk, _, ok := cur.First()
+	if !ok {
+		panic("[ERROR] First() failed")
+	}
+	if kk != k[0] {
+		panic(fmt.Sprintf("[ERROR] get first_key=%d, but expected_key=%d", kk, k[0]))
+	}
+	for i := 1; i < len(k) && cur.HasNext(); i++ {
+		kk, _ = cur.Next()
+		if kk != k[i] {
+			panic(fmt.Sprintf("[ERROR] get the %d'th key, current_key=%d,expected_key=%d", i, kk, k[i]))
+		}
+	}
+
+	_, _, _ = cur.First()
+	if cur.HasPrev() {
+		panic("cursor at first,cannot has prev")
+	}
+
+	fmt.Println("============> 2 test desc...")
+	kk, _, ok = cur.Last()
+	if !ok {
+		panic("[ERROR] Last() failed")
+	}
+	if kk != k[n-1] {
+		panic(fmt.Sprintf("[ERROR] get last_key=%d, but expected_key=%d", kk, k[n-1]))
+	}
+	for i := n - 2; i >= 0 && cur.HasPrev(); i-- {
+		kk, _ = cur.Prev()
+		if kk != k[i] {
+			panic(fmt.Sprintf("[ERROR] get %d'th key,current_key=%d, expected-key=%d", i+1, kk, k[i]))
+		}
+	}
+
+	_, _, _ = cur.Last()
+	if cur.HasNext() {
+		panic("cursor at last,cannot has next")
+	}
+
+	fmt.Println("============> 3 test seek+random...")
+	for i := 0; i < n/4; i++ {
+		j := rand.Intn(n)
+		kk, vv, _ := cur.Seek(ks[j])
+		if kk != ks[j] || vv != vs[j] {
+			panic(fmt.Sprintf("[ERROR] seek current_key=%d, expected_key=%d", kk, ks[j]))
+		}
+	}
+
+	fmt.Println("============> 4 test seek+forward...")
+	kk, _, ok = cur.Seek(k[n/2])
+	if !ok {
+		panic(fmt.Sprintf("[ERROR] seek key %d failed", k[n/2]))
+	}
+	if kk != k[n/2] {
+		panic(fmt.Sprintf("[ERROR] seek key %d but get %d", k[n/2], kk))
+	}
+	for i := n/2 + 1; i < n; i++ {
+		kk, _ = cur.Next()
+		if kk != k[i] {
+			panic(fmt.Sprintf("[ERROR] seek current_key=%d, expected_key=%d", kk, k[i]))
+		}
+	}
+
+	fmt.Println("============> 5 test seek+backward...")
+	kk, _, ok = cur.Seek(k[n/2])
+	if !ok {
+		panic(fmt.Sprintf("[ERROR] seek key %d failed", k[n/2]))
+	}
+	if kk != k[n/2] {
+		panic(fmt.Sprintf("[ERROR] seek key %d but get %d", k[n/2], kk))
+	}
+	for i := n/2 - 1; i >= 0; i-- {
+		kk, _ = cur.Prev()
+		//fmt.Printf("seek %d'th element,key=%d\n", i+1, kk)
+		if kk != k[i] {
+			panic(fmt.Sprintf("[ERROR] seek current_key=%d, expected_key=%d", kk, k[i]))
+		}
+	}
+
+	fmt.Println("==========> test complete")
+}
+
+func TestSkipList(t *testing.T) {
+	args := flag.Args()
+	switch args[0] {
+	case "rw":
+		testSkipListRW(100, true)
+	case "iter":
+		testSkipListCursor(100, true)
+	default:
+	}
+}
