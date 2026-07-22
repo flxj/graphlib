@@ -16,20 +16,20 @@
 
 package graphlib
 
-type element[K comparable, V any, P comparable] struct {
+type element[K comparable, V any, P any] struct {
 	key   K
 	value V
 	rank  P
 	index int
 }
 
-type binaryHeap[K comparable, V any, P comparable] struct {
+type binaryHeap[K comparable, V any, P any] struct {
 	ready bool
 	elems []*element[K, V, P]
 	less  func(k1, k2 P) bool
 }
 
-func newBinaryHeap[K comparable, V any, P comparable](less func(k1, k2 P) bool) *binaryHeap[K, V, P] {
+func newBinaryHeap[K comparable, V any, P any](less func(k1, k2 P) bool) *binaryHeap[K, V, P] {
 	return &binaryHeap[K, V, P]{
 		less: less,
 	}
@@ -141,15 +141,15 @@ func (h *binaryHeap[K, V, P]) shiftDown(idx int) {
 	}
 }
 
-type priorityQueue[K comparable, V any, P comparable] struct {
+type priorityQueue[K comparable, V any, P any] struct {
 	items map[K]*element[K, V, P]
 	heap  *binaryHeap[K, V, P]
 }
 
-func newPriorityQueue[K comparable, V any, P comparable](less func(p1, p2 P) bool) *priorityQueue[K, V, P] {
+func newPriorityQueue[K comparable, V any, P any](less func(p1, p2 P) bool) *priorityQueue[K, V, P] {
 	q := &priorityQueue[K, V, P]{
 		items: make(map[K]*element[K, V, P]),
-		heap:  newBinaryHeap[K, V, P](less),
+		heap:  newBinaryHeap[K, V](less),
 	}
 	q.heap.init()
 	return q
