@@ -812,11 +812,9 @@ func (g *execGraph[K, J]) Reset() error {
 
 	defer close(ch)
 
-	select {
-	case err := <-ch:
-		if err != nil {
-			return err
-		}
+	err := <-ch
+	if err != nil {
+		return err
 	}
 
 	g.mu.Lock()

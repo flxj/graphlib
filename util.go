@@ -247,7 +247,7 @@ func (pq *costQueue[K]) Init() {
 
 type stack[K comparable] struct {
 	elems []K
-	top   int
+	idx   int
 }
 
 func newStack[K comparable]() *stack[K] {
@@ -255,35 +255,42 @@ func newStack[K comparable]() *stack[K] {
 }
 
 func (s *stack[K]) empty() bool {
-	return s.top == 0
+	return s.idx == 0
 }
 
 func (s *stack[K]) push(k K) {
-	if s.top < len(s.elems) {
-		s.elems[s.top] = k
+	if s.idx < len(s.elems) {
+		s.elems[s.idx] = k
 	} else {
 		s.elems = append(s.elems, k)
 	}
-	s.top++
+	s.idx++
 }
 
 func (s *stack[K]) pop() (K, bool) {
 	var k K
 	if !s.empty() {
-		k = s.elems[s.top-1]
-		s.top--
+		k = s.elems[s.idx-1]
+		s.idx--
 		return k, true
 	}
 	return k, false
 }
 
 func (s *stack[K]) contains(k K) bool {
-	for i := 0; i < s.top; i++ {
+	for i := 0; i < s.idx; i++ {
 		if s.elems[i] == k {
 			return true
 		}
 	}
 	return false
+}
+
+func (s *stack[K]) top() (k K) {
+	if s.idx > 0 {
+		return s.elems[s.idx-1]
+	}
+	return
 }
 
 type fifo[K comparable] struct {

@@ -16,7 +16,12 @@
 
 package graphlib
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+	"math/rand"
+	"strconv"
+)
 
 type ThinGraph[K comparable] struct {
 	Graph[K, any, int]
@@ -225,4 +230,140 @@ func (t *ThinTree[K]) LeastCommonAncestor(k1, k2 K) (k K, b bool) {
 	}
 	dfs(t.idx[t.root])
 	return
+}
+
+func PetersenGraph() Graph[int, any, int] {
+	g, _ := NewGraph[int, any, int](false, "petersen_graph")
+	for i := 0; i < 10; i++ {
+		_ = g.AddVertex(Vertex[int, any]{Key: i})
+	}
+	edges := []Edge[int, int]{
+		{Key: 0, Head: 0, Tail: 1},
+		{Key: 1, Head: 1, Tail: 2},
+		{Key: 2, Head: 2, Tail: 3},
+		{Key: 3, Head: 3, Tail: 4},
+		{Key: 4, Head: 4, Tail: 0},
+		{Key: 5, Head: 0, Tail: 5},
+		{Key: 6, Head: 1, Tail: 6},
+		{Key: 7, Head: 2, Tail: 7},
+		{Key: 8, Head: 3, Tail: 8},
+		{Key: 9, Head: 4, Tail: 9},
+		{Key: 10, Head: 5, Tail: 7},
+		{Key: 11, Head: 7, Tail: 9},
+		{Key: 12, Head: 9, Tail: 6},
+		{Key: 13, Head: 6, Tail: 8},
+		{Key: 14, Head: 8, Tail: 5},
+	}
+	for _, e := range edges {
+		_ = g.AddEdge(e)
+	}
+	return g
+}
+
+func CompleteGraph(n int) Graph[int, any, int] {
+	if n < 0 {
+		return nil
+	}
+	g, _ := NewGraph[int, any, int](false, "k"+strconv.Itoa(n))
+	for v := 0; v < n; v++ {
+		_ = g.AddVertex(Vertex[int, any]{Key: v})
+	}
+	var k int
+	for i := 0; i < n; i++ {
+		for j := i + 1; j < n; j++ {
+			_ = g.AddEdge(Edge[int, int]{Key: k, Head: i, Tail: j})
+			k++
+		}
+	}
+	return g
+}
+
+func CompleteBipartite(a, b int) *Bipartite[int, any, int] {
+	if a < 1 || b < 1 {
+		return nil
+	}
+	g, _ := NewBipartite[int, any, int](false, fmt.Sprintf("K%d_%d", a, b))
+	for i := 0; i < a; i++ {
+		_ = g.AddVertexTo(Vertex[int, any]{Key: i}, true)
+	}
+	for i := a; i < a+b; i++ {
+		_ = g.AddVertexTo(Vertex[int, any]{Key: i}, false)
+	}
+	var k int
+	for i := 0; i < a; i++ {
+		for j := a; j < a+b; j++ {
+			_ = g.g.AddEdge(Edge[int, int]{Key: k, Head: i, Tail: j})
+			k++
+		}
+	}
+	return g
+}
+
+func HajosGraph() Graph[int, any, int] {
+	g, _ := NewGraph[int, any, int](false, "hajos_graph")
+	for i := 0; i < 7; i++ {
+		_ = g.AddVertex(Vertex[int, any]{Key: i})
+	}
+	edges := []Edge[int, int]{
+		{Head: 0, Tail: 1},
+		{Head: 0, Tail: 2},
+		{Head: 0, Tail: 4},
+		{Head: 1, Tail: 3},
+		{Head: 1, Tail: 6},
+		{Head: 2, Tail: 4},
+		{Head: 2, Tail: 5},
+		{Head: 3, Tail: 5},
+		{Head: 3, Tail: 6},
+		{Head: 4, Tail: 5},
+		{Head: 5, Tail: 6},
+	}
+	for i, e := range edges {
+		e.Key = i
+		_ = g.AddEdge(e)
+	}
+	return g
+}
+
+func Hypercube(n int) Graph[int, any, int] {
+	if n < 0 || n > 31 {
+		return nil
+	}
+	g, _ := NewGraph[int, any, int](false, strconv.Itoa(n)+"-cube")
+	for i := 0; i < (1 << n); i++ {
+		_ = g.AddVertex(Vertex[int, any]{Key: i})
+	}
+	var k int
+	for u := 0; u < (1 << n); u++ {
+		// find u's neighbour v such that larger than u
+		for b := 0; b < n; b++ {
+			if (u>>b)&1 == 0 {
+				v := u | (1 << b)
+				_ = g.AddEdge(Edge[int, int]{Key: k, Head: u, Tail: v})
+				k++
+			}
+		}
+	}
+	return g
+}
+
+func RandomGraph(n int, p float64) Graph[int, any, int] {
+	if p < 0.0 || p > 1.0 {
+		return nil
+	}
+	g, _ := NewGraph[int, any, int](false, "k"+strconv.Itoa(n))
+	for v := 0; v < n; v++ {
+		_ = g.AddVertex(Vertex[int, any]{Key: v})
+	}
+	M := int(p * 10000.0)
+	var k int
+	for i := 0; i < n; i++ {
+		for j := i + 1; j < n; j++ {
+			// probability
+			if rand.Intn(10000) < M {
+				_ = g.AddEdge(Edge[int, int]{Key: k, Head: i, Tail: j})
+				k++
+			}
+		}
+	}
+	return nil
 }
