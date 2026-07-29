@@ -153,6 +153,8 @@ type Graph[K comparable, V any, W number] interface {
 	// and 'endpoint2->endpoint1' directions simultaneously.
 	RemoveEdge(endpoint1, endpoint2 K) error
 	//
+	// Delete all edges.
+	RemoveAllEdge() error
 	// Calculate the degree of vertices.
 	// If it is a directed graph, calculate the sum of in degree and out degree.
 	// If the vertex does not exist, an error is returned.
@@ -189,6 +191,9 @@ type Graph[K comparable, V any, W number] interface {
 	// Remove vertex label.
 	DeleteVertexLabel(key K, labelKey string) error
 	//
+	//
+	// Update edge weight.
+	SetEdgeWeight(key K, weight W) error
 	// Update edge data.
 	SetEdgeValueByKey(key K, value any) error
 	//

@@ -367,3 +367,59 @@ func RandomGraph(n int, p float64) Graph[int, any, int] {
 	}
 	return nil
 }
+
+func FanoPlane() Graph[int, any, int] {
+	g, _ := NewGraph[int, any, int](false, "fano_plane")
+	for v := 0; v < 7; v++ {
+		_ = g.AddVertex(Vertex[int, any]{Key: v})
+	}
+	E := []Edge[int, int]{
+		{Head: 0, Tail: 3},
+		{Head: 3, Tail: 1},
+		{Head: 1, Tail: 4},
+		{Head: 4, Tail: 2},
+		{Head: 2, Tail: 5},
+		{Head: 5, Tail: 0},
+		{Head: 0, Tail: 6},
+		{Head: 1, Tail: 6},
+		{Head: 2, Tail: 6},
+		{Head: 3, Tail: 6},
+		{Head: 4, Tail: 6},
+		{Head: 5, Tail: 6},
+		{Head: 3, Tail: 5},
+		{Head: 3, Tail: 4},
+		{Head: 4, Tail: 5},
+	}
+	for i, e := range E {
+		e.Key = i
+		_ = g.AddEdge(e)
+	}
+	return g
+}
+
+func HeawoodGraph() Graph[int, any, int] {
+	g, _ := NewGraph[int, any, int](false, "fano_plane")
+	for v := 0; v < 14; v++ {
+		_ = g.AddVertex(Vertex[int, any]{Key: v})
+	}
+	ek := 0
+	for v := 0; v < 14; v++ {
+		_ = g.AddEdge(Edge[int, int]{Key: ek, Head: v, Tail: (v + 1) % 14})
+		ek++
+	}
+	E := []Edge[int, int]{
+		{Head: 0, Tail: 5},
+		{Head: 1, Tail: 10},
+		{Head: 2, Tail: 7},
+		{Head: 3, Tail: 12},
+		{Head: 4, Tail: 9},
+		{Head: 6, Tail: 11},
+		{Head: 8, Tail: 13},
+	}
+	for _, e := range E {
+		e.Key = ek
+		_ = g.AddEdge(e)
+		ek++
+	}
+	return g
+}

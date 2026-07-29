@@ -121,13 +121,12 @@ func (bg *Bipartite[K, V, W]) RemoveVertex(key K) error {
 }
 
 func (bg *Bipartite[K, V, W]) AddEdge(edge Edge[K, W]) error {
-	if bg.partA[edge.Head] || bg.partA[edge.Tail] {
+	if bg.partA[edge.Head] && bg.partA[edge.Tail] {
 		return errViolateBipartite
 	}
-	if bg.partB[edge.Head] || bg.partB[edge.Tail] {
+	if bg.partB[edge.Head] && bg.partB[edge.Tail] {
 		return errViolateBipartite
 	}
-
 	return bg.g.AddEdge(edge)
 }
 
@@ -287,6 +286,11 @@ func (bg *Bipartite[K, V, W]) NeighbourEdges(endpoint1, endpoint2 K) ([]Edge[K, 
 
 func (bg *Bipartite[K, V, W]) IncidentEdges(vertex K) ([]Edge[K, W], error) {
 	return bg.g.IncidentEdges(vertex)
+}
+
+func (bg *Bipartite[K, V, W]) InPartA(key K) bool {
+	_, ok := bg.partA[key]
+	return ok
 }
 
 /*

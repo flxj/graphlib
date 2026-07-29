@@ -22,9 +22,6 @@ import (
 )
 
 func CheckPlanarity[K comparable, V any, W number](g Graph[K, V, W]) bool {
-	if g == nil {
-		return false
-	}
 	return CheckPlanarityLR(g)
 }
 
@@ -34,14 +31,21 @@ func CheckPlanarityBM[K comparable, V any, W number](g Graph[K, V, W]) bool { //
 }
 
 // Hopcroft-Tarjan
-func CheckPlanarityHT[K comparable, V any, W number](g Graph[K, V, W]) bool { //TODO
+func CheckPlanarityHT[K comparable, V any, W number](g Graph[K, V, W]) bool { // TODO
+	/*
+		if g == nil {
+			return false
+		}
+		p := &planarTestHT[K, V, W]{g: g}
+		return p.planarity()
+	*/
 	panic("not implement now")
 }
 
 // Left-Right
 func CheckPlanarityLR[K comparable, V any, W number](g Graph[K, V, W]) bool {
-	p := newPlanarTestLR(g)
-	return p.lrPlanarity(false)
+	p := &planarTestLR[K, V, W]{g: g}
+	return p.planarity(false)
 }
 
 type interval struct {
@@ -81,12 +85,6 @@ type planarTestLR[K comparable, V any, W number] struct {
 	top         int
 	S           stack[*pair]
 	stackBottom []*pair
-}
-
-func newPlanarTestLR[K comparable, V any, W number](g Graph[K, V, W]) *planarTestLR[K, V, W] {
-	return &planarTestLR[K, V, W]{
-		g: g,
-	}
 }
 
 func (p *planarTestLR[K, V, W]) orient(e int, tail, head int) {
@@ -337,7 +335,7 @@ func (p *planarTestLR[K, V, W]) sign(e int) int {
 	return p.side[e]
 }
 
-func (p *planarTestLR[K, V, W]) lrPlanarity(embedding bool) bool {
+func (p *planarTestLR[K, V, W]) planarity(embedding bool) bool {
 	n, m := p.g.Order(), p.g.Size()
 	if n > 2 && m > 3*n-6 {
 		return false
@@ -405,4 +403,399 @@ func (p *planarTestLR[K, V, W]) dfsEmbedding(v int) {
 			}
 		}
 	}
+}
+
+type planarTestHT[K comparable, V any, W number] struct {
+	g       Graph[K, V, W]
+	vtx     []Vertex[K, V]
+	edges   []Edge[K, W]
+	vtxIdx  map[K]int // key: v.Key, value: index of vtx
+	edgeIdx map[K]int // key: e.Key, value: index of edges
+
+	num    int
+	roots  []int // root vertex index of each connected component.
+	number []int // vertex number (root vertex number is 1).
+	lowpt1 []int
+	lowpt2 []int
+
+	oriented   [][3]int         // [e]{tail,head,frond}
+	orderedAdj map[int][][2]int // key:vertex index(tail),value: {e,head}
+
+	s     int   // a global variable,record the start vertex's number of the current path, and is initialized to 0.
+	pathN int   // path number
+	path  []int // path number of vertexes
+
+	L    []int
+	R    []int
+	B    [][2]int
+	FREE int
+}
+
+func (p *planarTestHT[K, V, W]) getEdge(u, v int) int {
+	es, _ := p.g.GetEdge(p.vtx[u].Key, p.vtx[v].Key)
+	return p.edgeIdx[es[0].Key]
+}
+
+func (p *planarTestHT[K, V, W]) init() {
+	p.vtx, _ = p.g.AllVertexes()
+	p.edges, _ = p.g.AllEdges()
+	p.vtxIdx = make(map[K]int)
+	p.edgeIdx = make(map[K]int)
+	for i, v := range p.vtx {
+		p.vtxIdx[v.Key] = i
+	}
+	for i, e := range p.edges {
+		p.edgeIdx[e.Key] = i
+	}
+	m, n := p.g.Size(), p.g.Order()
+	p.number = make([]int, n)
+	p.lowpt1 = make([]int, n)
+	p.lowpt2 = make([]int, n)
+	p.oriented = make([][3]int, m)
+}
+
+func (p *planarTestHT[K, V, W]) orient(e int, tail, head int, frond int) {
+	p.oriented[e] = [3]int{tail, head, frond}
+}
+
+func (p *planarTestHT[K, V, W]) dfs(u, v int) { // u is father node of v
+	p.number[v] = p.num
+	p.num++
+
+	p.lowpt1[v], p.lowpt2[v] = p.number[v], p.number[v]
+
+	vk := p.vtx[v].Key
+	es, err := p.g.IncidentEdges(vk)
+	if err != nil {
+		return
+	}
+	for _, e := range es {
+		var w int
+		if e.Head == vk {
+			w = p.vtxIdx[e.Tail]
+		} else {
+			w = p.vtxIdx[e.Head]
+		}
+		vw := p.edgeIdx[e.Key]
+		if p.number[w] == 0 {
+			p.orient(vw, v, w, 0) // orient v -> w
+			p.dfs(v, w)
+			if p.lowpt1[w] < p.lowpt1[v] {
+				p.lowpt2[v] = min(p.lowpt1[v], p.lowpt2[w])
+				p.lowpt1[v] = p.lowpt1[w]
+			} else if p.lowpt1[w] == p.lowpt1[v] {
+				p.lowpt2[v] = min(p.lowpt2[v], p.lowpt2[w])
+			} else {
+				p.lowpt2[v] = min(p.lowpt2[v], p.lowpt1[w])
+			}
+		} else {
+			if p.number[w] < p.number[v] && w != u {
+				// mark (v,w) as a frond
+				p.orient(vw, v, w, 1)
+				if p.number[w] < p.lowpt1[v] {
+					p.lowpt2[v] = p.lowpt1[v]
+					p.lowpt1[v] = p.number[w]
+				} else if p.number[w] > p.lowpt1[v] {
+					p.lowpt2[v] = min(p.lowpt2[v], p.number[w])
+				}
+			}
+		}
+	}
+}
+
+func (p *planarTestHT[K, V, W]) sortEdges() {
+	n, m := len(p.vtx), len(p.edges)
+	bucket := make([][]int, 2*n+2)
+	p.orderedAdj = make(map[int][][2]int)
+	var v, w, f int
+	for e := 0; e < m; e++ {
+		v, w, f = p.oriented[e][0], p.oriented[e][1], p.oriented[e][2]
+		if f == 1 {
+			bucket[2*p.number[w]] = append(bucket[2*p.number[w]], e)
+		} else {
+			if p.lowpt2[w] >= p.number[v] {
+				bucket[2*p.lowpt1[w]] = append(bucket[2*p.lowpt1[w]], e)
+			} else {
+				bucket[2*p.lowpt1[w]+1] = append(bucket[2*p.lowpt1[w]+1], e)
+			}
+		}
+	}
+	for i := 1; i < 2*n+2; i++ {
+		if bucket[i] != nil {
+			for _, e := range bucket[i] {
+				v, w = p.oriented[e][0], p.oriented[e][1]
+				p.orderedAdj[v] = append(p.orderedAdj[v], [2]int{e, w})
+			}
+		}
+	}
+}
+
+/*Stacks L and R are stored as linked lists using arrays STACK and NEXT.
+STACK (i) gives a stack entry, and NEXT(i) points to the next entry on the same stack.
+NEXT(0) points to the first entry on L. NEXT(-1) points to the first entry on R.
+FREE is the first unused location in STACK.
+
+Variable p denotes the number of the current path. If v is a vertex PATH(v) denotes the number of the first path containing
+v. If i is the number of a path, f(i) denotes the last vertex on the path numbered i.
+
+Blocks are represented as ordered pairs on stack B. If (x, y) is on B, x denotes the last entry on L in the block,
+and y denotes the last entry on R in the block. If x = 0 (y = 0), the block has no entries on L(R).
+SAVE is a temporary variable used for switching;
+
+Let a block B be a maximal set of entries on L and
+R which correspond to fronds such that the placement of any one of the fronds determines the placement of all the others.
+The blocks change as the content of the stacks change, but the blocks always partition the stack entries.
+*/
+
+func (p *planarTestHT[K, V, W]) STACK(i int) int { // L
+	return -1
+}
+
+func (p *planarTestHT[K, V, W]) NEXT(i int) int { // R
+	return -1
+}
+
+func (p *planarTestHT[K, V, W]) SETNEXT(i int, val int) {
+}
+
+func (p *planarTestHT[K, V, W]) SETSTACK(i int, val int) {
+}
+
+// If i is the number of a path, F(i) denotes the last vertex on the path numbered i.
+func (p *planarTestHT[K, V, W]) F(i int) int {
+	return -1
+}
+
+func (p *planarTestHT[K, V, W]) pathFinder(v int) bool {
+	vn := p.number[v]
+	for _, out := range p.orderedAdj[v] {
+		e, w := out[0], out[1]
+		if p.oriented[e][2] == 0 { // tree edge
+			if p.s == 0 { // start a new path
+				p.s = vn
+				p.pathN++ // pn is a path number,we use it to trace a path.
+			}
+			// add (v,w) to current path.
+			p.path[w] = p.pathN
+			if !p.pathFinder(w) {
+				return false
+			}
+			// delete stack entries and blocks corresponding to vertices no smaller than v;
+			for _, e1 := range p.B {
+				xn, yn := e1[0], e1[1]
+				if (p.STACK(xn) >= vn || xn == 0) && (p.STACK(yn) >= vn || yn == 0) {
+					// TODO: delete (x, y) from B;
+				}
+			}
+			var xn, yn int
+			// TODO: if (xn, yn) on B has STACK(xn) >= vn then replace (xn, yn) on B by (0, yn);
+			// TODO: if (xn, yn) on B has STACK(yn) >= vn then replace (xn, yn) on B by (xn, 0);
+			for p.NEXT(-1) != 0 && p.STACK(p.NEXT(-1)) >= vn {
+				p.SETNEXT(-1, p.NEXT(p.NEXT(-1)))
+			}
+			for p.NEXT(0) != 0 && p.NEXT(p.NEXT(0)) >= vn {
+				p.SETNEXT(0, p.NEXT(p.NEXT(0)))
+			}
+			if p.path[v] != p.path[w] {
+				// all of segment with first edge (v, w) has been embedded. New blocks must be moved from right to left;
+				L := 0
+				for _, e1 := range p.B {
+					xn, yn := e1[0], e1[1]
+					if p.STACK(xn) > p.F(p.path[w]) || p.STACK(yn) > p.F(p.path[w]) && p.STACK(p.NEXT(-1)) != 0 {
+						if p.STACK(xn) > p.F(p.path[w]) {
+							if p.STACK(yn) > p.F(p.path[w]) {
+								return false
+							}
+							L = xn
+						} else {
+							SAVE := p.NEXT(L)
+							p.SETNEXT(L, p.NEXT(-1))
+							p.SETNEXT(-1, p.NEXT(yn))
+							p.SETNEXT(yn, SAVE)
+							L = yn
+						}
+						// TODO: delete (x, y) from B;
+					}
+				}
+				// block on B must be combined with new blocks just deleted;
+				// TODO: delete (xn, yn) from B;
+				if xn != 0 {
+					// TODO: add (xn,yn) to B;
+				} else if L != 0 || yn != 0 {
+					// TODO: add (L,yn) to B;
+				}
+				// delete end-of-stack marker on right stack;
+				p.SETNEXT(-1, p.NEXT(p.NEXT(-1)))
+			}
+		} else {
+			// v --> w. Current path is complete.
+			if p.s == 0 {
+				p.pathN++
+				p.s = p.number[v]
+			}
+			// TODO: f(p) := w;
+			L, R := 0, -1
+			for (p.NEXT(L) != 0 && p.STACK(p.NEXT(L)) > p.number[w]) || (p.NEXT(R) != 0 && p.STACK(p.NEXT(R)) > p.number[w]) {
+				var xn, yn int //TODO: (x,y) on B
+				if xn != 0 && yn != 0 {
+					if p.STACK(p.NEXT(L)) > p.number[w] {
+						if p.STACK(p.NEXT(R)) > p.number[w] {
+							return false
+						}
+						SAVE := p.NEXT(R)
+						p.SETNEXT(R, p.NEXT(L))
+						p.SETNEXT(L, SAVE)
+						//
+						SAVE = p.NEXT(xn)
+						p.SETNEXT(xn, p.NEXT(yn))
+						p.SETNEXT(yn, SAVE)
+						L, R = yn, xn
+					} else {
+						L, R = xn, yn
+					}
+				} else if xn != 0 {
+					save := p.NEXT(xn)
+					p.SETNEXT(xn, p.NEXT(R))
+					p.SETNEXT(R, p.NEXT(L))
+					p.SETNEXT(L, save)
+					R = xn
+				} else {
+					R = yn
+				}
+				// TODO: delete (x, y) from B;
+			}
+			// add P to left stack if p is normal;
+			if p.F(p.s) < p.number[w] {
+				if L == 0 {
+					L = p.FREE
+				}
+				// TODO: STACK(FREE) := f;  ---> p.SETSTACK(p.FREE) = f
+				p.SETNEXT(p.FREE, p.NEXT(0))
+				p.SETNEXT(0, p.FREE)
+				p.FREE++
+			}
+			if R == -1 {
+				R = 0
+			}
+			if L != 0 || R != 0 || vn != p.s {
+				// TODO: add (L,R) to B
+			}
+			if vn != p.s {
+				p.SETSTACK(p.FREE, 0)
+				p.SETNEXT(p.FREE, p.NEXT(-1))
+				p.SETNEXT(-1, p.FREE)
+				p.FREE++
+			}
+			// TODO: add (v,w) to current path
+			// TODO: output current path
+			p.s = 0
+		}
+	}
+	return true
+}
+
+/*
+When c is removed, G falls into several connected pieces, called segments. Each segment
+S consists either of a single frond (v, w), or of a tree arc (v, w) plus a subtree with root w plus all fronds leading from the subtree.
+
+A segment must be embedded completely on one side of c by the Jordan Curve Theorem.
+*/
+
+/*
+We use Lemma 9 to test planarity, in the following way:
+first we embed the cycle c in the plane.
+Then we embed the segments one at a time in the order they are explored during pathfinding.
+To embed a segment S, we find a path in it, say p. We choose a side, say the left, on which to embed p.
+We compare p with previously embedded fronds to determine if p can be embedded.
+If not, we move segments which have fronds blocking p from the left to the right.
+If p can be embedded after moving segments, we embed it.
+However, if we move segments from the left to the right we may have to move other segments from the right to the left.
+Thus it may be impossible to embed p. If so, we declare the graph nonplanar.
+
+If p can be embedded, we try to embed the rest of S by in essence using the algorithm recursively.
+Then we try to embed the next segment.
+*/
+
+/*
+EMBED()
+began
+
+	L := R := B := the empty stack;
+	find first cycle c;
+	while (some segment is unexplored) do
+		begin
+			initiate search for path in next segment S;
+			when backing down tree arc v -> w delete entries on L and R and blocks on B containing vertices no smaller than v;
+			let p: s-->*f be first path found in segment S;
+			while (position of top block determines position of p) do
+				begin
+					delete top block from B;
+					if (block entries on left) then
+						switch block of entries from L to R and from R to L by switching list pointers;
+					if (block still has an entry on left in conflict with p) then
+						go to nonplanar;
+				end;
+			if (p is normal) then
+				add last vertex of p to L;
+			add new block to B corresponding to p and blocks just removed from B;
+			add end-of-stack marker to R;
+			call embedding algorithm recursively;
+			for each (new block (x, y) on B) do
+				begin
+					if (x != 0) and (y != 0) then
+						go to nonplanar;
+					if (y != 0) then
+						move entries in block to L;
+					delete (x, y) from B;
+				end;
+			delete end-of-stack marker on R;
+			add one block to B to represent S minus path p;
+			combine top two blocks on B;
+		end;
+
+end;
+*/
+func (p *planarTestHT[K, V, W]) embed(r int) bool {
+	// integer array STACK(0 :: E), NEXT(-1 :: E), f(1 :: E - V + 1), PATH(1 :: V); B(1 :: E);
+	m := len(p.edges)
+
+	p.L, p.R = make([]int, m), make([]int, m)
+	p.B = make([][2]int, m)
+
+	p.SETNEXT(-1, 0)
+	p.SETNEXT(0, 0)
+	p.FREE = 1
+	p.SETSTACK(0, 0)
+	p.pathN = 0
+	p.s = 0
+	p.path[r] = 1
+	return p.pathFinder(r)
+}
+
+func (p *planarTestHT[K, V, W]) planarity() bool {
+	n, m := p.g.Order(), p.g.Size()
+	if n > 2 && m > 3*n-6 {
+		return false
+	} else if n < 5 {
+		return true
+	}
+	p.init()
+	// TODO divide G into biconnected components;
+
+	// 1.number vertices and transform G into a palm trees;
+	for s := 0; s < n; s++ {
+		if p.number[s] == 0 {
+			p.roots = append(p.roots, s)
+			p.dfs(0, s)
+		}
+	}
+	// 2.
+	p.sortEdges()
+	p.path = make([]int, n)
+	for _, r := range p.roots {
+		if !p.embed(r) {
+			return false
+		}
+	}
+	return true
 }

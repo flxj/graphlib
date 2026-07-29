@@ -233,54 +233,13 @@ func MaxFlow[K comparable, V any, W number](g Graph[K, V, W], source, sink K) (W
 	return mfDinic(g, source, sink)
 }
 
-func mmBlossom[K comparable, V any, W number](g Graph[K, V, W]) ([]K, error) {
-	return nil, errNotImplement
-}
-
-// Calculate the maximum matching of any graph and return the set of edges.
-func MaxMatching[K comparable, V any, W number](g Graph[K, V, W]) ([]K, error) {
-	return mmBlossom(g)
-}
-
-func MaxWeightMatching[K comparable, V any, W number](g Graph[K, V, W]) ([]K, error) {
-	return nil, errNotImplement
-}
-
-// Calculate the perfect matching of any graph, if it exists, return the set of edges,
-// otherwise return non-existent.
-func PerfectMatching[K comparable, V any, W number](g Graph[K, V, W]) ([]K, error) {
-	mm, err := MaxMatching(g)
-	if err != nil {
-		return nil, err
-	}
-	vs := make(map[K]bool)
-	for _, k := range mm {
-		e, err := g.GetEdgeByKey(k)
-		if err != nil {
-			return nil, err
-		}
-		vs[e.Head] = true
-		vs[e.Tail] = true
-	}
-	vertexes, err := g.AllVertexes()
-	if err != nil {
-		return nil, err
-	}
-	for _, v := range vertexes {
-		if _, ok := vs[v.Key]; !ok {
-			return nil, errMatchNotExists
-		}
-	}
-	return mm, nil
-}
-
 var inf = math.MaxInt
 
 // update current matching by dfs:
 //
 //	from vertex k(in partA and not in current matching)
 //	find the successor vertex of k in augmenting path.
-func updateMatching[K comparable, V any, W number](g Bipartite[K, V, W], pairU, pairV map[K]K, dist map[K]int, u, dummyK K) (bool, error) {
+func updateMatching[K comparable, V any, W number](g *Bipartite[K, V, W], pairU, pairV map[K]K, dist map[K]int, u, dummyK K) (bool, error) {
 	if u != dummyK {
 		// get u's neighbours(in partB).
 		// and check the already matched neighbour
@@ -340,20 +299,8 @@ func updateMatching[K comparable, V any, W number](g Bipartite[K, V, W], pairU, 
 
 // Once an augmenting path is found, DFS (Depth First Search) is used to add augmenting paths to current matching.
 // DFS simply follows the distance map setup by BFS. It fills values in pairU[u] and pairV[v] if v is next to u in BFS.
-func mmHopcroftKarp[K comparable, V any, W number](g Bipartite[K, V, W]) ([]K, error) {
-	var (
-		dummyK K
-		err    error
-		partA  []Vertex[K, V]
-		partB  []Vertex[K, V]
-	)
-	if partA, err = g.Part(true); err != nil {
-		return nil, err
-	}
-	if partB, err = g.Part(false); err != nil {
-		return nil, err
-	}
-	//
+func mmHopcroftKarp[K comparable, V any, W number](partA, partB []Vertex[K, V], g *Bipartite[K, V, W]) ([]Edge[K, W], error) {
+	var dummyK K
 	pairU := make(map[K]K)
 	pairV := make(map[K]K)
 	dist := make(map[K]int)
@@ -437,7 +384,7 @@ func mmHopcroftKarp[K comparable, V any, W number](g Bipartite[K, V, W]) ([]K, e
 		}
 	}
 	//
-	var edges []K
+	var edges []Edge[K, W]
 	for u, v := range pairU {
 		if v != dummyK {
 			es, err := g.GetEdge(u, v)
@@ -445,7 +392,7 @@ func mmHopcroftKarp[K comparable, V any, W number](g Bipartite[K, V, W]) ([]K, e
 				return nil, err
 			}
 			if len(es) > 0 {
-				edges = append(edges, es[0].Key)
+				edges = append(edges, es[0])
 			}
 		}
 	}
@@ -453,18 +400,27 @@ func mmHopcroftKarp[K comparable, V any, W number](g Bipartite[K, V, W]) ([]K, e
 }
 
 // Calculate the maximum matching of bipartite graph.
-func BipartiteMaxMatching[K comparable, V any, W number](g Bipartite[K, V, W]) ([]K, error) {
-	return mmHopcroftKarp(g)
+func BipartiteMaxMatching[K comparable, V any, W number](g *Bipartite[K, V, W]) ([]Edge[K, W], error) {
+	var err error
+	var partA []Vertex[K, V]
+	var partB []Vertex[K, V]
+	if partA, err = g.Part(true); err != nil {
+		return nil, err
+	}
+	if partB, err = g.Part(false); err != nil {
+		return nil, err
+	}
+	return mmHopcroftKarp(partA, partB, g)
 }
 
-func BipartitePerfectMatching[K comparable, V any, W number](g Bipartite[K, V, W]) ([]K, error) {
+func BipartitePerfectMatching[K comparable, V any, W number](g *Bipartite[K, V, W]) ([]Edge[K, W], error) {
 	mm, err := BipartiteMaxMatching(g)
 	if err != nil {
 		return nil, err
 	}
 	vs := make(map[K]bool)
 	for _, k := range mm {
-		e, err := g.GetEdgeByKey(k)
+		e, err := g.GetEdgeByKey(k.Key)
 		if err != nil {
 			return nil, err
 		}

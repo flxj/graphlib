@@ -446,6 +446,13 @@ func (g *graph[K, V, W]) RemoveEdge(v1, v2 K) error {
 	return nil
 }
 
+func (g *graph[K, V, W]) RemoveAllEdge() error {
+	g.adjList.delAllEdge()
+	g.edges = make(map[K]*Edge[K, W])
+	g.version++
+	return nil
+}
+
 func (g *graph[K, V, W]) Degree(key K) (int, error) {
 	if _, ok := g.vertexes[key]; !ok {
 		return 0, errVertexNotExists
@@ -769,13 +776,24 @@ func (g *graph[K, V, W]) IncidentEdges(vertex K) ([]Edge[K, W], error) {
 	if _, ok := g.vertexes[vertex]; !ok {
 		return nil, errVertexNotExists
 	}
-
 	var res []Edge[K, W]
-	for _, e := range g.edges {
-		if e.Tail == vertex || e.Head == vertex {
-			res = append(res, *e)
-		}
+	ks, err := g.adjList.incidentEdges(vertex)
+	if err != nil {
+		return []Edge[K, W]{}, err
 	}
-
+	res = make([]Edge[K, W], len(ks))
+	for i, e := range ks {
+		res[i] = *g.edges[e]
+	}
 	return res, nil
+}
+
+func (g *graph[K, V, W]) SetEdgeWeight(key K, weight W) error {
+	e, ok := g.edges[key]
+	if !ok {
+		return errEdgeNotExists
+	}
+	e.Weight = weight
+	return nil
+	// TODO: update weight on adjlist
 }

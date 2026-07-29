@@ -96,6 +96,37 @@ func edgeFormat[K comparable](v1, v2 K) K {
 	}
 }
 
+func maxValue[N number](n N) N {
+	switch any(n).(type) {
+	case int:
+		return any(math.MaxInt).(N)
+	case int8:
+		return any(math.MaxInt8).(N)
+	case int16:
+		return any(math.MaxInt16).(N)
+	case int32:
+		return any(math.MaxInt32).(N)
+	case int64:
+		return any(math.MaxInt64).(N)
+	case uint:
+		return any(math.MaxInt).(N)
+	case uint8:
+		return any(math.MaxUint8).(N)
+	case uint16:
+		return any(math.MaxUint16).(N)
+	case uint32:
+		return any(math.MaxUint32).(N)
+	case uint64:
+		return any(math.MaxInt64).(N)
+	case float32:
+		return any(math.MaxFloat32).(N)
+	case float64:
+		return any(math.MaxFloat64).(N)
+	default:
+		return n
+	}
+}
+
 var (
 	errRunTimeout = errors.New("function run timeout")
 )

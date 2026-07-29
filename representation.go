@@ -957,3 +957,35 @@ func (l *adjacencyList[K, W]) property(p int) (property[bool], error) {
 		value: r,
 	}, nil
 }
+
+func (l *adjacencyList[K, W]) incidentEdges(v K) ([]K, error) {
+	var ks []K
+	p, ok := l.outAdj[v]
+	if !ok {
+		return nil, fmt.Errorf("vertex %v not exists", v)
+	}
+	for q := p; q != nil; q = q.next {
+		ks = append(ks, q.edge)
+	}
+	if l.digraph {
+		p, ok = l.inAdj[v]
+		if !ok {
+			return nil, fmt.Errorf("vertex %v not exists", v)
+		}
+		for q := p; q != nil; q = q.next {
+			ks = append(ks, q.edge)
+		}
+	}
+	return ks, nil
+}
+
+func (l *adjacencyList[K, W]) delAllEdge() {
+	for k := range l.outAdj {
+		l.outAdj[k] = nil
+	}
+	if l.digraph {
+		for k := range l.inAdj {
+			l.inAdj[k] = nil
+		}
+	}
+}
