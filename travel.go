@@ -31,18 +31,7 @@ package graphlib
 //  2. For each u ∈ N+(v) do: if tvisit(u) = 0 then pred(u) :=v and perform
 //     DFS-PROC(u).
 //  3. Set time := time+1, texpl(v):=time.
-func dfs[K comparable, V any, W number](g Graph[K, V, W], start K, in bool, visitor func(v Vertex[K, V]) error) error {
-	neighbours := g.Neighbours
-	if g.IsDigraph() {
-		dg, ok := g.(Digraph[K, V, W])
-		if ok {
-			if in {
-				neighbours = dg.InNeighbours
-			} else {
-				neighbours = dg.OutNeighbours
-			}
-		}
-	}
+func dfs[K comparable, V any, W number](g Graph[K, V, W], start K, in bool, visitor func(v Vertex[K, V]) error, neighbours func(K) ([]Vertex[K, V], error)) error {
 	//
 	startV, err := g.GetVertex(start)
 	if err != nil {
@@ -76,15 +65,44 @@ func dfs[K comparable, V any, W number](g Graph[K, V, W], start K, in bool, visi
 
 // Start depth first search from the specified source vertex, where g can be a directed or undirected graph.
 func DFS[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(v Vertex[K, V]) error) error {
-	return dfs(g, start, false, visitor)
+	neighbours := g.Neighbours
+	if g.IsDigraph() {
+		dg, ok := g.(Digraph[K, V, W])
+		if ok {
+			neighbours = dg.OutNeighbours
+		} else {
+			neighbours = func(v K) ([]Vertex[K, V], error) {
+				es, err := g.IncidentEdges(v)
+				if err != nil {
+					return nil, err
+				}
+				var res []Vertex[K, V]
+				for _, e := range es {
+					if e.Tail == v {
+						w, err := g.GetVertex(e.Head)
+						if err != nil {
+							return nil, err
+						}
+						res = append(res, w)
+					}
+				}
+				return res, nil
+			}
+		}
+	}
+	return dfs(g, start, false, visitor, neighbours)
 }
 
 // Perform depth first search in a directed graph, and specify the search direction using the in parameter:
 // if in is set to true, search from source in the order of the incident vertices of the current vertex.
 func DFSDigraph[K comparable, V any, W number](dg Digraph[K, V, W], start K, in bool, visitor func(v Vertex[K, V]) error) error {
-	var g Graph[K, V, W]
-	g = dg
-	return dfs(g, start, in, visitor)
+	var neighbours func(K) ([]Vertex[K, V], error)
+	if in {
+		neighbours = dg.InNeighbours
+	} else {
+		neighbours = dg.OutNeighbours
+	}
+	return dfs(dg, start, in, visitor, neighbours)
 }
 
 //	 BFS
@@ -96,19 +114,7 @@ func DFSDigraph[K comparable, V any, W number](dg Digraph[K, V, W], start K, in 
 //		from Q and consider the out-neighbours of u in D one by one. If, for an
 //		out-neighbour v of u,dist(s,v)=∞,thensetdist(s,v):=dist(s,u)+1,
 //		pred(v):=u, and put v to the end of Q.
-func bfs[K comparable, V any, W number](g Graph[K, V, W], start K, in bool, visitor func(v Vertex[K, V]) error) error {
-	neighbours := g.Neighbours
-	if g.IsDigraph() {
-		dg, ok := g.(Digraph[K, V, W])
-		if ok {
-			if in {
-				neighbours = dg.InNeighbours
-			} else {
-				neighbours = dg.OutNeighbours
-			}
-		}
-	}
-	//
+func bfs[K comparable, V any, W number](g Graph[K, V, W], start K, in bool, visitor func(v Vertex[K, V]) error, neighbours func(K) ([]Vertex[K, V], error)) error {
 	startV, err := g.GetVertex(start)
 	if err != nil {
 		return err
@@ -143,33 +149,44 @@ func bfs[K comparable, V any, W number](g Graph[K, V, W], start K, in bool, visi
 
 // Start breadth first search from the specified source vertex, where g can be a directed or undirected graph.
 func BFS[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(v Vertex[K, V]) error) error {
-	return bfs(g, start, false, visitor)
+	neighbours := g.Neighbours
+	if g.IsDigraph() {
+		dg, ok := g.(Digraph[K, V, W])
+		if ok {
+			neighbours = dg.OutNeighbours
+		} else {
+			neighbours = func(v K) ([]Vertex[K, V], error) {
+				es, err := g.IncidentEdges(v)
+				if err != nil {
+					return nil, err
+				}
+				var res []Vertex[K, V]
+				for _, e := range es {
+					if e.Tail == v {
+						w, err := g.GetVertex(e.Head)
+						if err != nil {
+							return nil, err
+						}
+						res = append(res, w)
+					}
+				}
+				return res, nil
+			}
+		}
+	}
+	return bfs(g, start, false, visitor, neighbours)
 }
 
 // Perform breadth first search in a directed graph, and specify the search direction using the in parameter:
 // if in is set to true, search from source in the order of the incident vertices of the current vertex.
 func BFSDigraph[K comparable, V any, W number](dg Digraph[K, V, W], start K, in bool, visitor func(v Vertex[K, V]) error) error {
-	var g Graph[K, V, W]
-	g = dg
-	return bfs(g, start, in, visitor)
-}
-
-// Determine whether the start and end vertices in graph g are connected.
-// If it is a directed graph, determine if there is a directed path from start to end.
-func Connected[K comparable, V any, W number](g Graph[K, V, W], start, end K) (bool, error) {
-	var connected bool
-	visitor := func(v Vertex[K, V]) error {
-		if v.Key == end {
-			connected = true
-			return errNone
-		}
-		return nil
+	var neighbours func(K) ([]Vertex[K, V], error)
+	if in {
+		neighbours = dg.InNeighbours
+	} else {
+		neighbours = dg.OutNeighbours
 	}
-	err := DFS(g, start, visitor)
-	if !connected {
-		return false, err
-	}
-	return true, nil
+	return bfs(dg, start, in, visitor, neighbours)
 }
 
 /*
@@ -253,39 +270,6 @@ func topologicalSort[K comparable, V any, W number](g Digraph[K, V, W]) ([]Verte
 // If there is a cycle in the graph, return an error.
 func TopologicalSort[K comparable, V any, W number](g Digraph[K, V, W]) ([]Vertex[K, V], error) {
 	return topologicalSort(g)
-}
-
-/*
-Let G =(V,E) be a digraph and s a root of G.
-
-Procedure DFSM(G,s,nr,Nr,p)
-
-	(1) for v ∈ V do nr(v)←0; Nr(v)←0; p(v)←0 od;
-	(2) for e ∈ E do u(e)←false od;
-	(3) i←1; j←0; v←s; nr(s)←1; Nr(s)←|V|;
-	(4) repeat
-	(5)     while there exists w ∈ Av with u(vw)=false do
-	(6)         choose some w ∈ Av with u(vw)=false; u(vw)←true;
-	(7)         f nr(w)=0 then p(w)←v; i←i+1;nr(w)←i;
-	            v←w fi
-	(8)     od;
-	(9)     j←j+1;Nr(v)←j; v←p(v)
-	(10)until v = s and u(sw) = true for each w ∈ As
-
-Let G be a digraph and s a root of G. The algorithm determines the strong components of G.
-
-Procedure STRONGCOMP(G,s)
-
-	(1) DFSM(G,s,nr,Nr,p); k←0;
-	(2) let H be the digraph with the opposite orientation of G;
-	(3) repeat
-	(4)     choose the vertex r in H for which Nr(r) is maximal;
-	(5)     k←k+1;DFS(H,r;nr,p); Ck ←{v ∈ H :nr(v)=0};
-	(6)     remove all vertices in Ck and all the edges incident with them;
-	(7) until the vertex set of H is empty
-*/
-func sccKosaraju[K comparable, V any, W number](g Digraph[K, V, W]) ([][]K, error) {
-	return nil, errNotImplement
 }
 
 // 1.DFS search produces a DFS tree/forest
@@ -388,8 +372,53 @@ func sccTarjan[K comparable, V any, W number](g Digraph[K, V, W]) ([][]K, error)
 	return sccs, nil
 }
 
+/*
+Let G =(V,E) be a digraph and s a root of G.
+
+Procedure DFSM(G,s,nr,Nr,p)
+
+	(1) for v ∈ V do nr(v)←0; Nr(v)←0; p(v)←0 od;
+	(2) for e ∈ E do u(e)←false od;
+	(3) i←1; j←0; v←s; nr(s)←1; Nr(s)←|V|;
+	(4) repeat
+	(5)     while there exists w ∈ Av with u(vw)=false do
+	(6)         choose some w ∈ Av with u(vw)=false; u(vw)←true;
+	(7)         f nr(w)=0 then p(w)←v; i←i+1;nr(w)←i;
+	            v←w fi
+	(8)     od;
+	(9)     j←j+1;Nr(v)←j; v←p(v)
+	(10)until v = s and u(sw) = true for each w ∈ As
+
+Let G be a digraph and s a root of G. The algorithm determines the strong components of G.
+
+Procedure STRONGCOMP(G,s)
+
+	(1) DFSM(G,s,nr,Nr,p); k←0;
+	(2) let H be the digraph with the opposite orientation of G;
+	(3) repeat
+	(4)     choose the vertex r in H for which Nr(r) is maximal;
+	(5)     k←k+1;DFS(H,r;nr,p); Ck ←{v ∈ H :nr(v)=0};
+	(6)     remove all vertices in Ck and all the edges incident with them;
+	(7) until the vertex set of H is empty
+*/
+func sccKosaraju[K comparable, V any, W number](g Digraph[K, V, W]) ([][]K, error) { //TODO
+	return nil, errNotImplement
+}
+
 // Calculate the strongly connected components of a directed graph and
 // return the set of vertices for each strongly connected component.
 func StronglyConnectedComponent[K comparable, V any, W number](g Digraph[K, V, W]) ([][]K, error) {
+	return sccKosaraju(g)
+}
+
+// Calculate the strongly connected components of a directed graph and
+// return the set of vertices for each strongly connected component.
+func StronglyConnectedComponentTarjan[K comparable, V any, W number](g Digraph[K, V, W]) ([][]K, error) {
 	return sccTarjan(g)
+}
+
+// Calculate the strongly connected components of a directed graph and
+// return the set of vertices for each strongly connected component.
+func StronglyConnectedComponentKosaraju[K comparable, V any, W number](g Digraph[K, V, W]) ([][]K, error) {
+	return sccKosaraju(g)
 }

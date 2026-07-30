@@ -423,3 +423,25 @@ func HeawoodGraph() Graph[int, any, int] {
 	}
 	return g
 }
+
+func RandomTournament(n int) Digraph[int, any, int] {
+	if n < 0 {
+		return nil
+	}
+	g, _ := NewDigraph[int, any, int]("tournament" + strconv.Itoa(n))
+	for v := 0; v < n; v++ {
+		_ = g.AddVertex(Vertex[int, any]{Key: v})
+	}
+	var ek int
+	for i := 0; i < n; i++ {
+		for j := i + 1; j < n; j++ {
+			if rand.Intn(2) == 1 {
+				_ = g.AddEdge(Edge[int, int]{Key: ek, Head: i, Tail: j})
+			} else {
+				_ = g.AddEdge(Edge[int, int]{Key: ek, Head: j, Tail: i})
+			}
+			ek++
+		}
+	}
+	return g
+}
