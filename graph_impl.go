@@ -394,11 +394,17 @@ func (g *graph[K, V, W]) RemoveVertex(key K) error {
 }
 
 func (g *graph[K, V, W]) AddEdge(edge Edge[K, W]) error {
-	if any(edge.Key) == nil {
-		edge.Key = edgeFormat(edge.Head, edge.Tail)
-	}
-	if _, ok := g.edges[edge.Key]; ok {
-		return errEdgeExists
+	if any(edge.Key) != nil {
+		if _, ok := g.edges[edge.Key]; ok {
+			return errEdgeExists
+		}
+	} else {
+		for {
+			edge.Key = edgeFormat(edge.Head, edge.Tail)
+			if _, ok := g.edges[edge.Key]; ok {
+				break
+			}
+		}
 	}
 	if err := g.adjList.addEdge(edge.Head, edge.Tail, edge.Key, edge.Weight); err != nil {
 		return err

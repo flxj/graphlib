@@ -31,8 +31,7 @@ package graphlib
 //  2. For each u ∈ N+(v) do: if tvisit(u) = 0 then pred(u) :=v and perform
 //     DFS-PROC(u).
 //  3. Set time := time+1, texpl(v):=time.
-func dfs[K comparable, V any, W number](g Graph[K, V, W], start K, in bool, visitor func(v Vertex[K, V]) error, neighbours func(K) ([]Vertex[K, V], error)) error {
-	//
+func dfs[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(v Vertex[K, V]) error, neighbours func(K) ([]Vertex[K, V], error)) error {
 	startV, err := g.GetVertex(start)
 	if err != nil {
 		return err
@@ -90,7 +89,7 @@ func DFS[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(
 			}
 		}
 	}
-	return dfs(g, start, false, visitor, neighbours)
+	return dfs(g, start, visitor, neighbours)
 }
 
 // Perform depth first search in a directed graph, and specify the search direction using the in parameter:
@@ -102,7 +101,7 @@ func DFSDigraph[K comparable, V any, W number](dg Digraph[K, V, W], start K, in 
 	} else {
 		neighbours = dg.OutNeighbours
 	}
-	return dfs(dg, start, in, visitor, neighbours)
+	return dfs(dg, start, visitor, neighbours)
 }
 
 //	 BFS
@@ -114,7 +113,7 @@ func DFSDigraph[K comparable, V any, W number](dg Digraph[K, V, W], start K, in 
 //		from Q and consider the out-neighbours of u in D one by one. If, for an
 //		out-neighbour v of u,dist(s,v)=∞,thensetdist(s,v):=dist(s,u)+1,
 //		pred(v):=u, and put v to the end of Q.
-func bfs[K comparable, V any, W number](g Graph[K, V, W], start K, in bool, visitor func(v Vertex[K, V]) error, neighbours func(K) ([]Vertex[K, V], error)) error {
+func bfs[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(v Vertex[K, V]) error, neighbours func(K) ([]Vertex[K, V], error)) error {
 	startV, err := g.GetVertex(start)
 	if err != nil {
 		return err
@@ -174,7 +173,7 @@ func BFS[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(
 			}
 		}
 	}
-	return bfs(g, start, false, visitor, neighbours)
+	return bfs(g, start, visitor, neighbours)
 }
 
 // Perform breadth first search in a directed graph, and specify the search direction using the in parameter:
@@ -186,7 +185,7 @@ func BFSDigraph[K comparable, V any, W number](dg Digraph[K, V, W], start K, in 
 	} else {
 		neighbours = dg.OutNeighbours
 	}
-	return bfs(dg, start, in, visitor, neighbours)
+	return bfs(dg, start, visitor, neighbours)
 }
 
 /*
@@ -272,153 +271,242 @@ func TopologicalSort[K comparable, V any, W number](g Digraph[K, V, W]) ([]Verte
 	return topologicalSort(g)
 }
 
-// 1.DFS search produces a DFS tree/forest
-//
-// 2.Strongly Connected Components form subtrees of the DFS tree.
-//
-// 3.If we can find the head of such subtrees, we can print/store all the nodes in that subtree (including the head) and that will be one SCC.
-//
-// 4.There is no back edge from one SCC to another (There can be cross edges, but cross edges will not be used while processing the graph).
-//
-//
-// dfn[v]: This is the time when a vertex v is visited 1st time while DFS traversal.
-// Assign a new number to each vertex in the graph. If a vertex v is traversed i-th in the dfs tree, its number is i, called a timestamp,
-// represented by dfn[v]=i. The timestamp is unique, and the timestamp corresponding to the vertex is also unique.
-//
-// In the DFS tree, Tree edges take us forward, from the ancestor node to one of its descendants.
-// Back edges take us backward, from a descendant node to one of its ancestors.
-//
-// low[v]: as the minimum timestamp that vertex v can reach,that is, the minimum timestamp that the subtrees of v and v can reach,
-// and also describe it as the minimum timestamp that v can trace in the dfs stack.
-// If the low of a vertex v is equal to its timestamp, then that vertex must be the "root" of its strongly connected component.
-func tarjan[K comparable, V any, W number](g Digraph[K, V, W], u K, stack *stack[K], num *int, dfn, low map[K]int, scc map[K][]K) error {
-	*num++
-	dfn[u] = *num
-	low[u] = *num
-	stack.push(u)
-	//
-	es, err := g.OutEdges(u)
+/*
+In the first step of the algorithm, we perform a sequence of depth first searches (dfs), visiting the entire graph.
+That is, as long as there are still unvisited vertices, we take one of them, and initiate a depth first search from that vertex.
+For each vertex, we keep track of the exit_time[v] . This is the 'timestamp' at which the execution of dfs on vertex v finishes,
+i.e., the moment at which all vertices reachable from v have been visited and the algorithm is back at v.
+
+It means that any edge in the condensation graph goes from a component with a larger value of  exit_time  to a component with a smaller value.
+
+If we sort all vertices V  in decreasing order of their exit_time[v] ,
+then the first vertex u will belong to the "root" strongly connected component, which has no incoming edges in the condensation graph.
+
+Now we want to run some type of search from this vertex u so that it will visit all vertices in its strongly connected component, but not other vertices.
+*/
+func sccKosaraju[K comparable, V any, W number](g Digraph[K, V, W], condensation bool) ([][]K, Digraph[K, []K, W], error) {
+	if g == nil {
+		return nil, nil, errEmptyGraph
+	}
+	vtx, err := g.AllVertexes()
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
-	for _, e := range es {
-		v := e.Tail
-		// v has not been visited.
-		if dfn[v] == 0 {
-			if err = tarjan(g, v, stack, num, dfn, low, scc); err != nil {
-				return err
+
+	var dfs func(K, *[]K) error
+	var exitTime []K // record the exit time of a vertex when dfs.
+	// first dfs
+	revAdj := make(map[K][]K)
+	visited := make(map[K]struct{})
+	dfs = func(v K, arr *[]K) error {
+		visited[v] = struct{}{}
+		out, err := g.OutNeighbours(v)
+		if err != nil {
+			return err
+		}
+		// update reverse adjlist
+		for _, w := range out {
+			revAdj[w.Key] = append(revAdj[w.Key], v)
+		}
+		//
+		for _, w := range out {
+			if _, ok := visited[w.Key]; !ok {
+				dfs(w.Key, arr)
 			}
-			//low[u] = min(low[u],low[v])
-			if low[v] < low[u] {
-				low[u] = low[v]
-			}
-		} else if stack.contains(v) {
-			// low[u] = min(low[u],dfs[v])
-			if low[u] < dfn[v] {
-				low[u] = dfn[v]
+		}
+		*arr = append(*arr, v)
+		return nil
+	}
+	for _, v := range vtx {
+		if _, ok := visited[v.Key]; !ok {
+			if err := dfs(v.Key, &exitTime); err != nil {
+				return nil, nil, err
 			}
 		}
 	}
-	//
-	if dfn[u] == low[u] {
-		for {
-			v, ok := stack.pop()
-			if !ok {
-				break
+	// second dfs
+	var components [][]K
+	root := make(map[K]K)
+	visited = make(map[K]struct{})
+	dfs = func(v K, arr *[]K) error {
+		visited[v] = struct{}{}
+		for _, w := range revAdj[v] {
+			if _, ok := visited[w]; !ok {
+				_ = dfs(w, arr)
 			}
-			if _, ok := scc[u]; !ok {
-				scc[u] = []K{v}
-			} else {
-				scc[u] = append(scc[u], v)
-			}
-			if u == v {
-				break
+		}
+		*arr = append(*arr, v)
+		return nil
+	}
+	for i := len(exitTime) - 1; i >= 0; i-- {
+		v := exitTime[i]
+		if _, ok := visited[v]; !ok {
+			// new component
+			c := []K{}
+			_ = dfs(v, &c)
+			components = append(components, c)
+			if condensation {
+				for _, w := range c {
+					root[w] = c[0]
+				}
 			}
 		}
 	}
-	return nil
+	if !condensation {
+		return components, nil, nil
+	}
+	// build condensation graph
+	cond, _ := NewDigraph[K, []K, W](g.Name() + "_condensation")
+	for _, c := range components {
+		_ = cond.AddVertex(Vertex[K, []K]{Key: c[0], Value: c})
+	}
+	for _, v := range vtx {
+		out, err := g.OutNeighbours(v.Key)
+		if err != nil {
+			return nil, nil, err
+		}
+		for _, w := range out {
+			if root[w.Key] != root[v.Key] {
+				_ = cond.AddEdge(Edge[K, W]{Head: root[w.Key], Tail: root[v.Key]})
+			}
+		}
+	}
+	return components, cond, nil
 }
 
-func sccTarjan[K comparable, V any, W number](g Digraph[K, V, W]) ([][]K, error) {
-	vertexes, err := g.AllVertexes()
-	if err != nil {
-		return nil, err
-	}
-	if len(vertexes) == 0 {
-		return [][]K{}, nil
-	}
-
-	stack := newStack[K]()
-	//
-	num := 0
-	dfn := make(map[K]int)
-	low := make(map[K]int)
-	// record scc vertexes with root k
-	scc := make(map[K][]K)
-	//
-	for _, v := range vertexes {
-		if dfn[v.Key] == 0 {
-			if err = tarjan(g, v.Key, stack, &num, dfn, low, scc); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	var sccs [][]K
-	for _, vs := range scc {
-		sccs = append(sccs, vs)
-	}
-
-	return sccs, nil
+// Calculate the strongly connected components of a directed graph and
+// return the set of vertices for each strongly connected component.
+func StronglyConnectedComponent[K comparable, V any, W number](g Digraph[K, V, W], condensation bool) ([][]K, Digraph[K, []K, W], error) {
+	return sccKosaraju(g, condensation)
 }
 
 /*
-Let G =(V,E) be a digraph and s a root of G.
+Let's consider the tree induced by the sequence of DFS calls, which we will call DFS tree.
+Once we first call a DFS on a vertex from an SCC, all the vertices of its SCC will be visited before this call ends,
+since they are all reachable from each other.
+In the DFS tree, this first vertex will be a common ancestor to all other vertices of the SCC;
+we define this vertex to be the root of the SCC.
 
-Procedure DFSM(G,s,nr,Nr,p)
+Once we finish traversing the neighbours list of a vertex, we somehow are able to determine whether it is a root or not.
+In case the vertex is a root, we will then immediately find and claim all the vertices of its SCC.
+When all calls finish, all roots will have been detected and all vertices will have been claimed as part of some SCC.
 
-	(1) for v ∈ V do nr(v)←0; Nr(v)←0; p(v)←0 od;
-	(2) for e ∈ E do u(e)←false od;
-	(3) i←1; j←0; v←s; nr(s)←1; Nr(s)←|V|;
-	(4) repeat
-	(5)     while there exists w ∈ Av with u(vw)=false do
-	(6)         choose some w ∈ Av with u(vw)=false; u(vw)←true;
-	(7)         f nr(w)=0 then p(w)←v; i←i+1;nr(w)←i;
-	            v←w fi
-	(8)     od;
-	(9)     j←j+1;Nr(v)←j; v←p(v)
-	(10)until v = s and u(sw) = true for each w ∈ As
-
-Let G be a digraph and s a root of G. The algorithm determines the strong components of G.
-
-Procedure STRONGCOMP(G,s)
-
-	(1) DFSM(G,s,nr,Nr,p); k←0;
-	(2) let H be the digraph with the opposite orientation of G;
-	(3) repeat
-	(4)     choose the vertex r in H for which Nr(r) is maximal;
-	(5)     k←k+1;DFS(H,r;nr,p); Ck ←{v ∈ H :nr(v)=0};
-	(6)     remove all vertices in Ck and all the edges incident with them;
-	(7) until the vertex set of H is empty
+we define the entry time in[v]  for each vertex v  which corresponds to the 'timestamp' at which the DFS was called on v.
+By definition, the root is the first vertex of an SCC to be visited by the DFS so it will have the minimal value of in[v]  of its SCC.
 */
-func sccKosaraju[K comparable, V any, W number](g Digraph[K, V, W]) ([][]K, error) { //TODO
-	return nil, errNotImplement
+func sccTarjan[K comparable, V any, W number](g Digraph[K, V, W], condensation bool) ([][]K, Digraph[K, []K, W], error) {
+	if g == nil {
+		return nil, nil, errEmptyGraph
+	}
+	vtx, err := g.AllEdges()
+	if err != nil {
+		return nil, nil, err
+	}
+	// 1.DFS search produces a DFS tree/forest
+	// 2.Strongly Connected Components form subtrees of the DFS tree.
+	// 3.If we can find the root of such subtrees, we can print/store all the nodes in that subtree (including the root) and that will be one SCC.
+	// 4.There is no back edge from one SCC to another (There can be cross edges, but cross edges will not be used while processing the graph).
+	//
+	// inTime[v]: This is the time when a vertex v is visited 1st time while DFS traversal.
+	// Assign a new number to each vertex in the graph. If a vertex v is traversed i-th in the dfs tree, its number is i, called a timestamp,
+	// represented by inTime[v]=i. The timestamp is unique, and the timestamp corresponding to the vertex is also unique.
+	//
+	// In the DFS tree, Tree edges take us forward, from the ancestor node to one of its descendants.
+	// Back edges take us backward, from a descendant node to one of its ancestors.
+	//
+	// lowTime[v]: as the minimum timestamp that vertex v can reach,that is, the minimum timestamp that the subtrees of v and v can reach,
+	// and also describe it as the minimum timestamp that v can trace in the dfs stack.
+	// If the low of a vertex v is equal to its timestamp, then that vertex must be the "root" of its strongly connected component.
+	var t int
+	lowTime := make([]int, len(vtx))
+	inTime := make([]int, len(vtx))
+	root := make([]int, len(vtx))
+	idx := make(map[K]int)
+	for i, v := range vtx {
+		idx[v.Key] = i
+	}
+	stk := newStack[int]()
+	var dfs func(K, int, *[][]K) error
+	dfs = func(v K, i int, components *[][]K) error {
+		lowTime[i] = t
+		inTime[i] = t
+		t++
+		stk.push(i)
+		out, err := g.OutNeighbours(v)
+		if err != nil {
+			return err
+		}
+		for _, w := range out {
+			j := idx[w.Key]
+			if inTime[j] == -1 { // (v,w) is tree edge
+				dfs(w.Key, j, components)
+				lowTime[i] = min(lowTime[i], lowTime[j])
+			} else if root[j] == -1 { // // back-edge, cross-edge or forward-edge to an unclaimed vertex
+				lowTime[i] = min(lowTime[i], inTime[j])
+			}
+		}
+		if inTime[i] == lowTime[i] { // v is a root
+			// create a new component.
+			comp := []K{v}
+			for {
+				j, ok := stk.pop()
+				if !ok {
+					break
+				}
+				root[j] = i
+				if i == j {
+					break
+				}
+				comp = append(comp, vtx[j].Key)
+			}
+			*components = append(*components, comp)
+		}
+		return nil
+	}
+	for i := 0; i < len(vtx); i++ {
+		root[i] = -1
+		inTime[i] = -1
+		lowTime[i] = -1
+	}
+	var components [][]K
+	for i, v := range vtx {
+		if inTime[i] == -1 {
+			if err := dfs(v.Key, i, &components); err != nil {
+				return nil, nil, err
+			}
+		}
+	}
+	if !condensation {
+		return components, nil, nil
+	}
+	// build condensation graph
+	cond, _ := NewDigraph[K, []K, W](g.Name() + "_condensation")
+	for _, c := range components {
+		_ = cond.AddVertex(Vertex[K, []K]{Key: c[0], Value: c})
+	}
+	for i, v := range vtx {
+		out, err := g.OutNeighbours(v.Key)
+		if err != nil {
+			return nil, nil, err
+		}
+		for _, w := range out {
+			j := idx[w.Key]
+			if root[i] != root[j] {
+				_ = cond.AddEdge(Edge[K, W]{Head: vtx[root[j]].Key, Tail: vtx[root[i]].Key})
+			}
+		}
+	}
+	return components, cond, nil
 }
 
 // Calculate the strongly connected components of a directed graph and
 // return the set of vertices for each strongly connected component.
-func StronglyConnectedComponent[K comparable, V any, W number](g Digraph[K, V, W]) ([][]K, error) {
-	return sccKosaraju(g)
+func StronglyConnectedComponentTarjan[K comparable, V any, W number](g Digraph[K, V, W], condensation bool) ([][]K, Digraph[K, []K, W], error) {
+	return sccTarjan(g, condensation)
 }
 
 // Calculate the strongly connected components of a directed graph and
 // return the set of vertices for each strongly connected component.
-func StronglyConnectedComponentTarjan[K comparable, V any, W number](g Digraph[K, V, W]) ([][]K, error) {
-	return sccTarjan(g)
-}
-
-// Calculate the strongly connected components of a directed graph and
-// return the set of vertices for each strongly connected component.
-func StronglyConnectedComponentKosaraju[K comparable, V any, W number](g Digraph[K, V, W]) ([][]K, error) {
-	return sccKosaraju(g)
+func StronglyConnectedComponentKosaraju[K comparable, V any, W number](g Digraph[K, V, W], condensation bool) ([][]K, Digraph[K, []K, W], error) {
+	return sccKosaraju(g, condensation)
 }
