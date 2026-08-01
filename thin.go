@@ -278,7 +278,7 @@ func CompleteGraph(n int) Graph[int, any, int] {
 	return g
 }
 
-func CompleteBipartite(a, b int) *Bipartite[int, any, int] {
+func CompleteBipartite(a, b int) Bipartite[int, any, int] {
 	if a < 1 || b < 1 {
 		return nil
 	}
@@ -292,7 +292,7 @@ func CompleteBipartite(a, b int) *Bipartite[int, any, int] {
 	var k int
 	for i := 0; i < a; i++ {
 		for j := a; j < a+b; j++ {
-			_ = g.g.AddEdge(Edge[int, int]{Key: k, Head: i, Tail: j})
+			_ = g.AddEdge(Edge[int, int]{Key: k, Head: i, Tail: j})
 			k++
 		}
 	}

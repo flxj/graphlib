@@ -27,7 +27,7 @@ var inf = math.MaxInt
 //
 //	from vertex k(in partA and not in current matching)
 //	find the successor vertex of k in augmenting path.
-func updateMatching[K comparable, V any, W number](g *Bipartite[K, V, W], pairU, pairV map[K]K, dist map[K]int, u, dummyK K) (bool, error) {
+func updateMatching[K comparable, V any, W number](g Bipartite[K, V, W], pairU, pairV map[K]K, dist map[K]int, u, dummyK K) (bool, error) {
 	if u != dummyK {
 		// get u's neighbours(in partB).
 		// and check the already matched neighbour
@@ -87,7 +87,7 @@ func updateMatching[K comparable, V any, W number](g *Bipartite[K, V, W], pairU,
 
 // Once an augmenting path is found, DFS (Depth First Search) is used to add augmenting paths to current matching.
 // DFS simply follows the distance map setup by BFS. It fills values in pairU[u] and pairV[v] if v is next to u in BFS.
-func mmHopcroftKarp[K comparable, V any, W number](partA, partB []Vertex[K, V], g *Bipartite[K, V, W]) ([]Edge[K, W], error) {
+func mmHopcroftKarp[K comparable, V any, W number](partA, partB []Vertex[K, V], g Bipartite[K, V, W]) ([]Edge[K, W], error) {
 	var dummyK K
 	pairU := make(map[K]K)
 	pairV := make(map[K]K)
@@ -188,7 +188,7 @@ func mmHopcroftKarp[K comparable, V any, W number](partA, partB []Vertex[K, V], 
 }
 
 // Calculate the maximum matching of bipartite graph.
-func BipartiteMaxMatching[K comparable, V any, W number](g *Bipartite[K, V, W]) ([]Edge[K, W], error) {
+func BipartiteMaxMatching[K comparable, V any, W number](g Bipartite[K, V, W]) ([]Edge[K, W], error) {
 	var err error
 	var partA []Vertex[K, V]
 	var partB []Vertex[K, V]
@@ -202,7 +202,7 @@ func BipartiteMaxMatching[K comparable, V any, W number](g *Bipartite[K, V, W]) 
 }
 
 // Attempt to obtain a perfect match for the bipartite graph. If the match does not exist, return an error.
-func BipartitePerfectMatching[K comparable, V any, W number](g *Bipartite[K, V, W]) ([]Edge[K, W], error) {
+func BipartitePerfectMatching[K comparable, V any, W number](g Bipartite[K, V, W]) ([]Edge[K, W], error) {
 	mm, err := BipartiteMaxMatching(g)
 	if err != nil {
 		return nil, err
@@ -230,7 +230,7 @@ func BipartitePerfectMatching[K comparable, V any, W number](g *Bipartite[K, V, 
 
 // Hungarian algorithm (also known as the Kuhn–Munkres algorithm) solving the maximum/minimum weighted matching problem for bipartite graphs.
 // we assume that all weight of edges are non-negative.
-func BipartiteWeightedMatching[K comparable, V any, W number](g *Bipartite[K, V, W], maximum bool) ([]Edge[K, W], error) {
+func BipartiteWeightedMatching[K comparable, V any, W number](g Bipartite[K, V, W], maximum bool) ([]Edge[K, W], error) {
 	if g.Order() == 0 || g.Size() == 0 {
 		return []Edge[K, W]{}, nil
 	}
@@ -308,7 +308,7 @@ func BipartiteWeightedMatching[K comparable, V any, W number](g *Bipartite[K, V,
 }
 
 // Disposal method
-func maxMatchingHungarian0[K comparable, V any, W number](V1, V2 []Vertex[K, V], weight [][]W, g *Bipartite[K, V, W]) ([]Edge[K, W], error) {
+func maxMatchingHungarian0[K comparable, V any, W number](V1, V2 []Vertex[K, V], weight [][]W, g Bipartite[K, V, W]) ([]Edge[K, W], error) {
 	// init
 	n := len(V1)
 	Y, Z := make([]Vertex[int, any], n), make([]Vertex[int, any], n)
@@ -655,7 +655,7 @@ func minMatchingHungarian[W number](n int, weight [][]W) []int {
 }
 
 // Obtain the minimum vertex cover of a bipartite graph.
-func BipartiteMinimumVertexCover[K comparable, V any, W number](g *Bipartite[K, V, W]) (map[K]struct{}, error) {
+func BipartiteMinimumVertexCover[K comparable, V any, W number](g Bipartite[K, V, W]) (map[K]struct{}, error) {
 	if g.Order() == 0 || g.Size() == 0 {
 		return make(map[K]struct{}), nil
 	}
@@ -674,7 +674,7 @@ func BipartiteMinimumVertexCover[K comparable, V any, W number](g *Bipartite[K, 
 	return bipartiteMVC(A, B, M, g)
 }
 
-func bipartiteMVC[K comparable, V any, W number](A, B []Vertex[K, V], M []Edge[K, W], g *Bipartite[K, V, W]) (map[K]struct{}, error) {
+func bipartiteMVC[K comparable, V any, W number](A, B []Vertex[K, V], M []Edge[K, W], g Bipartite[K, V, W]) (map[K]struct{}, error) {
 	VA := make(map[K]int8)
 	for _, v := range A {
 		VA[v.Key] = 1

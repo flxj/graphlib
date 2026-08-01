@@ -22,7 +22,7 @@ import (
 	"testing"
 )
 
-func bwmTestGraph(maximum bool) *Bipartite[int, any, int] {
+func bwmTestGraph(maximum bool) Bipartite[int, any, int] {
 	g, _ := NewBipartite[int, any, int](false, "g1")
 	for i := 1; i < 9; i++ {
 		if i <= 4 {

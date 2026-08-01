@@ -18,58 +18,65 @@ package graphlib
 
 import "math/rand"
 
-type Bipartite[K comparable, V any, W number] struct {
+type Bipartite[K comparable, V any, W number] interface {
+	Graph[K, V, W]
+	AddVertexTo(v Vertex[K, V], partA bool) error
+	Part(partA bool) ([]Vertex[K, V], error)
+	InPartA(K) bool
+}
+
+type bipartite[K comparable, V any, W number] struct {
 	Graph[K, V, W]
 	g     *graph[K, V, W]
 	partA map[K]bool
 	partB map[K]bool
 }
 
-func NewBipartite[K comparable, V any, W number](digraph bool, name string) (*Bipartite[K, V, W], error) {
+func NewBipartite[K comparable, V any, W number](digraph bool, name string) (Bipartite[K, V, W], error) {
 	g, err := newGraph[K, V, W](digraph, name)
 	if err != nil {
 		return nil, err
 	}
-	return &Bipartite[K, V, W]{
+	return &bipartite[K, V, W]{
 		g:     g,
 		partA: make(map[K]bool),
 		partB: make(map[K]bool),
 	}, nil
 }
 
-func (bg *Bipartite[K, V, W]) Name() string {
+func (bg *bipartite[K, V, W]) Name() string {
 	return bg.g.Name()
 }
 
-func (bg *Bipartite[K, V, W]) SetName(name string) {
+func (bg *bipartite[K, V, W]) SetName(name string) {
 	bg.g.SetName(name)
 }
 
-func (bg *Bipartite[K, V, W]) IsDigraph() bool {
+func (bg *bipartite[K, V, W]) IsDigraph() bool {
 	return bg.g.IsDigraph()
 }
 
-func (bg *Bipartite[K, V, W]) Order() int {
+func (bg *bipartite[K, V, W]) Order() int {
 	return bg.g.Order()
 }
 
-func (bg *Bipartite[K, V, W]) Size() int {
+func (bg *bipartite[K, V, W]) Size() int {
 	return bg.g.Size()
 }
 
-func (bg *Bipartite[K, V, W]) Property(p PropertyName) (GraphProperty[any], error) {
+func (bg *bipartite[K, V, W]) Property(p PropertyName) (GraphProperty[any], error) {
 	return bg.g.Property(p)
 }
 
-func (bg *Bipartite[K, V, W]) AllVertexes() ([]Vertex[K, V], error) {
+func (bg *bipartite[K, V, W]) AllVertexes() ([]Vertex[K, V], error) {
 	return bg.g.AllVertexes()
 }
 
-func (bg *Bipartite[K, V, W]) AllEdges() ([]Edge[K, W], error) {
+func (bg *bipartite[K, V, W]) AllEdges() ([]Edge[K, W], error) {
 	return bg.g.AllEdges()
 }
 
-func (bg *Bipartite[K, V, W]) AddVertex(v Vertex[K, V]) error {
+func (bg *bipartite[K, V, W]) AddVertex(v Vertex[K, V]) error {
 	if err := bg.g.AddVertex(v); err != nil {
 		return err
 	}
@@ -81,7 +88,7 @@ func (bg *Bipartite[K, V, W]) AddVertex(v Vertex[K, V]) error {
 	return nil
 }
 
-func (bg *Bipartite[K, V, W]) AddVertexTo(v Vertex[K, V], partA bool) error {
+func (bg *bipartite[K, V, W]) AddVertexTo(v Vertex[K, V], partA bool) error {
 	if err := bg.g.AddVertex(v); err != nil {
 		return err
 	}
@@ -93,7 +100,7 @@ func (bg *Bipartite[K, V, W]) AddVertexTo(v Vertex[K, V], partA bool) error {
 	return nil
 }
 
-func (bg *Bipartite[K, V, W]) Part(partA bool) ([]Vertex[K, V], error) {
+func (bg *bipartite[K, V, W]) Part(partA bool) ([]Vertex[K, V], error) {
 	var vs []Vertex[K, V]
 	var ks map[K]bool
 	if partA {
@@ -111,7 +118,7 @@ func (bg *Bipartite[K, V, W]) Part(partA bool) ([]Vertex[K, V], error) {
 	return vs, nil
 }
 
-func (bg *Bipartite[K, V, W]) RemoveVertex(key K) error {
+func (bg *bipartite[K, V, W]) RemoveVertex(key K) error {
 	if err := bg.g.RemoveVertex(key); err != nil {
 		return err
 	}
@@ -120,7 +127,7 @@ func (bg *Bipartite[K, V, W]) RemoveVertex(key K) error {
 	return nil
 }
 
-func (bg *Bipartite[K, V, W]) AddEdge(edge Edge[K, W]) error {
+func (bg *bipartite[K, V, W]) AddEdge(edge Edge[K, W]) error {
 	if bg.partA[edge.Head] && bg.partA[edge.Tail] {
 		return errViolateBipartite
 	}
@@ -130,79 +137,79 @@ func (bg *Bipartite[K, V, W]) AddEdge(edge Edge[K, W]) error {
 	return bg.g.AddEdge(edge)
 }
 
-func (bg *Bipartite[K, V, W]) RemoveEdgeByKey(key K) error {
+func (bg *bipartite[K, V, W]) RemoveEdgeByKey(key K) error {
 	return bg.g.RemoveEdgeByKey(key)
 }
 
-func (bg *Bipartite[K, V, W]) RemoveEdge(v1, v2 K) error {
+func (bg *bipartite[K, V, W]) RemoveEdge(v1, v2 K) error {
 	return bg.g.RemoveEdge(v1, v2)
 }
 
-func (bg *Bipartite[K, V, W]) Degree(key K) (int, error) {
+func (bg *bipartite[K, V, W]) Degree(key K) (int, error) {
 	return bg.g.Degree(key)
 }
 
-func (bg *Bipartite[K, V, W]) Neighbours(v K) ([]Vertex[K, V], error) {
+func (bg *bipartite[K, V, W]) Neighbours(v K) ([]Vertex[K, V], error) {
 	return bg.g.Neighbours(v)
 }
 
-func (bg *Bipartite[K, V, W]) GetVertex(key K) (Vertex[K, V], error) {
+func (bg *bipartite[K, V, W]) GetVertex(key K) (Vertex[K, V], error) {
 	return bg.g.GetVertex(key)
 }
 
-func (bg *Bipartite[K, V, W]) GetEdge(v1, v2 K) ([]Edge[K, W], error) {
+func (bg *bipartite[K, V, W]) GetEdge(v1, v2 K) ([]Edge[K, W], error) {
 	return bg.g.GetEdge(v1, v2)
 }
 
-func (bg *Bipartite[K, V, W]) GetEdgeByKey(key K) (Edge[K, W], error) {
+func (bg *bipartite[K, V, W]) GetEdgeByKey(key K) (Edge[K, W], error) {
 	return bg.g.GetEdgeByKey(key)
 }
 
-func (bg *Bipartite[K, V, W]) GetVertexesByLabel(labels map[string]string) ([]Vertex[K, V], error) {
+func (bg *bipartite[K, V, W]) GetVertexesByLabel(labels map[string]string) ([]Vertex[K, V], error) {
 	return bg.g.GetVertexesByLabel(labels)
 }
 
-func (bg *Bipartite[K, V, W]) GetEdgesByLabel(labels map[string]string) ([]Edge[K, W], error) {
+func (bg *bipartite[K, V, W]) GetEdgesByLabel(labels map[string]string) ([]Edge[K, W], error) {
 	return bg.g.GetEdgesByLabel(labels)
 }
 
-func (bg *Bipartite[K, V, W]) SetVertexValue(key K, value V) error {
+func (bg *bipartite[K, V, W]) SetVertexValue(key K, value V) error {
 	return bg.g.SetVertexValue(key, value)
 }
 
-func (bg *Bipartite[K, V, W]) SetVertexLabel(key K, labelKey, labelVal string) error {
+func (bg *bipartite[K, V, W]) SetVertexLabel(key K, labelKey, labelVal string) error {
 	return bg.g.SetVertexLabel(key, labelKey, labelVal)
 }
 
-func (bg *Bipartite[K, V, W]) DeleteVertexLabel(key K, labelKey string) error {
+func (bg *bipartite[K, V, W]) DeleteVertexLabel(key K, labelKey string) error {
 	return bg.g.DeleteVertexLabel(key, labelKey)
 }
 
-func (bg *Bipartite[K, V, W]) SetEdgeValueByKey(key K, value any) error {
+func (bg *bipartite[K, V, W]) SetEdgeValueByKey(key K, value any) error {
 	return bg.g.SetEdgeValueByKey(key, value)
 }
 
-func (bg *Bipartite[K, V, W]) SetEdgeLabelByKey(key K, labelKey, labelVal string) error {
+func (bg *bipartite[K, V, W]) SetEdgeLabelByKey(key K, labelKey, labelVal string) error {
 	return bg.g.SetEdgeLabelByKey(key, labelKey, labelVal)
 }
 
-func (bg *Bipartite[K, V, W]) DeleteEdgeLabelByKey(key K, labelKey string) error {
+func (bg *bipartite[K, V, W]) DeleteEdgeLabelByKey(key K, labelKey string) error {
 	return bg.g.DeleteEdgeLabelByKey(key, labelKey)
 }
 
-func (bg *Bipartite[K, V, W]) SetEdgeValue(endpoint1, endpoint2 K, value any) error {
+func (bg *bipartite[K, V, W]) SetEdgeValue(endpoint1, endpoint2 K, value any) error {
 	return bg.g.SetEdgeValue(endpoint1, endpoint2, value)
 }
 
-func (bg *Bipartite[K, V, W]) SetEdgeLabel(endpoint1, endpoint2 K, labelKey, labelVal string) error {
+func (bg *bipartite[K, V, W]) SetEdgeLabel(endpoint1, endpoint2 K, labelKey, labelVal string) error {
 	return bg.g.SetEdgeLabel(endpoint1, endpoint2, labelKey, labelVal)
 }
 
-func (bg *Bipartite[K, V, W]) DeleteEdgeLabel(endpoint1, endpoint2 K, labelKey string) error {
+func (bg *bipartite[K, V, W]) DeleteEdgeLabel(endpoint1, endpoint2 K, labelKey string) error {
 	return bg.g.DeleteEdgeLabel(endpoint1, endpoint2, labelKey)
 }
 
-func (bg *Bipartite[K, V, W]) Clone() (Graph[K, V, W], error) {
+func (bg *bipartite[K, V, W]) Clone() (Graph[K, V, W], error) {
 	g, err := bg.g.Clone()
 	if err != nil {
 		return nil, err
@@ -211,7 +218,7 @@ func (bg *Bipartite[K, V, W]) Clone() (Graph[K, V, W], error) {
 	if !ok {
 		return nil, errCloneFailed
 	}
-	b := &Bipartite[K, V, W]{
+	b := &bipartite[K, V, W]{
 		g:     ng,
 		partA: make(map[K]bool),
 		partB: make(map[K]bool),
@@ -225,70 +232,70 @@ func (bg *Bipartite[K, V, W]) Clone() (Graph[K, V, W], error) {
 	return b, nil
 }
 
-func (bg *Bipartite[K, V, W]) InDegree(vertex K) (int, error) {
+func (bg *bipartite[K, V, W]) InDegree(vertex K) (int, error) {
 	return bg.g.InDegree(vertex)
 }
 
-func (bg *Bipartite[K, V, W]) OutDegree(vertex K) (int, error) {
+func (bg *bipartite[K, V, W]) OutDegree(vertex K) (int, error) {
 	return bg.g.OutDegree(vertex)
 }
 
-func (bg *Bipartite[K, V, W]) InNeighbours(vertex K) ([]Vertex[K, V], error) {
+func (bg *bipartite[K, V, W]) InNeighbours(vertex K) ([]Vertex[K, V], error) {
 	return bg.g.InNeighbours(vertex)
 }
 
-func (bg *Bipartite[K, V, W]) OutNeighbours(vertex K) ([]Vertex[K, V], error) {
+func (bg *bipartite[K, V, W]) OutNeighbours(vertex K) ([]Vertex[K, V], error) {
 	return bg.g.OutNeighbours(vertex)
 }
 
-func (bg *Bipartite[K, V, W]) InEdges(vertex K) ([]Edge[K, W], error) {
+func (bg *bipartite[K, V, W]) InEdges(vertex K) ([]Edge[K, W], error) {
 	return bg.g.InEdges(vertex)
 }
 
-func (bg *Bipartite[K, V, W]) OutEdges(vertex K) ([]Edge[K, W], error) {
+func (bg *bipartite[K, V, W]) OutEdges(vertex K) ([]Edge[K, W], error) {
 	return bg.g.OutEdges(vertex)
 }
 
-func (bg *Bipartite[K, V, W]) Sources() ([]Vertex[K, V], error) {
+func (bg *bipartite[K, V, W]) Sources() ([]Vertex[K, V], error) {
 	return bg.g.Sources()
 }
 
-func (bg *Bipartite[K, V, W]) Sinks() ([]Vertex[K, V], error) {
+func (bg *bipartite[K, V, W]) Sinks() ([]Vertex[K, V], error) {
 	return bg.g.Sinks()
 }
 
-func (bg *Bipartite[K, V, W]) DetectCycle() ([][]K, error) {
+func (bg *bipartite[K, V, W]) DetectCycle() ([][]K, error) {
 	return nil, errNotImplement
 }
 
-func (bg *Bipartite[K, V, W]) Recerse() error {
+func (bg *bipartite[K, V, W]) Recerse() error {
 	return bg.g.Reverse()
 }
 
-func (bg *Bipartite[K, V, W]) RandomVertex() (Vertex[K, V], error) {
+func (bg *bipartite[K, V, W]) RandomVertex() (Vertex[K, V], error) {
 	return bg.g.RandomVertex()
 }
 
 //
-func (bg *Bipartite[K, V, W]) RandomEdge() (Edge[K, W], error) {
+func (bg *bipartite[K, V, W]) RandomEdge() (Edge[K, W], error) {
 	return bg.g.RandomEdge()
 }
 
 //
-func (bg *Bipartite[K, V, W]) NeighbourEdgesByKey(edge K) ([]Edge[K, W], error) {
+func (bg *bipartite[K, V, W]) NeighbourEdgesByKey(edge K) ([]Edge[K, W], error) {
 	return bg.g.NeighbourEdgesByKey(edge)
 }
 
 //
-func (bg *Bipartite[K, V, W]) NeighbourEdges(endpoint1, endpoint2 K) ([]Edge[K, W], error) {
+func (bg *bipartite[K, V, W]) NeighbourEdges(endpoint1, endpoint2 K) ([]Edge[K, W], error) {
 	return bg.g.NeighbourEdges(endpoint1, endpoint2)
 }
 
-func (bg *Bipartite[K, V, W]) IncidentEdges(vertex K) ([]Edge[K, W], error) {
+func (bg *bipartite[K, V, W]) IncidentEdges(vertex K) ([]Edge[K, W], error) {
 	return bg.g.IncidentEdges(vertex)
 }
 
-func (bg *Bipartite[K, V, W]) InPartA(key K) bool {
+func (bg *bipartite[K, V, W]) InPartA(key K) bool {
 	_, ok := bg.partA[key]
 	return ok
 }
