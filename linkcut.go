@@ -17,5 +17,5 @@
 package graphlib
 
 // TODO implement link cut tree
-type LinkCutTree[K any] struct {
+type LinkCutTree[K any, W number] struct {
 }
