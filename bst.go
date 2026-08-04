@@ -29,10 +29,7 @@ func (n *stNode[K, V]) isRoot() bool {
 }
 
 func (n *stNode[K, V]) isLeftChild() bool {
-	if n.parent != nil && n == n.parent.left {
-		return true
-	}
-	return false
+	return n.parent != nil && n == n.parent.left
 }
 
 type SplayTree[K any, V any] struct {
