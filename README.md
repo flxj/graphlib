@@ -7,6 +7,7 @@
 ✔️ **Basic operation of the graph:**
 
 * Create undirected/directed graphs
+* Create Special graphs (bipartite,tree,complete graph...)
 * Serialization and Deserialization of Graph Objects (JSON/YAML Format)
 * Dynamically adjust vertex (increase/decrease/modify attributes)
 * Dynamically adjust edge (increase/decrease/modify attributes)
@@ -29,6 +30,7 @@
 * Bipartite matching
 * Topological sorting
 * Vertex colouring/edge colouring
+* Planarity testing
   
 ✔️ **Workflow:**
 
@@ -38,6 +40,13 @@
 
 * Support graphical display of Graph objects (based on [D3](https://d3js.org) and [Graphviz](https://graphviz.org/))
 
+✔️ **Data Structure:**
+
+* Btree
+* SkipList
+* Splay tree
+* LinkCut tree
+* Disjoint set
 
 ### Getting started
 
