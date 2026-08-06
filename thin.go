@@ -23,26 +23,30 @@ import (
 	"strconv"
 )
 
-type ThinGraph[K comparable] struct {
+type ThinGraph[K comparable] interface {
 	Graph[K, any, int]
 }
 
-func NewThinGraph[K comparable](digraph bool) *ThinGraph[K] {
-	g, _ := newGraph[K, any, int](digraph, "")
-	return &ThinGraph[K]{
-		g,
-	}
-}
-
-type ThinDigraph[K comparable] struct {
+type ThinDigraph[K comparable] interface {
 	Digraph[K, any, int]
 }
 
-func NewThinDigraph[K comparable]() *ThinDigraph[K] {
+type thinGraph[K comparable] struct {
+	Graph[K, any, int]
+}
+
+type thinDigraph[K comparable] struct {
+	Digraph[K, any, int]
+}
+
+func NewThinGraph[K comparable](digraph bool) ThinGraph[K] {
+	g, _ := newGraph[K, any, int](digraph, "")
+	return &thinGraph[K]{g}
+}
+
+func NewThinDigraph[K comparable]() ThinDigraph[K] {
 	g, _ := NewDigraph[K, any, int]("")
-	return &ThinDigraph[K]{
-		g,
-	}
+	return &thinDigraph[K]{g}
 }
 
 type ThinTree[K comparable] struct {
@@ -441,6 +445,135 @@ func RandomTournament(n int) Digraph[int, any, int] {
 				_ = g.AddEdge(Edge[int, int]{Key: ek, Head: j, Tail: i})
 			}
 			ek++
+		}
+	}
+	return g
+}
+
+func CompleteKpartite(parts []int) Graph[int, any, int] {
+	g, _ := NewGraph[int, any, int](false, fmt.Sprintf("kpartite_%d", len(parts)))
+	var vtx [][]int
+	var idx int
+	for _, p := range parts {
+		var v []int
+		if p <= 0 {
+			return nil
+		}
+		for i := 0; i < p; i++ {
+			_ = g.AddVertex(Vertex[int, any]{Key: idx})
+			v = append(v, idx)
+			idx++
+		}
+		vtx = append(vtx, v)
+	}
+	idx = 0
+	for i := 0; i < len(vtx); i++ {
+		for _, u := range vtx[i] {
+			for j := i + 1; j < len(vtx); j++ {
+				for _, v := range vtx[j] {
+					_ = g.AddEdge(Edge[int, int]{Key: idx, Head: u, Tail: v})
+					idx++
+				}
+			}
+		}
+	}
+	return g
+}
+
+func Cycle(n int) Graph[int, any, int] {
+	if n < 0 {
+		return nil
+	}
+	g, _ := NewGraph[int, any, int](false, fmt.Sprintf("c_%d", n))
+	for i := 0; i < n; i++ {
+		_ = g.AddVertex(Vertex[int, any]{Key: i})
+	}
+	for i := 0; i < n; i++ {
+		_ = g.AddEdge(Edge[int, int]{Key: i, Head: i, Tail: (i + 1) % n})
+	}
+	return g
+}
+
+func QueenGraph(m, n int) Graph[int, any, int] {
+	if m <= 0 || n <= 0 {
+		return nil
+	}
+	g, _ := NewGraph[int, any, int](false, fmt.Sprintf("queen_%d_%d", m, n))
+	vtx := make([][]int, m)
+	for i := range vtx {
+		vtx[i] = make([]int, n)
+		for j := 0; j < n; j++ {
+			vtx[i][j] = n*i + j
+			_ = g.AddVertex(Vertex[int, any]{
+				Key: vtx[i][j],
+				Labels: map[string]string{
+					"row":    strconv.Itoa(i),
+					"column": strconv.Itoa(j),
+				}})
+		}
+	}
+	// add edge
+	var ek int
+	for i := 0; i < m; i++ {
+		for j := 0; j < n; j++ {
+			// (i,j) - (i,k)
+			for k := j - 1; k >= 0; k-- {
+				_ = g.AddEdge(Edge[int, int]{Key: ek, Head: vtx[i][j], Tail: vtx[i][k]})
+				ek++
+			}
+			// (i,j) - (k,j)
+			for k := i - 1; k >= 0; k-- {
+				_ = g.AddEdge(Edge[int, int]{Key: ek, Head: vtx[i][j], Tail: vtx[k][j]})
+				ek++
+			}
+			// (i,j) - (i-k,j-k)
+			for k := 1; k <= i && k <= j; k++ {
+				_ = g.AddEdge(Edge[int, int]{Key: ek, Head: vtx[i][j], Tail: vtx[i-k][j-k]})
+				ek++
+			}
+			// (i,j) - (i-k,j+k)
+			for k := 1; k <= i && j+k < n; k++ {
+				_ = g.AddEdge(Edge[int, int]{Key: ek, Head: vtx[i][j], Tail: vtx[i-k][j+k]})
+				ek++
+			}
+		}
+	}
+	return g
+}
+
+/*
+An n-Hadamard graph is a graph on 4n vertices defined in terms of a Hadamard matrix H=h[i][j] as follows.
+Define 4n symbols (r_i+, r_i-, c_i+, c_i-) for i=1...n, where r stands for "row" and c stands for "columns,"
+and take these as the vertices of the graph.
+Then construct two edges (r_i+,c_j+),(r_i-,c_j-), for each matrix element such that h[i][j]=1
+and (r_i+,c_j-),(r_i-,c_j+) for each matrix element such that h[i][j]=-1.
+*/
+func HadamardGraph(h [][]int) Graph[int, any, int] {
+	n := len(h)
+	if n == 0 {
+		return nil
+	}
+	g, _ := NewGraph[int, any, int](false, fmt.Sprintf("hadamard_%d", n))
+	for i := 0; i < 4*n; i++ {
+		_ = g.AddVertex(Vertex[int, any]{Key: i})
+	}
+	var ek int
+	for i := 0; i < n; i++ {
+		if len(h[i]) < n {
+			return nil
+		}
+		for j := 0; j < n; j++ {
+			switch h[i][j] {
+			case 1:
+				_ = g.AddEdge(Edge[int, int]{Key: ek, Head: i * 4, Tail: j*4 + 2})
+				_ = g.AddEdge(Edge[int, int]{Key: ek + 1, Head: i*4 + 1, Tail: j*4 + 3})
+			case -1:
+				_ = g.AddEdge(Edge[int, int]{Key: ek, Head: i * 4, Tail: j*4 + 3})
+				_ = g.AddEdge(Edge[int, int]{Key: ek + 1, Head: i*4 + 1, Tail: j*4 + 2})
+			default:
+				return nil
+			}
+			ek += 2
 		}
 	}
 	return g

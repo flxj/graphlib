@@ -26,18 +26,6 @@ import (
 	"time"
 )
 
-const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-func randStr(n int, s rand.Source) string {
-	//s := rand.NewSource(time.Now().UnixNano())
-
-	b := make([]byte, n)
-	for i := 0; i < n; i++ {
-		b[i] = charset[rand.Intn(len(charset))]
-	}
-	return string(b)
-}
-
 func seqStr(perfix string, n int) string {
 	return perfix + strconv.Itoa(n)
 }

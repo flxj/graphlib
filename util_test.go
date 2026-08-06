@@ -132,7 +132,7 @@ func TestPriorityQueue(t *testing.T) {
 	}
 }
 
-func TestLCM(t *testing.T) {
+func TestLCA(t *testing.T) {
 	tree := NewThinTree[int]()
 	es := []Edge[int, int]{
 		{Head: 1, Tail: 2},
@@ -201,4 +201,11 @@ func TestLCM(t *testing.T) {
 			panic(fmt.Sprintf("{%d,%d} lcm should be %d,but get %d", u[0], u[1], u[2], v))
 		}
 	}
+}
+
+func TestThinGraph(t *testing.T) {
+	q := QueenGraph(3, 3)
+
+	fmt.Println("order=", q.Order())
+	fmt.Println("size=", q.Size())
 }

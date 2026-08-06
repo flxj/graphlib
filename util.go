@@ -26,6 +26,18 @@ import (
 	"time"
 )
 
+const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+func randStr(n int, s rand.Source) string {
+	//s := rand.NewSource(time.Now().UnixNano())
+
+	b := make([]byte, n)
+	for i := 0; i < n; i++ {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(b)
+}
+
 func readFile(path string) ([]byte, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -70,7 +82,7 @@ func getMaxValue[W number](n W) W {
 func edgeFormat[K comparable](v1, v2 K) K {
 	switch any(v1).(type) {
 	case string, []byte:
-		return any(fmt.Sprintf("%v-%v", v1, v2)).(K)
+		return any(fmt.Sprintf("%v-%v-%s", v1, v2, randStr(7, rand.NewSource(rand.Int63())))).(K)
 	case int:
 		return any(rand.Int()).(K)
 	case int8:
