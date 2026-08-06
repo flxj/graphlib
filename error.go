@@ -32,6 +32,7 @@ var (
 	errNotDAG           = errors.New("current digraph is not DAG")
 	errNotConnected     = errors.New("current graph is not connected")
 	errEmptyGraph       = errors.New("current graph is empty")
+	errNilGraph         = errors.New("current graph is nil")
 	errNotSimple        = errors.New("current graph is not simple")
 	errViolateBipartite = errors.New("violate the definition of bipartite")
 	errCloneFailed      = errors.New("clone current graph failed")

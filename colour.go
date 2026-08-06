@@ -143,6 +143,9 @@ func vertexColouring[K comparable, V any, W number](g Graph[K, V, W], n int) (ma
 
 // Graph vertex coloring, returning a feasible coloring scheme.
 func VertexColouring[K comparable, V any, W number](g Graph[K, V, W], colours int) (map[K]int, error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
 	return vertexColouring(g, colours)
 }
 
@@ -230,5 +233,8 @@ func edgeColouring[K comparable, V any, W number](g Graph[K, V, W], n int) (map[
 
 // Graph edge coloring, returning a feasible coloring scheme.
 func EdgeColouring[K comparable, V any, W number](g Graph[K, V, W], colours int) (map[K]int, error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
 	return edgeColouring(g, colours)
 }

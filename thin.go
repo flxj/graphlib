@@ -578,3 +578,20 @@ func HadamardGraph(h [][]int) Graph[int, any, int] {
 	}
 	return g
 }
+
+func WheelGraph(n int) Graph[int, any, int] {
+	if n <= 0 {
+		return nil
+	}
+	g, _ := NewGraph[int, any, int](false, fmt.Sprintf("wheel_%d", n))
+	for i := 0; i < n; i++ {
+		_ = g.AddVertex(Vertex[int, any]{Key: i})
+	}
+	var ek int
+	for i := 0; i < n-1; i++ {
+		_ = g.AddEdge(Edge[int, int]{Key: ek, Head: i, Tail: (i + 1) % (n - 1)})
+		_ = g.AddEdge(Edge[int, int]{Key: ek + 1, Head: n, Tail: i})
+		ek += 2
+	}
+	return g
+}

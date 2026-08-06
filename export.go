@@ -33,6 +33,9 @@ type GraphInfo[K comparable, V any, W number] struct {
 
 // Serialize Graph in JSON format.
 func MarshalGraphToJSON[K comparable, V any, W number](g Graph[K, V, W]) ([]byte, error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
 	var (
 		err error
 		vs  []Vertex[K, V]
@@ -57,6 +60,9 @@ func MarshalGraphToJSON[K comparable, V any, W number](g Graph[K, V, W]) ([]byte
 
 // Serialize Graph in yaml format.
 func MarshalGraphToYaml[K comparable, V any, W number](g Graph[K, V, W]) ([]byte, error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
 	var (
 		err error
 		vs  []Vertex[K, V]

@@ -23,7 +23,7 @@ import "fmt"
 // with an edge iff the corresponding edges of G have a vertex in common.
 func LineGraph[K comparable, V any, W number](g Graph[K, V, W]) (Graph[int, any, int], error) {
 	if g == nil {
-		return nil, errEmptyGraph
+		return nil, errNilGraph
 	}
 	edges, err := g.AllEdges()
 	if err != nil {
@@ -84,7 +84,7 @@ func LineGraph[K comparable, V any, W number](g Graph[K, V, W]) (Graph[int, any,
 
 func LineDigraph[K comparable, V any, W number](g Digraph[K, V, W]) (Digraph[int, any, int], error) {
 	if g == nil {
-		return nil, errEmptyGraph
+		return nil, errNilGraph
 	}
 	edges, err := g.AllEdges()
 	if err != nil {

@@ -216,6 +216,10 @@ func mfHLPP[K comparable, V any, W number](g Graph[K, V, W], source, sink K) (W,
 
 // Calculate the maximum flow from the source vertex to the sink vertex.
 func MaxFlow[K comparable, V any, W number](g Graph[K, V, W], source, sink K) (W, error) {
+	var w W
+	if g == nil {
+		return w, errNilGraph
+	}
 	var (
 		flow W
 		err  error

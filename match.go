@@ -189,6 +189,12 @@ func mmHopcroftKarp[K comparable, V any, W number](partA, partB []Vertex[K, V], 
 
 // Calculate the maximum matching of bipartite graph.
 func BipartiteMaxMatching[K comparable, V any, W number](g Bipartite[K, V, W]) ([]Edge[K, W], error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
+	if g.Order() == 0 || g.Size() == 0 {
+		return []Edge[K, W]{}, nil
+	}
 	var err error
 	var partA []Vertex[K, V]
 	var partB []Vertex[K, V]
@@ -231,6 +237,9 @@ func BipartitePerfectMatching[K comparable, V any, W number](g Bipartite[K, V, W
 // Hungarian algorithm (also known as the Kuhn–Munkres algorithm) solving the maximum/minimum weighted matching problem for bipartite graphs.
 // we assume that all weight of edges are non-negative.
 func BipartiteWeightedMatching[K comparable, V any, W number](g Bipartite[K, V, W], maximum bool) ([]Edge[K, W], error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
 	if g.Order() == 0 || g.Size() == 0 {
 		return []Edge[K, W]{}, nil
 	}
@@ -656,6 +665,9 @@ func minMatchingHungarian[W number](n int, weight [][]W) []int {
 
 // Obtain the minimum vertex cover of a bipartite graph.
 func BipartiteMinimumVertexCover[K comparable, V any, W number](g Bipartite[K, V, W]) (map[K]struct{}, error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
 	if g.Order() == 0 || g.Size() == 0 {
 		return make(map[K]struct{}), nil
 	}
@@ -744,10 +756,6 @@ func bipartiteMVC[K comparable, V any, W number](A, B []Vertex[K, V], M []Edge[K
 	return C, nil
 }
 
-func mmBlossom[K comparable, V any, W number](_ Graph[K, V, W]) ([]Edge[K, W], error) {
-	return nil, errNotImplement
-}
-
 // Calculate the maximum matching of any graph and return the set of edges.
 func MaxMatching[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W], error) {
 	return mmBlossom(g)
@@ -779,4 +787,11 @@ func PerfectMatching[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K,
 		}
 	}
 	return mm, nil
+}
+
+func mmBlossom[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W], error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
+	return nil, errNotImplement
 }

@@ -22,6 +22,9 @@ import (
 )
 
 func CheckPlanarity[K comparable, V any, W number](g Graph[K, V, W]) bool {
+	if g == nil {
+		return false
+	}
 	return CheckPlanarityLR(g)
 }
 
@@ -44,6 +47,9 @@ func CheckPlanarityHT[K comparable, V any, W number](g Graph[K, V, W]) bool { //
 
 // Left-Right
 func CheckPlanarityLR[K comparable, V any, W number](g Graph[K, V, W]) bool {
+	if g == nil {
+		return false
+	}
 	p := &planarTestLR[K, V, W]{g: g}
 	return p.planarity(false)
 }

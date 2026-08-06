@@ -64,6 +64,9 @@ func dfs[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(
 
 // Start depth first search from the specified source vertex, where g can be a directed or undirected graph.
 func DFS[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(v Vertex[K, V]) error) error {
+	if g == nil {
+		return errNilGraph
+	}
 	neighbours := g.Neighbours
 	if g.IsDigraph() {
 		dg, ok := g.(Digraph[K, V, W])
@@ -95,6 +98,9 @@ func DFS[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(
 // Perform depth first search in a directed graph, and specify the search direction using the in parameter:
 // if in is set to true, search from source in the order of the incident vertices of the current vertex.
 func DFSDigraph[K comparable, V any, W number](dg Digraph[K, V, W], start K, in bool, visitor func(v Vertex[K, V]) error) error {
+	if dg == nil {
+		return errNilGraph
+	}
 	var neighbours func(K) ([]Vertex[K, V], error)
 	if in {
 		neighbours = dg.InNeighbours
@@ -148,6 +154,9 @@ func bfs[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(
 
 // Start breadth first search from the specified source vertex, where g can be a directed or undirected graph.
 func BFS[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(v Vertex[K, V]) error) error {
+	if g == nil {
+		return errNilGraph
+	}
 	neighbours := g.Neighbours
 	if g.IsDigraph() {
 		dg, ok := g.(Digraph[K, V, W])
@@ -179,6 +188,9 @@ func BFS[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(
 // Perform breadth first search in a directed graph, and specify the search direction using the in parameter:
 // if in is set to true, search from source in the order of the incident vertices of the current vertex.
 func BFSDigraph[K comparable, V any, W number](dg Digraph[K, V, W], start K, in bool, visitor func(v Vertex[K, V]) error) error {
+	if dg == nil {
+		return errNilGraph
+	}
 	var neighbours func(K) ([]Vertex[K, V], error)
 	if in {
 		neighbours = dg.InNeighbours
@@ -268,6 +280,9 @@ func topologicalSort[K comparable, V any, W number](g Digraph[K, V, W]) ([]Verte
 // Perform topological sorting on a directed graph and return a sequence of vertices.
 // If there is a cycle in the graph, return an error.
 func TopologicalSort[K comparable, V any, W number](g Digraph[K, V, W]) ([]Vertex[K, V], error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
 	return topologicalSort(g)
 }
 
@@ -286,7 +301,7 @@ Now we want to run some type of search from this vertex u so that it will visit 
 */
 func sccKosaraju[K comparable, V any, W number](g Digraph[K, V, W], condensation bool) ([][]K, Digraph[K, []K, W], error) {
 	if g == nil {
-		return nil, nil, errEmptyGraph
+		return nil, nil, errNilGraph
 	}
 	vtx, err := g.AllVertexes()
 	if err != nil {
@@ -396,7 +411,7 @@ By definition, the root is the first vertex of an SCC to be visited by the DFS s
 */
 func sccTarjan[K comparable, V any, W number](g Digraph[K, V, W], condensation bool) ([][]K, Digraph[K, []K, W], error) {
 	if g == nil {
-		return nil, nil, errEmptyGraph
+		return nil, nil, errNilGraph
 	}
 	vtx, err := g.AllEdges()
 	if err != nil {

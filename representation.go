@@ -22,6 +22,9 @@ import (
 
 // Create weight matrix for graph.
 func NewWeightMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*WeightMatrix[K, W], error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
 	p, err := g.Property(PropertySimple)
 	if err != nil {
 		return nil, err
@@ -75,6 +78,9 @@ func NewWeightMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*WeightMa
 
 // Create adjacency matrix for graph.
 func NewAdjacencytMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*AdjacencyMatrix[K], error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
 	var (
 		err error
 		vs  []Vertex[K, V]
@@ -111,6 +117,9 @@ func NewAdjacencytMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*Adja
 }
 
 func NewDegreeMatrix[K comparable, W number](g Graph[K, any, W]) (*DegreeMatrix[K], error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
 	vs, err := g.AllVertexes()
 	if err != nil {
 		return nil, err

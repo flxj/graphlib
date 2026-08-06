@@ -353,6 +353,10 @@ func mstKruskal[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K,
 // return the set of edges of the tree, and the sum of tree weights.
 // If the graph is non connected, an error will be returned.
 func MinWeightSpanningTree[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W], W, error) {
+	var w W
+	if g == nil {
+		return nil, w, errNilGraph
+	}
 	_, es, w, err := mstPrimWithPQ(g)
 	return es, w, err
 }
@@ -361,5 +365,8 @@ func MinWeightSpanningTree[K comparable, V any, W number](g Graph[K, V, W]) ([]E
 // which generates a corresponding minimum spanning tree for each connected component,
 // returns the set of vertices and edges for each tree, as well as the sum of tree weights.
 func MinWeightSpanningForest[K comparable, V any, W number](g Graph[K, V, W]) ([][]K, [][]Edge[K, W], []W, error) {
+	if g == nil {
+		return nil, nil, nil, errNilGraph
+	}
 	return msfPrim(g)
 }

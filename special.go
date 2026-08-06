@@ -313,6 +313,9 @@ Following is a simple algorithm to find out whether a given graph is Bipartite o
 
 // Determine whether the given graph is a bipartite graph.
 func IsBipartite[K comparable, V any, W number](g Graph[K, V, W]) (bool, error) {
+	if g == nil {
+		return false, errNilGraph
+	}
 	vertexes, err := g.AllVertexes()
 	if err != nil {
 		return false, err

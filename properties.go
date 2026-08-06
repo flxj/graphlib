@@ -74,6 +74,9 @@ func isConnected[K comparable, V any, W number](g Graph[K, V, W], vertex K, edge
 }
 
 func IsCutvertex[K comparable, V any, W number](g Graph[K, V, W], vertex K) (bool, error) {
+	if g == nil {
+		return false, errNilGraph
+	}
 	vs, err := g.Neighbours(vertex)
 	if err != nil {
 		return false, err
@@ -153,6 +156,9 @@ func isBridge[K comparable, V any, W number](g Graph[K, V, W], edge Edge[K, W]) 
 }
 
 func IsBridge[K comparable, V any, W number](g Graph[K, V, W], edge K) (bool, error) {
+	if g == nil {
+		return false, errNilGraph
+	}
 	e, err := g.GetEdgeByKey(edge)
 	if err != nil {
 		return false, err
@@ -161,6 +167,9 @@ func IsBridge[K comparable, V any, W number](g Graph[K, V, W], edge K) (bool, er
 }
 
 func FindBridges[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W], error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
 	var bri []Edge[K, W]
 	var t int
 	visited := make(map[K]struct{})
@@ -238,6 +247,9 @@ type FindBridgesOnline[K comparable, V any, W number] struct {
 }
 
 func NewFindBridgesOnline[K comparable, V any, W number](g Graph[K, V, W]) (*FindBridgesOnline[K, V, W], error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
 	vs, err := g.AllVertexes()
 	if err != nil {
 		return nil, err

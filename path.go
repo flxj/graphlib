@@ -34,6 +34,9 @@ type Path[K comparable, W number] struct {
 // If the source and target are not connected, the shortest path does not exist,
 // and the corresponding length is MaxDistance.
 func ShortestPath[K comparable, V any, W number](g Graph[K, V, W], source K, target K) (Path[K, W], error) {
+	if g == nil {
+		return Path[K, W]{}, errNilGraph
+	}
 	p, err := g.Property(PropertyNegativeWeight)
 	if err != nil {
 		return Path[K, W]{}, err
@@ -57,6 +60,9 @@ func ShortestPath[K comparable, V any, W number](g Graph[K, V, W], source K, tar
 // where g can be an undirected or directed graph, with negative weights allowed
 // (however, if negative loops are detected during the calculation process, an error will be returned)。
 func ShortestPaths[K comparable, V any, W number](g Graph[K, V, W], source K) ([]Path[K, W], error) {
+	if g == nil {
+		return []Path[K, W]{}, errNilGraph
+	}
 	p, err := g.Property(PropertyNegativeWeight)
 	if err != nil {
 		return nil, err
@@ -520,11 +526,17 @@ func shortestPathsFloyd[K comparable, V any, W number](g Graph[K, V, W]) ([]Path
 // If a pair of vertices are unreachable between them,
 // the corresponding shortest path value is MaxDistance.
 func AllShortestPaths[K comparable, V any, W number](g Graph[K, V, W]) ([]Path[K, W], error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
 	return shortestPathsFloyd(g)
 }
 
 //
 func CountCycles[K comparable, V any, W number](g Graph[K, V, W], length int) (int, error) {
+	if g == nil {
+		return 0, errNilGraph
+	}
 	if length <= 0 {
 		return 0, nil
 	} else if length == 1 {

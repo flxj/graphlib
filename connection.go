@@ -19,6 +19,9 @@ package graphlib
 // Determine whether the start and end vertices in graph g are connected.
 // If it is a directed graph, determine if there is a directed path from start to end.
 func Connected[K comparable, V any, W number](g Graph[K, V, W], start, end K) (bool, error) {
+	if g == nil {
+		return false, errNilGraph
+	}
 	var connected bool
 	visitor := func(v Vertex[K, V]) error {
 		if v.Key == end {
@@ -35,6 +38,9 @@ func Connected[K comparable, V any, W number](g Graph[K, V, W], start, end K) (b
 }
 
 func auxiliaryGraphEDP[K comparable, V any, W number](g Graph[K, V, W]) (Graph[K, V, int], error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
 	aux, _ := NewGraph[K, V, int](g.IsDigraph(), "")
 	vs, err := g.AllVertexes()
 	if err != nil {
@@ -59,6 +65,9 @@ func auxiliaryGraphEDP[K comparable, V any, W number](g Graph[K, V, W]) (Graph[K
 
 // The edge disjoint paths in the auxiliary digraph correspond to the node disjoint paths in the original graph.
 func auxiliaryGraphVDP[K comparable, V any, W number](g Graph[K, V, W], source, target K) (Graph[int, any, int], int, int, error) {
+	if g == nil {
+		return nil, 0, 0, errNilGraph
+	}
 	aux, err := NewGraph[int, any, int](g.IsDigraph(), "")
 	if err != nil {
 		return nil, 0, 0, err
