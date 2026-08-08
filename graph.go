@@ -47,6 +47,7 @@ const (
 	PropertyMaxDegree
 	PropertyMinDegree
 	PropertyAvgDegree
+	PropertyMultiplicity
 )
 
 // Graph [K, V, W] represents the graph object,

@@ -998,3 +998,27 @@ func (l *adjacencyList[K, W]) delAllEdge() {
 		}
 	}
 }
+
+func (l *adjacencyList[K, W]) multiplicity() int {
+	var m int
+	for k, v := range l.outAdj {
+		cnt := make(map[K]int)
+		for p := v; p != nil; p = p.next {
+			cnt[p.key] += 1
+			if cnt[p.key] > m {
+				m = cnt[p.key]
+			}
+		}
+		if l.digraph {
+			for p := l.inAdj[k]; p != nil; p = p.next {
+				if _, ok := cnt[p.key]; ok {
+					cnt[p.key] += 1
+					if cnt[p.key] > m {
+						m = cnt[p.key]
+					}
+				}
+			}
+		}
+	}
+	return m
+}

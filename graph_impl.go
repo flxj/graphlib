@@ -67,6 +67,7 @@ type graph[K comparable, V any, W number] struct {
 	minDe      property[int]
 	maxDe      property[int]
 	avgDe      property[float64]
+	multi      property[int]
 	vertexes   map[K]*Vertex[K, V]
 	edges      map[K]*Edge[K, W]
 	adjList    *adjacencyList[K, W]
@@ -285,6 +286,23 @@ func (g *graph[K, V, W]) AvgDegree() float64 {
 	return avg
 }
 
+func (g *graph[K, V, W]) Multiplicity() int {
+	if g.multi.version == g.version {
+		return g.multi.value
+	}
+	var d int
+	if g.IsSimple() {
+		if g.Size() > 0 {
+			d = 1
+		}
+	} else {
+		d = g.adjList.multiplicity()
+	}
+	g.multi.version = g.version
+	g.multi.value = d
+	return d
+}
+
 func (g *graph[K, V, W]) Property(p PropertyName) (GraphProperty[any], error) {
 	gp := GraphProperty[any]{Name: p}
 	switch p {
@@ -322,6 +340,8 @@ func (g *graph[K, V, W]) Property(p PropertyName) (GraphProperty[any], error) {
 		gp.Value = g.MinDegree()
 	case PropertyAvgDegree:
 		gp.Value = g.AvgDegree()
+	case PropertyMultiplicity:
+		gp.Value = g.Multiplicity()
 	default:
 		return gp, errUnknownProperty
 	}

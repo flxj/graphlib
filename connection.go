@@ -139,3 +139,109 @@ func DigraphEdgeDisjointPath[K comparable, V any, W number](g Digraph[K, V, W], 
 func DigraphVertexDisjointPath[K comparable, V any, W number](g Graph[K, V, W], source, target K) (int, error) {
 	return VertexDisjointPath(g, source, target)
 }
+
+func DigraphCut[K comparable, V any, W number](g Digraph[K, V, W], X []K, incut bool) ([]Edge[K, W], error) {
+	var res []Edge[K, W]
+	xm := make(map[K]struct{})
+	for _, v := range X {
+		xm[v] = struct{}{}
+	}
+	var es []Edge[K, W]
+	var err error
+	for v := range xm {
+		if incut {
+			es, err = g.InEdges(v)
+		} else {
+			es, err = g.OutEdges(v)
+		}
+		if err != nil {
+			return nil, err
+		}
+		for _, e := range es {
+			_, ok := xm[e.Head]
+			_, ok1 := xm[e.Tail]
+			if ok && ok1 {
+				continue
+			}
+			res = append(res, e)
+		}
+	}
+	return res, nil
+}
+
+func DigraphArcs[K comparable, V any, W number](g Digraph[K, V, W], from, to []K) ([]Edge[K, W], error) {
+	var res []Edge[K, W]
+	xm := make(map[K]struct{})
+	ym := make(map[K]struct{})
+	for _, v := range from {
+		xm[v] = struct{}{}
+	}
+	for _, v := range to {
+		ym[v] = struct{}{}
+	}
+	for v := range xm {
+		es, err := g.OutEdges(v)
+		if err != nil {
+			return nil, err
+		}
+		for _, e := range es {
+			if _, ok := ym[e.Head]; ok {
+				res = append(res, e)
+			}
+		}
+	}
+	return res, nil
+}
+
+func GraphCoboundary[K comparable, V any, W number](g Graph[K, V, W], X []K) ([]Edge[K, W], error) {
+	var res []Edge[K, W]
+	xm := make(map[K]struct{})
+	for _, v := range X {
+		xm[v] = struct{}{}
+	}
+	for v := range xm {
+		es, err := g.IncidentEdges(v)
+		if err != nil {
+			return nil, err
+		}
+		for _, e := range es {
+			_, ok := xm[e.Head]
+			_, ok1 := xm[e.Tail]
+			if ok && ok1 {
+				continue
+			}
+			res = append(res, e)
+		}
+	}
+	return res, nil
+}
+
+func GraphEdges[K comparable, V any, W number](g Graph[K, V, W], X, Y []K) ([]Edge[K, W], error) {
+	xm := make(map[K]struct{})
+	ym := make(map[K]struct{})
+	for _, v := range X {
+		xm[v] = struct{}{}
+	}
+	for _, v := range Y {
+		ym[v] = struct{}{}
+	}
+	em := make(map[K]Edge[K, W])
+	for v := range xm {
+		es, err := g.IncidentEdges(v)
+		if err != nil {
+			return nil, err
+		}
+		for _, e := range es {
+			_, ok := ym[e.Head]
+			_, ok2 := ym[e.Tail]
+			if ok || ok2 {
+				em[e.Key] = e
+			}
+		}
+	}
+	var res []Edge[K, W]
+	for _, e := range em {
+		res = append(res, e)
+	}
+	return res, nil
+}
