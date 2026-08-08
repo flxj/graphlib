@@ -200,15 +200,62 @@ func GreedyVertexColouring[K comparable, V any, W number](g Graph[K, V, W]) (map
 	if g == nil {
 		return nil, 0, errNilGraph
 	}
-	//
-	//vtx := g.AllVertexes()
-
-	return nil, 0, errNotImplement
+	vtx := g.AllVertexes()
+	col := make(map[K]int)
+	var cnt int
+	for i := 0; i < len(vtx); i++ {
+		vs, err := g.Neighbours(vtx[i].Key)
+		if err != nil {
+			return nil, 0, err
+		}
+		used := make(map[int]bool)
+		for _, u := range vs {
+			c, ok := col[u.Key]
+			if ok {
+				used[c] = true
+			}
+		}
+		for c := 0; ; c++ {
+			if !used[c] {
+				col[vtx[i].Key] = c
+				if c > cnt {
+					cnt = c
+				}
+				break
+			}
+		}
+	}
+	return col, cnt + 1, nil
 }
 
 func GreedyEdgeColouring[K comparable, V any, W number](g Graph[K, V, W]) (map[K]int, int, error) {
 	if g == nil {
 		return nil, 0, errNilGraph
 	}
-	return nil, 0, errNotImplement
+	edge := g.AllEdges()
+	col := make(map[K]int)
+	var cnt int
+	for i := 0; i < len(edge); i++ {
+		es, err := g.NeighbourEdges(edge[i].Head, edge[i].Tail)
+		if err != nil {
+			return nil, 0, err
+		}
+		used := make(map[int]bool)
+		for _, e := range es {
+			c, ok := col[e.Key]
+			if ok {
+				used[c] = true
+			}
+		}
+		for c := 0; ; c++ {
+			if !used[c] {
+				col[edge[i].Key] = c
+				if c > cnt {
+					cnt = c
+				}
+				break
+			}
+		}
+	}
+	return col, cnt + 1, nil
 }

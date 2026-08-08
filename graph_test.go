@@ -324,3 +324,15 @@ func TestConnected(t *testing.T) {
 	fmt.Printf("connected:%v\n", pc.Value)
 
 }
+
+func TestColour(t *testing.T) {
+	g := PetersenGraph()
+	col, x, err := GreedyVertexColouring(g)
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Println("colour=", x)
+	for v, c := range col {
+		fmt.Println("v=", v, " c=", c)
+	}
+}
