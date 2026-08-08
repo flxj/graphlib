@@ -36,17 +36,9 @@ func MarshalGraphToJSON[K comparable, V any, W number](g Graph[K, V, W]) ([]byte
 	if g == nil {
 		return nil, errNilGraph
 	}
-	var (
-		err error
-		vs  []Vertex[K, V]
-		es  []Edge[K, W]
-	)
-	if vs, err = g.AllVertexes(); err != nil {
-		return nil, err
-	}
-	if es, err = g.AllEdges(); err != nil {
-		return nil, err
-	}
+
+	vs := g.AllVertexes()
+	es := g.AllEdges()
 
 	gi := GraphInfo[K, V, W]{
 		Name:     g.Name(),
@@ -63,17 +55,9 @@ func MarshalGraphToYaml[K comparable, V any, W number](g Graph[K, V, W]) ([]byte
 	if g == nil {
 		return nil, errNilGraph
 	}
-	var (
-		err error
-		vs  []Vertex[K, V]
-		es  []Edge[K, W]
-	)
-	if vs, err = g.AllVertexes(); err != nil {
-		return nil, err
-	}
-	if es, err = g.AllEdges(); err != nil {
-		return nil, err
-	}
+
+	vs := g.AllVertexes()
+	es := g.AllEdges()
 
 	gi := GraphInfo[K, V, W]{
 		Name:     g.Name(),
@@ -96,17 +80,14 @@ func UnmarshalGraph[K comparable, V any, W number](s []byte) (Graph[K, V, W], er
 			return nil, err
 		}
 	}
-	g, err := NewGraph[K, V, W](gi.Digraph, gi.Name)
-	if err != nil {
-		return nil, err
-	}
+	g := NewGraph[K, V, W](gi.Digraph, gi.Name)
 	for _, v := range gi.Vertexes {
-		if err = g.AddVertex(v); err != nil {
+		if err := g.AddVertex(v); err != nil {
 			return nil, err
 		}
 	}
 	for _, e := range gi.Edges {
-		if err = g.AddEdge(e); err != nil {
+		if err := g.AddEdge(e); err != nil {
 			return nil, err
 		}
 	}
@@ -124,17 +105,14 @@ func UnmarshalDigraph[K comparable, V any, W number](s []byte) (Digraph[K, V, W]
 			return nil, err
 		}
 	}
-	g, err := NewDigraph[K, V, W](gi.Name)
-	if err != nil {
-		return nil, err
-	}
+	g := NewDigraph[K, V, W](gi.Name)
 	for _, v := range gi.Vertexes {
-		if err = g.AddVertex(v); err != nil {
+		if err := g.AddVertex(v); err != nil {
 			return nil, err
 		}
 	}
 	for _, e := range gi.Edges {
-		if err = g.AddEdge(e); err != nil {
+		if err := g.AddEdge(e); err != nil {
 			return nil, err
 		}
 	}

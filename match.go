@@ -222,10 +222,7 @@ func BipartitePerfectMatching[K comparable, V any, W number](g Bipartite[K, V, W
 		vs[e.Head] = true
 		vs[e.Tail] = true
 	}
-	vertexes, err := g.AllVertexes()
-	if err != nil {
-		return nil, err
-	}
+	vertexes := g.AllVertexes()
 	for _, v := range vertexes {
 		if _, ok := vs[v.Key]; !ok {
 			return nil, errMatchNotExists
@@ -781,10 +778,7 @@ func PerfectMatching[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K,
 		vs[e.Head] = true
 		vs[e.Tail] = true
 	}
-	vertexes, err := g.AllVertexes()
-	if err != nil {
-		return nil, err
-	}
+	vertexes := g.AllVertexes()
 	for _, v := range vertexes {
 		if _, ok := vs[v.Key]; !ok {
 			return nil, errMatchNotExists
@@ -949,10 +943,7 @@ func (b *blossomAlgo[K, V, W]) findAugmentingPath() ([]K, error) {
 }
 
 func (b *blossomAlgo[K, V, W]) findMaxMaxthing() ([]Edge[K, W], error) {
-	var err error
-	if b.vtx, err = b.g.AllVertexes(); err != nil {
-		return nil, err
-	}
+	b.vtx = b.g.AllVertexes()
 	b.M = make(map[K]K)
 	for {
 		path, err := b.findAugmentingPath()
@@ -1023,11 +1014,8 @@ type maxMatchingBlossom[K comparable, V any, W number] struct {
 	g [][]int
 }
 
-func (mm *maxMatchingBlossom[K, V, W]) init() error {
-	var err error
-	if mm.vtx, err = mm.graph.AllVertexes(); err != nil {
-		return err
-	}
+func (mm *maxMatchingBlossom[K, V, W]) init() {
+	mm.vtx = mm.graph.AllVertexes()
 	mm.n = len(mm.vtx)
 	mm.idx = make(map[K]int)
 	for i, v := range mm.vtx {
@@ -1051,12 +1039,11 @@ func (mm *maxMatchingBlossom[K, V, W]) init() error {
 	}
 	mm.m = m
 	// init g
-	edges, err := mm.graph.AllEdges()
+	edges := mm.graph.AllEdges()
 	for _, e := range edges {
 		u, v := mm.idx[e.Head], mm.idx[e.Tail]
 		mm.addEdge(u, v)
 	}
-	return nil
 }
 
 // traces the path to the root, where we only take vertices/blossoms in the contracted graph.
@@ -1261,9 +1248,7 @@ func (mm *maxMatchingBlossom[K, V, W]) path(head int, tail ...int) *stack[int] {
 //     paths from x and y to the root to determine if this event is a blossom contraction or an augmenting path.
 //     In either case, we should break from the inner loop.
 func (mm *maxMatchingBlossom[K, V, W]) find() ([]Edge[K, W], error) {
-	if err := mm.init(); err != nil {
-		return nil, err
-	}
+	mm.init()
 	for {
 		A, err := mm.findAugmentingPath()
 		if err != nil {

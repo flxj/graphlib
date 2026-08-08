@@ -24,18 +24,9 @@ func Contains[K comparable, V any, W number](g1 Graph[K, V, W], g2 Graph[K, V, W
 	if g1.IsDigraph() != g2.IsDigraph() {
 		return false, errNotSameType
 	}
-	var (
-		err error
-		vs1 []Vertex[K, V]
-		es1 []Edge[K, W]
-	)
-	if vs1, err = g2.AllVertexes(); err != nil {
-		return false, err
-	}
-	if es1, err = g2.AllEdges(); err != nil {
-		return false, err
-	}
-
+	var err error
+	vs1 := g2.AllVertexes()
+	es1 := g2.AllEdges()
 	for _, v := range vs1 {
 		_, err = g1.GetVertex(v.Key)
 		if err != nil {

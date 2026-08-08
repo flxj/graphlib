@@ -22,12 +22,7 @@ import (
 )
 
 func TestDigraph1(t *testing.T) {
-	g, err := NewDigraph[int, int, int]("test-g")
-	if err != nil {
-		fmt.Printf("new graph error:%v\n", err)
-		return
-	}
-
+	g := NewDigraph[int, int, int]("test-g")
 	vs := []Vertex[int, int]{
 		{Key: 1, Value: 1},
 		{Key: 2, Value: 2},

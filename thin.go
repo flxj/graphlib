@@ -40,12 +40,12 @@ type thinDigraph[K comparable] struct {
 }
 
 func NewThinGraph[K comparable](digraph bool) ThinGraph[K] {
-	g, _ := newGraph[K, any, int](digraph, "")
+	g := newGraph[K, any, int](digraph, "")
 	return &thinGraph[K]{g}
 }
 
 func NewThinDigraph[K comparable]() ThinDigraph[K] {
-	g, _ := NewDigraph[K, any, int]("")
+	g := NewDigraph[K, any, int]("")
 	return &thinDigraph[K]{g}
 }
 
@@ -58,7 +58,7 @@ type ThinTree[K comparable] struct {
 }
 
 func NewThinTree[K comparable]() *ThinTree[K] {
-	g, _ := newGraph[K, any, int](false, "")
+	g := newGraph[K, any, int](false, "")
 	t := &ThinTree[K]{Graph: g}
 	t.idx = make(map[K]int)
 	t.duf = newDynamicUnionFind(0)
@@ -150,14 +150,8 @@ func (t *ThinTree[K]) RemoveEdgeByKeys(keys ...K) error {
 }
 
 func (t *ThinTree[K]) rebuild() error {
-	vs, err := t.AllVertexes()
-	if err != nil {
-		return err
-	}
-	es, err := t.AllEdges()
-	if err != nil {
-		return err
-	}
+	vs := t.AllVertexes()
+	es := t.AllEdges()
 	t.vtx = make([]K, len(vs))
 	for i, v := range vs {
 		t.vtx[i] = v.Key
@@ -237,7 +231,7 @@ func (t *ThinTree[K]) LeastCommonAncestor(k1, k2 K) (k K, b bool) {
 }
 
 func PetersenGraph() Graph[int, any, int] {
-	g, _ := NewGraph[int, any, int](false, "petersen_graph")
+	g := NewGraph[int, any, int](false, "petersen_graph")
 	for i := 0; i < 10; i++ {
 		_ = g.AddVertex(Vertex[int, any]{Key: i})
 	}
@@ -268,7 +262,7 @@ func CompleteGraph(n int) Graph[int, any, int] {
 	if n < 0 {
 		return nil
 	}
-	g, _ := NewGraph[int, any, int](false, "k"+strconv.Itoa(n))
+	g := NewGraph[int, any, int](false, "k"+strconv.Itoa(n))
 	for v := 0; v < n; v++ {
 		_ = g.AddVertex(Vertex[int, any]{Key: v})
 	}
@@ -304,7 +298,7 @@ func CompleteBipartite(a, b int) Bipartite[int, any, int] {
 }
 
 func HajosGraph() Graph[int, any, int] {
-	g, _ := NewGraph[int, any, int](false, "hajos_graph")
+	g := NewGraph[int, any, int](false, "hajos_graph")
 	for i := 0; i < 7; i++ {
 		_ = g.AddVertex(Vertex[int, any]{Key: i})
 	}
@@ -332,7 +326,7 @@ func Hypercube(n int) Graph[int, any, int] {
 	if n < 0 || n > 31 {
 		return nil
 	}
-	g, _ := NewGraph[int, any, int](false, strconv.Itoa(n)+"-cube")
+	g := NewGraph[int, any, int](false, strconv.Itoa(n)+"-cube")
 	for i := 0; i < (1 << n); i++ {
 		_ = g.AddVertex(Vertex[int, any]{Key: i})
 	}
@@ -354,7 +348,7 @@ func RandomGraph(n int, p float64) Graph[int, any, int] {
 	if p < 0.0 || p > 1.0 {
 		return nil
 	}
-	g, _ := NewGraph[int, any, int](false, "k"+strconv.Itoa(n))
+	g := NewGraph[int, any, int](false, "k"+strconv.Itoa(n))
 	for v := 0; v < n; v++ {
 		_ = g.AddVertex(Vertex[int, any]{Key: v})
 	}
@@ -373,7 +367,7 @@ func RandomGraph(n int, p float64) Graph[int, any, int] {
 }
 
 func FanoPlane() Graph[int, any, int] {
-	g, _ := NewGraph[int, any, int](false, "fano_plane")
+	g := NewGraph[int, any, int](false, "fano_plane")
 	for v := 0; v < 7; v++ {
 		_ = g.AddVertex(Vertex[int, any]{Key: v})
 	}
@@ -402,7 +396,7 @@ func FanoPlane() Graph[int, any, int] {
 }
 
 func HeawoodGraph() Graph[int, any, int] {
-	g, _ := NewGraph[int, any, int](false, "fano_plane")
+	g := NewGraph[int, any, int](false, "fano_plane")
 	for v := 0; v < 14; v++ {
 		_ = g.AddVertex(Vertex[int, any]{Key: v})
 	}
@@ -432,7 +426,7 @@ func RandomTournament(n int) Digraph[int, any, int] {
 	if n < 0 {
 		return nil
 	}
-	g, _ := NewDigraph[int, any, int]("tournament" + strconv.Itoa(n))
+	g := NewDigraph[int, any, int]("tournament" + strconv.Itoa(n))
 	for v := 0; v < n; v++ {
 		_ = g.AddVertex(Vertex[int, any]{Key: v})
 	}
@@ -451,7 +445,7 @@ func RandomTournament(n int) Digraph[int, any, int] {
 }
 
 func CompleteKpartite(parts []int) Graph[int, any, int] {
-	g, _ := NewGraph[int, any, int](false, fmt.Sprintf("kpartite_%d", len(parts)))
+	g := NewGraph[int, any, int](false, fmt.Sprintf("kpartite_%d", len(parts)))
 	var vtx [][]int
 	var idx int
 	for _, p := range parts {
@@ -484,7 +478,7 @@ func Cycle(n int) Graph[int, any, int] {
 	if n < 0 {
 		return nil
 	}
-	g, _ := NewGraph[int, any, int](false, fmt.Sprintf("c_%d", n))
+	g := NewGraph[int, any, int](false, fmt.Sprintf("c_%d", n))
 	for i := 0; i < n; i++ {
 		_ = g.AddVertex(Vertex[int, any]{Key: i})
 	}
@@ -498,7 +492,7 @@ func QueenGraph(m, n int) Graph[int, any, int] {
 	if m <= 0 || n <= 0 {
 		return nil
 	}
-	g, _ := NewGraph[int, any, int](false, fmt.Sprintf("queen_%d_%d", m, n))
+	g := NewGraph[int, any, int](false, fmt.Sprintf("queen_%d_%d", m, n))
 	vtx := make([][]int, m)
 	for i := range vtx {
 		vtx[i] = make([]int, n)
@@ -553,7 +547,7 @@ func HadamardGraph(h [][]int) Graph[int, any, int] {
 	if n == 0 {
 		return nil
 	}
-	g, _ := NewGraph[int, any, int](false, fmt.Sprintf("hadamard_%d", n))
+	g := NewGraph[int, any, int](false, fmt.Sprintf("hadamard_%d", n))
 	for i := 0; i < 4*n; i++ {
 		_ = g.AddVertex(Vertex[int, any]{Key: i})
 	}
@@ -583,7 +577,7 @@ func WheelGraph(n int) Graph[int, any, int] {
 	if n <= 0 {
 		return nil
 	}
-	g, _ := NewGraph[int, any, int](false, fmt.Sprintf("wheel_%d", n))
+	g := NewGraph[int, any, int](false, fmt.Sprintf("wheel_%d", n))
 	for i := 0; i < n; i++ {
 		_ = g.AddVertex(Vertex[int, any]{Key: i})
 	}

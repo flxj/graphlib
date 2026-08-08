@@ -37,10 +37,7 @@ import "sort"
 // 11: end while
 // 12: return (p, w(T))
 func mstPrim[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K, W], W, error) {
-	vertexes, err := g.AllVertexes()
-	if err != nil {
-		return nil, nil, 0.0, err
-	}
+	vertexes := g.AllVertexes()
 	if len(vertexes) == 0 {
 		return nil, nil, 0.0, errEmptyGraph
 	}
@@ -109,10 +106,7 @@ func mstPrim[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K, W]
 
 // use priority queue.
 func mstPrimWithPQ[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K, W], W, error) {
-	vertexes, err := g.AllVertexes()
-	if err != nil {
-		return nil, nil, 0.0, err
-	}
+	vertexes := g.AllVertexes()
 	if len(vertexes) == 0 {
 		return nil, nil, 0.0, errEmptyGraph
 	}
@@ -171,10 +165,8 @@ func mstPrimWithPQ[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge
 }
 
 func msfPrim[K comparable, V any, W number](g Graph[K, V, W]) ([][]K, [][]Edge[K, W], []W, error) {
-	vertexes, err := g.AllVertexes()
-	if err != nil {
-		return nil, nil, nil, err
-	}
+	vertexes := g.AllVertexes()
+
 	if len(vertexes) == 0 {
 		return nil, nil, nil, errEmptyGraph
 	}
@@ -277,10 +269,7 @@ func msfPrim[K comparable, V any, W number](g Graph[K, V, W]) ([][]K, [][]Edge[K
 // 8         UNION(u,v)
 // 9 return A
 func mstKruskal[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K, W], W, error) {
-	vertexes, err := g.AllVertexes()
-	if err != nil {
-		return nil, nil, 0.0, err
-	}
+	vertexes := g.AllVertexes()
 	if len(vertexes) == 0 {
 		return nil, nil, 0.0, errEmptyGraph
 	}
@@ -306,10 +295,7 @@ func mstKruskal[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K,
 	}
 
 	// Sort all the edges in non-decreasing order of their weight.
-	allEdges, err := g.AllEdges()
-	if err != nil {
-		return nil, nil, 0.0, err
-	}
+	allEdges := g.AllEdges()
 	sort.Slice(allEdges, func(i, j int) bool {
 		return allEdges[i].Weight < allEdges[j].Weight
 	})

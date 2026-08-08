@@ -60,7 +60,7 @@ type Digraph[K comparable, V any, W number] interface {
 }
 
 // Create a new directed graph.
-func NewDigraph[K comparable, V any, W number](name string) (Digraph[K, V, W], error) {
+func NewDigraph[K comparable, V any, W number](name string) Digraph[K, V, W] {
 	return newGraph[K, V, W](true, name)
 }
 

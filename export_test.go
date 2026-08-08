@@ -24,11 +24,7 @@ import (
 )
 
 func exportTestGraph1() (Graph[int, int, int], bool) {
-	g, err := NewGraph[int, int, int](false, "test-g")
-	if err != nil {
-		fmt.Printf("new graph error:%v\n", err)
-		return nil, false
-	}
+	g := NewGraph[int, int, int](false, "test-g")
 	vs := []Vertex[int, int]{
 		{Key: 1, Value: 1},
 		{Key: 2, Value: 2},

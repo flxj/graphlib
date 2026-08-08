@@ -26,11 +26,7 @@ func vertexColouring[K comparable, V any, W number](g Graph[K, V, W], n int) (ma
 		return nil, errNoColouring
 	}
 
-	vertexes, err := g.AllVertexes()
-	if err != nil {
-		return nil, err
-	}
-	//
+	vertexes := g.AllVertexes()
 	colouring := make(map[K]int)
 	/*
 		if _,err = vertexColouringFrom(g,n,vertexes[0],colouring);err!=nil{
@@ -122,11 +118,7 @@ func edgeColouring[K comparable, V any, W number](g Graph[K, V, W], n int) (map[
 		return nil, errNoColouring
 	}
 
-	edges, err := g.AllEdges()
-	if err != nil {
-		return nil, err
-	}
-	//
+	edges := g.AllEdges()
 	colouring := make(map[K]int)
 
 	safe := func(c int, es []Edge[K, W]) bool {
@@ -204,16 +196,19 @@ func TryEdgeColouring[K comparable, V any, W number](g Graph[K, V, W], colours i
 }
 
 // Graph edge coloring, returning a feasible coloring scheme.
-func GreedyVertexColouring[K comparable, V any, W number](g Graph[K, V, W]) (map[K]int, error) {
+func GreedyVertexColouring[K comparable, V any, W number](g Graph[K, V, W]) (map[K]int, int, error) {
 	if g == nil {
-		return nil, errNilGraph
+		return nil, 0, errNilGraph
 	}
-	return nil, errNotImplement
+	//
+	//vtx := g.AllVertexes()
+
+	return nil, 0, errNotImplement
 }
 
-func GreedyEdgeColouring[K comparable, V any, W number](g Graph[K, V, W]) (map[K]int, error) {
+func GreedyEdgeColouring[K comparable, V any, W number](g Graph[K, V, W]) (map[K]int, int, error) {
 	if g == nil {
-		return nil, errNilGraph
+		return nil, 0, errNilGraph
 	}
-	return nil, errNotImplement
+	return nil, 0, errNotImplement
 }

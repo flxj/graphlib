@@ -214,10 +214,7 @@ func FindBridges[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W],
 		}
 		return nil
 	}
-	vtx, err := g.AllVertexes()
-	if err != nil {
-		return nil, err
-	}
+	vtx := g.AllVertexes()
 	for _, v := range vtx {
 		if _, ok := visited[v.Key]; !ok {
 			if err := dfs(v.Key, v.Key); err != nil {
@@ -250,14 +247,8 @@ func NewFindBridgesOnline[K comparable, V any, W number](g Graph[K, V, W]) (*Fin
 	if g == nil {
 		return nil, errNilGraph
 	}
-	vs, err := g.AllVertexes()
-	if err != nil {
-		return nil, err
-	}
-	es, err := g.AllEdges()
-	if err != nil {
-		return nil, err
-	}
+	vs := g.AllVertexes()
+	es := g.AllEdges()
 	fb := &FindBridgesOnline[K, V, W]{
 		g:       g,
 		vtx:     make([]K, g.Order()),

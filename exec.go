@@ -216,10 +216,7 @@ type ExecGraph[K comparable, J job] interface {
 
 // Create an empty ExecGraph.
 func NewExecGraph[K comparable, J job](name string) (ExecGraph[K, J], error) {
-	dag, err := NewDigraph[K, any, int](name)
-	if err != nil {
-		return nil, err
-	}
+	dag := NewDigraph[K, any, int](name)
 	eg := &execGraph[K, J]{
 		dag:        dag,
 		complete:   make(chan struct{}),
@@ -256,20 +253,9 @@ func NewExecGraphFromDAG[K comparable, V any, W number, J job](g Digraph[K, V, W
 		return nil, errExistsCycle
 	}
 
-	var (
-		dag Digraph[K, any, int]
-		vs  []Vertex[K, V]
-		es  []Edge[K, W]
-	)
-	if dag, err = NewDigraph[K, any, int](g.Name() + "-exec"); err != nil {
-		return nil, err
-	}
-	if vs, err = g.AllVertexes(); err != nil {
-		return nil, err
-	}
-	if es, err = g.AllEdges(); err != nil {
-		return nil, err
-	}
+	dag := NewDigraph[K, any, int](g.Name() + "-exec")
+	vs := g.AllVertexes()
+	es := g.AllEdges()
 	for _, v := range vs {
 		nv := Vertex[K, any]{Key: v.Key}
 		if err = dag.AddVertex(nv); err != nil {

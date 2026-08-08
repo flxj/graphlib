@@ -88,17 +88,10 @@ func getHTMLTemplate(digraph bool) (string, error) {
 func RenderHTML[K comparable, V any, W number](g graphlib.Graph[K, V, W], showWeight bool, dir string) (string, error) {
 	var (
 		err  error
-		vs   []graphlib.Vertex[K, V]
-		es   []graphlib.Edge[K, W]
 		data d3NetworkData
 	)
-
-	if vs, err = g.AllVertexes(); err != nil {
-		return "", err
-	}
-	if es, err = g.AllEdges(); err != nil {
-		return "", err
-	}
+	vs := g.AllVertexes()
+	es := g.AllEdges()
 	//
 	for _, v := range vs {
 		k := fmt.Sprintf("%v", v.Key)
@@ -173,19 +166,9 @@ type graphDOT struct {
 }
 
 func getDOT[K comparable, V any, W number](g graphlib.Graph[K, V, W], vertexShape string, attr []string, showWeight bool) ([]byte, error) {
-	var (
-		err error
-		vs  []graphlib.Vertex[K, V]
-		es  []graphlib.Edge[K, W]
-	)
-
-	if vs, err = g.AllVertexes(); err != nil {
-		return nil, err
-	}
-	if es, err = g.AllEdges(); err != nil {
-		return nil, err
-	}
-
+	var err error
+	vs := g.AllVertexes()
+	es := g.AllEdges()
 	dot := &graphDOT{
 		Digraph: g.IsDigraph(),
 		Attr:    attr,

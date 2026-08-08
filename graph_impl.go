@@ -73,7 +73,7 @@ type graph[K comparable, V any, W number] struct {
 	adjList    *adjacencyList[K, W]
 }
 
-func newGraph[K comparable, V any, W number](digraph bool, name string) (*graph[K, V, W], error) {
+func newGraph[K comparable, V any, W number](digraph bool, name string) *graph[K, V, W] {
 	g := &graph[K, V, W]{
 		version:  1,
 		name:     name,
@@ -81,23 +81,18 @@ func newGraph[K comparable, V any, W number](digraph bool, name string) (*graph[
 		edges:    make(map[K]*Edge[K, W]),
 	}
 	g.properties.digraph = digraph
+	g.adjList = newAdjacencyLis[K, W](digraph)
 
-	adj, err := newAdjacencyLis[K, W](digraph)
-	if err != nil {
-		return nil, err
-	}
-	g.adjList = adj
-
-	return g, nil
+	return g
 }
 
 // Create a new graph.
-func NewGraph[K comparable, V any, W number](digraph bool, name string) (Graph[K, V, W], error) {
+func NewGraph[K comparable, V any, W number](digraph bool, name string) Graph[K, V, W] {
 	return newGraph[K, V, W](digraph, name)
 }
 
 // Create a new undirected graph
-func NewUnDigraph[K comparable, V any, W number](name string) (Graph[K, V, W], error) {
+func NewUnDigraph[K comparable, V any, W number](name string) Graph[K, V, W] {
 	return newGraph[K, V, W](false, name)
 }
 
@@ -112,10 +107,7 @@ func NewGraphFromFile[K comparable, V any, W number](path string) (Graph[K, V, W
 
 // Create a graph using vertex and edge sets.
 func ConstructGraph[K comparable, V any, W number](digraph bool, name string, vertexes []Vertex[K, V], edges []Edge[K, W]) (Graph[K, V, W], error) {
-	g, err := newGraph[K, V, W](digraph, name)
-	if err != nil {
-		return nil, err
-	}
+	g := newGraph[K, V, W](digraph, name)
 	for _, v := range vertexes {
 		if err := g.AddVertex(v); err != nil {
 			return nil, err
@@ -348,35 +340,41 @@ func (g *graph[K, V, W]) Property(p PropertyName) (GraphProperty[any], error) {
 	return gp, nil
 }
 
-func (g *graph[K, V, W]) AllVertexes() ([]Vertex[K, V], error) {
+func (g *graph[K, V, W]) AllVertexes() []Vertex[K, V] {
 	vs := make([]Vertex[K, V], len(g.vertexes))
 	var i int
 	for _, v := range g.vertexes {
-		vs[i] = Vertex[K, V]{
-			Key:    v.Key,
-			Value:  v.Value,
-			Labels: v.Labels,
-		}
+		/*
+			vs[i] = Vertex[K, V]{
+				Key:    v.Key,
+				Value:  v.Value,
+				Labels: v.Labels,
+			}
+		*/
+		vs[i] = *v
 		i++
 	}
-	return vs, nil
+	return vs
 }
 
-func (g *graph[K, V, W]) AllEdges() ([]Edge[K, W], error) {
+func (g *graph[K, V, W]) AllEdges() []Edge[K, W] {
 	es := make([]Edge[K, W], len(g.edges))
 	var i int
 	for _, e := range g.edges {
-		es[i] = Edge[K, W]{
-			Key:    e.Key,
-			Head:   e.Head,
-			Tail:   e.Tail,
-			Value:  e.Value,
-			Weight: e.Weight,
-			Labels: e.Labels,
-		}
+		/*
+			es[i] = Edge[K, W]{
+				Key:    e.Key,
+				Head:   e.Head,
+				Tail:   e.Tail,
+				Value:  e.Value,
+				Weight: e.Weight,
+				Labels: e.Labels,
+			}
+		*/
+		es[i] = *e
 		i++
 	}
-	return es, nil
+	return es
 }
 
 func (g *graph[K, V, W]) AddVertex(v Vertex[K, V]) error {
@@ -723,10 +721,7 @@ func (g *graph[K, V, W]) DeleteEdgeLabel(endpoint1, endpoint2 K, labelKey string
 }
 
 func (g *graph[K, V, W]) Clone() (Graph[K, V, W], error) {
-	adjList, err := newAdjacencyLis[K, W](g.properties.digraph)
-	if err != nil {
-		return nil, err
-	}
+	adjList := newAdjacencyLis[K, W](g.properties.digraph)
 	ng := *g
 	ng.vertexes = make(map[K]*Vertex[K, V])
 	ng.edges = make(map[K]*Edge[K, W])
@@ -734,13 +729,13 @@ func (g *graph[K, V, W]) Clone() (Graph[K, V, W], error) {
 
 	for k, v := range g.vertexes {
 		ng.vertexes[k] = v.Clone()
-		if err = ng.adjList.addVertexes(k); err != nil {
+		if err := ng.adjList.addVertexes(k); err != nil {
 			return nil, err
 		}
 	}
 	for k, v := range g.edges {
 		ng.edges[k] = v.Clone()
-		if err = ng.adjList.addEdge(v.Head, v.Tail, v.Key, v.Weight); err != nil {
+		if err := ng.adjList.addEdge(v.Head, v.Tail, v.Key, v.Weight); err != nil {
 			return nil, err
 		}
 	}

@@ -25,12 +25,9 @@ func LineGraph[K comparable, V any, W number](g Graph[K, V, W]) (Graph[int, any,
 	if g == nil {
 		return nil, errNilGraph
 	}
-	edges, err := g.AllEdges()
-	if err != nil {
-		return nil, err
-	}
+	edges := g.AllEdges()
 	idx := make(map[K]int)
-	lg, _ := NewGraph[int, any, int](false, g.Name()+"_line")
+	lg := NewGraph[int, any, int](false, g.Name()+"_line")
 	for i, e := range edges {
 		idx[e.Key] = i
 		err := lg.AddVertex(Vertex[int, any]{
@@ -86,12 +83,9 @@ func LineDigraph[K comparable, V any, W number](g Digraph[K, V, W]) (Digraph[int
 	if g == nil {
 		return nil, errNilGraph
 	}
-	edges, err := g.AllEdges()
-	if err != nil {
-		return nil, err
-	}
+	edges := g.AllEdges()
 	idx := make(map[K]int)
-	lg, _ := NewDigraph[int, any, int](g.Name() + "_line")
+	lg := NewDigraph[int, any, int](g.Name() + "_line")
 	for i, e := range edges {
 		idx[e.Key] = i
 		err := lg.AddVertex(Vertex[int, any]{

@@ -41,15 +41,9 @@ func auxiliaryGraphEDP[K comparable, V any, W number](g Graph[K, V, W]) (Graph[K
 	if g == nil {
 		return nil, errNilGraph
 	}
-	aux, _ := NewGraph[K, V, int](g.IsDigraph(), "")
-	vs, err := g.AllVertexes()
-	if err != nil {
-		return nil, err
-	}
-	es, err := g.AllEdges()
-	if err != nil {
-		return nil, err
-	}
+	aux := NewGraph[K, V, int](g.IsDigraph(), "")
+	vs := g.AllVertexes()
+	es := g.AllEdges()
 	for _, v := range vs {
 		if err := aux.AddVertex(Vertex[K, V]{Key: v.Key}); err != nil {
 			return nil, err
@@ -68,18 +62,9 @@ func auxiliaryGraphVDP[K comparable, V any, W number](g Graph[K, V, W], source, 
 	if g == nil {
 		return nil, 0, 0, errNilGraph
 	}
-	aux, err := NewGraph[int, any, int](g.IsDigraph(), "")
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	vs, err := g.AllVertexes()
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	es, err := g.AllEdges()
-	if err != nil {
-		return nil, 0, 0, err
-	}
+	aux := NewGraph[int, any, int](g.IsDigraph(), "")
+	vs := g.AllVertexes()
+	es := g.AllEdges()
 	idx := make(map[K]int)
 	var ek, s, t int
 	for i, v := range vs {

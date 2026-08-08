@@ -130,10 +130,10 @@ type Graph[K comparable, V any, W number] interface {
 	Property(p PropertyName) (GraphProperty[any], error)
 	//
 	// The unordered set of all vertices in a graph.
-	AllVertexes() ([]Vertex[K, V], error)
+	AllVertexes() []Vertex[K, V]
 	//
 	// The unordered set of all edges in the graph.
-	AllEdges() ([]Edge[K, W], error)
+	AllEdges() []Edge[K, W]
 	//
 	// Add vertices to the graph.
 	AddVertex(vertex Vertex[K, V]) error

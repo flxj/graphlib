@@ -117,10 +117,7 @@ func getMinWeightEdge[K comparable, V any, W number](g Graph[K, V, W], v1, v2 K)
 // 8: end while
 // 9: return (p, L)
 func shortestPathDijkstra[K comparable, V any, W number](g Graph[K, V, W], source K, target K, all bool) ([]Path[K, W], error) {
-	vertexes, err := g.AllVertexes()
-	if err != nil {
-		return nil, err
-	}
+	vertexes := g.AllVertexes()
 
 	// use the map to record edges of the shortest paths.
 	// if trace[v] == e,means the edges of shorest path from source to v is:
@@ -209,10 +206,7 @@ func shortestPathDijkstra[K comparable, V any, W number](g Graph[K, V, W], sourc
 
 // Implement Dijkstra algorithm using priority queue.
 func shortestPathDijkstraWithPQ[K comparable, V any, W number](g Graph[K, V, W], source K, target K, all bool) ([]Path[K, W], error) {
-	vertexes, err := g.AllVertexes()
-	if err != nil {
-		return nil, err
-	}
+	vertexes := g.AllVertexes()
 	trace := make(map[K]*Edge[K, W])
 	unvisited := make(map[K]bool)
 	//
@@ -359,14 +353,8 @@ BELLMAN-FORD(G,w,s)
 8 return TRUE
 */
 func shortestPathBellmanFord[K comparable, V any, W number](g Graph[K, V, W], source K, target K, all bool) ([]Path[K, W], error) {
-	vertexes, err := g.AllVertexes()
-	if err != nil {
-		return nil, err
-	}
-	edges, err := g.AllEdges()
-	if err != nil {
-		return nil, err
-	}
+	vertexes := g.AllVertexes()
+	edges := g.AllEdges()
 
 	// use the map to record edges of the shortest paths.
 	// if trace[v] == e,means the edges of shorest path from source to v is:
@@ -540,10 +528,7 @@ func CountCycles[K comparable, V any, W number](g Graph[K, V, W], length int) (i
 	if length <= 0 {
 		return 0, nil
 	} else if length == 1 {
-		edges, err := g.AllEdges()
-		if err != nil {
-			return 0, err
-		}
+		edges := g.AllEdges()
 		var count int
 		for _, e := range edges {
 			if e.Head == e.Tail {
@@ -553,10 +538,7 @@ func CountCycles[K comparable, V any, W number](g Graph[K, V, W], length int) (i
 		return count, nil
 	} else if length == 2 {
 		// find multi number of a edge.
-		edges, err := g.AllEdges()
-		if err != nil {
-			return 0, err
-		}
+		edges := g.AllEdges()
 		counts := make(map[K]map[K]int)
 		for _, e := range edges {
 			ts, ok1 := counts[e.Head]
@@ -585,10 +567,7 @@ func CountCycles[K comparable, V any, W number](g Graph[K, V, W], length int) (i
 	var count int
 	visited := make(map[K]bool)
 
-	vertexes, err := g.AllVertexes()
-	if err != nil {
-		return 0, err
-	}
+	vertexes := g.AllVertexes()
 	for i := 0; i < len(vertexes)-length+1; i++ {
 		cp, err := countPaths(g, vertexes[i].Key, vertexes[i].Key, length-1, visited)
 		if err != nil {

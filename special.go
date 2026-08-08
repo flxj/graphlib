@@ -33,10 +33,7 @@ type bipartite[K comparable, V any, W number] struct {
 }
 
 func NewBipartite[K comparable, V any, W number](digraph bool, name string) (Bipartite[K, V, W], error) {
-	g, err := newGraph[K, V, W](digraph, name)
-	if err != nil {
-		return nil, err
-	}
+	g := newGraph[K, V, W](digraph, name)
 	return &bipartite[K, V, W]{
 		g:     g,
 		partA: make(map[K]bool),
@@ -68,11 +65,11 @@ func (bg *bipartite[K, V, W]) Property(p PropertyName) (GraphProperty[any], erro
 	return bg.g.Property(p)
 }
 
-func (bg *bipartite[K, V, W]) AllVertexes() ([]Vertex[K, V], error) {
+func (bg *bipartite[K, V, W]) AllVertexes() []Vertex[K, V] {
 	return bg.g.AllVertexes()
 }
 
-func (bg *bipartite[K, V, W]) AllEdges() ([]Edge[K, W], error) {
+func (bg *bipartite[K, V, W]) AllEdges() []Edge[K, W] {
 	return bg.g.AllEdges()
 }
 
@@ -316,10 +313,7 @@ func IsBipartite[K comparable, V any, W number](g Graph[K, V, W]) (bool, error) 
 	if g == nil {
 		return false, errNilGraph
 	}
-	vertexes, err := g.AllVertexes()
-	if err != nil {
-		return false, err
-	}
+	vertexes := g.AllVertexes()
 	switch len(vertexes) {
 	case 0, 1:
 		return false, nil

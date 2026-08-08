@@ -104,8 +104,8 @@ func (p *planarTestLR[K, V, W]) getEdge(u, v int) int {
 }
 
 func (p *planarTestLR[K, V, W]) init(embedding bool) {
-	p.vtx, _ = p.g.AllVertexes()
-	p.edges, _ = p.g.AllEdges()
+	p.vtx = p.g.AllVertexes()
+	p.edges = p.g.AllEdges()
 	p.vtxIdx = make(map[K]int)
 	p.edgeIdx = make(map[K]int)
 	for i, v := range p.vtx {
@@ -443,8 +443,8 @@ func (p *planarTestHT[K, V, W]) getEdge(u, v int) int {
 }
 
 func (p *planarTestHT[K, V, W]) init() {
-	p.vtx, _ = p.g.AllVertexes()
-	p.edges, _ = p.g.AllEdges()
+	p.vtx = p.g.AllVertexes()
+	p.edges = p.g.AllEdges()
 	p.vtxIdx = make(map[K]int)
 	p.edgeIdx = make(map[K]int)
 	for i, v := range p.vtx {

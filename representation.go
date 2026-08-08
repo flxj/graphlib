@@ -33,17 +33,9 @@ func NewWeightMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*WeightMa
 		return nil, errNotSimple
 	}
 
-	var (
-		vs []Vertex[K, V]
-		es []Edge[K, W]
-	)
+	vs := g.AllVertexes()
+	es := g.AllEdges()
 
-	if vs, err = g.AllVertexes(); err != nil {
-		return nil, err
-	}
-	if es, err = g.AllEdges(); err != nil {
-		return nil, err
-	}
 	var n W
 	none := getMaxValue(n)
 	wm := &WeightMatrix[K, W]{
@@ -81,17 +73,9 @@ func NewAdjacencytMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*Adja
 	if g == nil {
 		return nil, errNilGraph
 	}
-	var (
-		err error
-		vs  []Vertex[K, V]
-		es  []Edge[K, W]
-	)
-	if vs, err = g.AllVertexes(); err != nil {
-		return nil, err
-	}
-	if es, err = g.AllEdges(); err != nil {
-		return nil, err
-	}
+
+	vs := g.AllVertexes()
+	es := g.AllEdges()
 
 	am := &AdjacencyMatrix[K]{
 		vertexes: make([]K, len(vs)),
@@ -120,10 +104,7 @@ func NewDegreeMatrix[K comparable, W number](g Graph[K, any, W]) (*DegreeMatrix[
 	if g == nil {
 		return nil, errNilGraph
 	}
-	vs, err := g.AllVertexes()
-	if err != nil {
-		return nil, err
-	}
+	vs := g.AllVertexes()
 	dm := &DegreeMatrix[K]{
 		vertexes: make([]K, len(vs)),
 		data:     make([][]int, len(vs)),
@@ -230,7 +211,7 @@ type adjacencyList[K comparable, W number] struct {
 	inAdj   map[K]*endpoint[K, W] // contrary adjacency list
 }
 
-func newAdjacencyLis[K comparable, W number](digraph bool) (*adjacencyList[K, W], error) {
+func newAdjacencyLis[K comparable, W number](digraph bool) *adjacencyList[K, W] {
 	adj := &adjacencyList[K, W]{
 		digraph: digraph,
 		outAdj:  make(map[K]*endpoint[K, W]),
@@ -238,25 +219,17 @@ func newAdjacencyLis[K comparable, W number](digraph bool) (*adjacencyList[K, W]
 	if adj.digraph {
 		adj.inAdj = make(map[K]*endpoint[K, W])
 	}
-	return adj, nil
+	return adj
 }
 
 func newAdjacencyListFromGraph[K comparable, V any, W number](g Graph[K, V, W]) (*adjacencyList[K, W], error) {
 	var (
 		err error
-		vs  []Vertex[K, V]
-		es  []Edge[K, W]
 		adj *adjacencyList[K, W]
 	)
-	if vs, err = g.AllVertexes(); err != nil {
-		return nil, err
-	}
-	if es, err = g.AllEdges(); err != nil {
-		return nil, err
-	}
-	if adj, err = newAdjacencyLis[K, W](g.IsDigraph()); err != nil {
-		return nil, err
-	}
+	vs := g.AllVertexes()
+	es := g.AllEdges()
+	adj = newAdjacencyLis[K, W](g.IsDigraph())
 
 	for _, v := range vs {
 		if err = adj.addVertexes(v.Key); err != nil {

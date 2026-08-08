@@ -22,11 +22,7 @@ import (
 )
 
 func TestPath1(t *testing.T) {
-	g, err := NewGraph[int, int, int](false, "test-g")
-	if err != nil {
-		fmt.Printf("new graph error:%v\n", err)
-		return
-	}
+	g := NewGraph[int, int, int](false, "test-g")
 
 	vs := []Vertex[int, int]{
 		{Key: 1, Value: 1},

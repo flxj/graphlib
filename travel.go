@@ -231,10 +231,7 @@ Procedure TOPSORT (G; topnr,acyclic)：
 	(15) if N = n+1 then acyclic ← true else acyclic ← false fi
 */
 func topologicalSort[K comparable, V any, W number](g Digraph[K, V, W]) ([]Vertex[K, V], error) {
-	vertexes, err := g.AllVertexes()
-	if err != nil {
-		return nil, err
-	}
+	vertexes := g.AllVertexes()
 
 	inDegree := make(map[K]int)
 	for _, v := range vertexes {
@@ -303,10 +300,7 @@ func sccKosaraju[K comparable, V any, W number](g Digraph[K, V, W], condensation
 	if g == nil {
 		return nil, nil, errNilGraph
 	}
-	vtx, err := g.AllVertexes()
-	if err != nil {
-		return nil, nil, err
-	}
+	vtx := g.AllVertexes()
 
 	var dfs func(K, *[]K) error
 	var exitTime []K // record the exit time of a vertex when dfs.
@@ -371,7 +365,7 @@ func sccKosaraju[K comparable, V any, W number](g Digraph[K, V, W], condensation
 		return components, nil, nil
 	}
 	// build condensation graph
-	cond, _ := NewDigraph[K, []K, W](g.Name() + "_condensation")
+	cond := NewDigraph[K, []K, W](g.Name() + "_condensation")
 	for _, c := range components {
 		_ = cond.AddVertex(Vertex[K, []K]{Key: c[0], Value: c})
 	}
@@ -413,10 +407,7 @@ func sccTarjan[K comparable, V any, W number](g Digraph[K, V, W], condensation b
 	if g == nil {
 		return nil, nil, errNilGraph
 	}
-	vtx, err := g.AllEdges()
-	if err != nil {
-		return nil, nil, err
-	}
+	vtx := g.AllEdges()
 	// 1.DFS search produces a DFS tree/forest
 	// 2.Strongly Connected Components form subtrees of the DFS tree.
 	// 3.If we can find the root of such subtrees, we can print/store all the nodes in that subtree (including the root) and that will be one SCC.
@@ -495,7 +486,7 @@ func sccTarjan[K comparable, V any, W number](g Digraph[K, V, W], condensation b
 		return components, nil, nil
 	}
 	// build condensation graph
-	cond, _ := NewDigraph[K, []K, W](g.Name() + "_condensation")
+	cond := NewDigraph[K, []K, W](g.Name() + "_condensation")
 	for _, c := range components {
 		_ = cond.AddVertex(Vertex[K, []K]{Key: c[0], Value: c})
 	}
@@ -524,4 +515,14 @@ func StronglyConnectedComponentTarjan[K comparable, V any, W number](g Digraph[K
 // return the set of vertices for each strongly connected component.
 func StronglyConnectedComponentKosaraju[K comparable, V any, W number](g Digraph[K, V, W], condensation bool) ([][]K, Digraph[K, []K, W], error) {
 	return sccKosaraju(g, condensation)
+}
+
+// TODO
+func LexBFS[K comparable, V any, W number](g Graph[K, V, W]) error {
+	return errNotImplement
+}
+
+// TODO
+func LexDFS[K comparable, V any, W number](g Graph[K, V, W]) error {
+	return errNotImplement
 }

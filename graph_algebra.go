@@ -26,23 +26,10 @@ func Union[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K, V, W]
 	if g1.IsDigraph() != g2.IsDigraph() {
 		return nil, errNotSameType
 	}
-	var (
-		err      error
-		vs1, vs2 []Vertex[K, V]
-		es1, es2 []Edge[K, W]
-	)
-	if vs1, err = g1.AllVertexes(); err != nil {
-		return nil, err
-	}
-	if es1, err = g1.AllEdges(); err != nil {
-		return nil, err
-	}
-	if vs2, err = g2.AllVertexes(); err != nil {
-		return nil, err
-	}
-	if es2, err = g2.AllEdges(); err != nil {
-		return nil, err
-	}
+	vs1 := g1.AllVertexes()
+	es1 := g1.AllEdges()
+	vs2 := g2.AllVertexes()
+	es2 := g2.AllEdges()
 
 	uv := make(map[K]*Vertex[K, V])
 	ue := make(map[K]*Edge[K, W])
@@ -63,18 +50,15 @@ func Union[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K, V, W]
 		ue[ee.Key] = &ee
 	}
 
-	ug, err := NewGraph[K, V, W](g1.IsDigraph(), fmt.Sprintf("%s-union-%s", g1.Name(), g2.Name()))
-	if err != nil {
-		return nil, err
-	}
+	ug := NewGraph[K, V, W](g1.IsDigraph(), fmt.Sprintf("%s-union-%s", g1.Name(), g2.Name()))
 
 	for _, v := range uv {
-		if err = ug.AddVertex(*v); err != nil {
+		if err := ug.AddVertex(*v); err != nil {
 			return nil, err
 		}
 	}
 	for _, e := range ue {
-		if err = ug.AddEdge(*e); err != nil {
+		if err := ug.AddEdge(*e); err != nil {
 			return nil, err
 		}
 	}
@@ -87,23 +71,11 @@ func Intersection[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K
 	if g1.IsDigraph() != g2.IsDigraph() {
 		return nil, errNotSameType
 	}
-	var (
-		err      error
-		vs1, vs2 []Vertex[K, V]
-		es1, es2 []Edge[K, W]
-	)
-	if vs1, err = g1.AllVertexes(); err != nil {
-		return nil, err
-	}
-	if es1, err = g1.AllEdges(); err != nil {
-		return nil, err
-	}
-	if vs2, err = g2.AllVertexes(); err != nil {
-		return nil, err
-	}
-	if es2, err = g2.AllEdges(); err != nil {
-		return nil, err
-	}
+
+	vs1 := g1.AllVertexes()
+	es1 := g1.AllEdges()
+	vs2 := g2.AllVertexes()
+	es2 := g2.AllEdges()
 
 	iv := make(map[K]bool)
 	ie := make(map[K]bool)
@@ -128,18 +100,15 @@ func Intersection[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K
 			ue[ee.Key] = &ee
 		}
 	}
-	ug, err := NewGraph[K, V, W](g1.IsDigraph(), fmt.Sprintf("%s-intersection-%s", g1.Name(), g2.Name()))
-	if err != nil {
-		return nil, err
-	}
+	ug := NewGraph[K, V, W](g1.IsDigraph(), fmt.Sprintf("%s-intersection-%s", g1.Name(), g2.Name()))
 
 	for _, v := range uv {
-		if err = ug.AddVertex(*v); err != nil {
+		if err := ug.AddVertex(*v); err != nil {
 			return nil, err
 		}
 	}
 	for _, e := range ue {
-		if err = ug.AddEdge(*e); err != nil {
+		if err := ug.AddEdge(*e); err != nil {
 			return nil, err
 		}
 	}
@@ -152,28 +121,12 @@ func CartesianProduct[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Gra
 		return nil, errors.New("not support operation")
 	}
 
-	var (
-		err  error
-		g1vs []Vertex[K, V]
-		g2vs []Vertex[K, V]
-		g1es []Edge[K, W]
-		g2es []Edge[K, W]
-	)
-	if g1vs, err = g1.AllVertexes(); err != nil {
-		return nil, err
-	}
-	if g2vs, err = g2.AllVertexes(); err != nil {
-		return nil, err
-	}
-	if g1es, err = g1.AllEdges(); err != nil {
-		return nil, err
-	}
-	if g2es, err = g2.AllEdges(); err != nil {
-		return nil, err
-	}
+	g1vs := g1.AllVertexes()
+	g2vs := g2.AllVertexes()
+	g1es := g1.AllEdges()
+	g2es := g2.AllEdges()
 
-	g, _ := NewGraph[string, V, W](g1.IsDigraph(), g1.Name()+"X"+g2.Name())
-
+	g := NewGraph[string, V, W](g1.IsDigraph(), g1.Name()+"X"+g2.Name())
 	for _, v1 := range g1vs {
 		for _, v2 := range g2vs {
 			v := Vertex[string, V]{
@@ -183,7 +136,7 @@ func CartesianProduct[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Gra
 					g2.Name(): fmt.Sprintf("%v", v2.Key),
 				},
 			}
-			if err = g.AddVertex(v); err != nil {
+			if err := g.AddVertex(v); err != nil {
 				return nil, err
 			}
 		}
@@ -198,7 +151,7 @@ func CartesianProduct[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Gra
 				Head: head,
 				Tail: tail,
 			}
-			if err = g.AddEdge(e); err != nil {
+			if err := g.AddEdge(e); err != nil {
 				return nil, err
 			}
 		}
@@ -213,7 +166,7 @@ func CartesianProduct[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Gra
 				Head: head,
 				Tail: tail,
 			}
-			if err = g.AddEdge(e); err != nil {
+			if err := g.AddEdge(e); err != nil {
 				return nil, err
 			}
 		}

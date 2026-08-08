@@ -23,7 +23,7 @@ import (
 )
 
 func testBridgeG() Graph[int, any, int] {
-	g, _ := NewGraph[int, any, int](false, "")
+	g := NewGraph[int, any, int](false, "")
 	for i := 0; i < 8; i++ {
 		err := g.AddVertex(Vertex[int, any]{Key: i})
 		if err != nil {
