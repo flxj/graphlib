@@ -757,14 +757,18 @@ func bipartiteMVC[K comparable, V any, W number](A, B []Vertex[K, V], M []Edge[K
 }
 
 // Calculate the maximum matching of any graph and return the set of edges.
-func MaxMatching[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W], error) {
-	return mmBlossom(g)
+func MaxMatchingBlossom[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W], error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
+	mm := &maxMatchingBlossom[K, V, W]{graph: g}
+	return mm.find()
 }
 
 // Calculate the perfect matching of any graph, if it exists, return the set of edges,
 // otherwise return non-existent.
 func PerfectMatching[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W], error) {
-	mm, err := MaxMatching(g)
+	mm, err := MaxMatchingBlossom(g)
 	if err != nil {
 		return nil, err
 	}
@@ -789,9 +793,521 @@ func PerfectMatching[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K,
 	return mm, nil
 }
 
+/*
+In summary, the algorithm works like this. We repeat the following process until we fail to find an augmenting path,
+then return. We begin a graph search with DFS or BFS from the exposed vertices,
+ensuring that the paths alternate between matched and unmatched edges.
+If we see an edge to an unvisited node, we add it to our search forest.
+Otherwise if it's a visited node, there are three cases.
+
+1.The edge creates an odd cycle in the search tree. Here, we contract the blossom and continue our search.
+
+2.The edge connects two different search trees and forms an augmenting path.
+Here, we keep undoing the blossom contractions, lifting the augmenting path back to our original graph,
+and flip all the matched and unmatched edges.
+
+3.The edge creates neither case 1 nor case 2. Here, we do nothing and continue our search.
+*/
 func mmBlossom[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
-	return nil, errNotImplement
+	b := &blossomAlgo[K, V, W]{g: g}
+	return b.findMaxMaxthing()
+}
+
+type blossomAlgo[K comparable, V any, W number] struct {
+	g      Graph[K, V, W]
+	vtx    []Vertex[K, V]
+	F      map[K][]K
+	dist   map[K]int // distince to its root.
+	parent map[K]K
+	M      map[K]K // current matching
+}
+
+func (b *blossomAlgo[K, V, W]) addToForest(v, w K) K {
+	x := b.M[w]
+	// add edges (v,w),(w,x) to tree(v) in F
+	b.parent[w] = v
+	b.parent[x] = w
+	b.dist[w] = b.dist[v] + 1
+	b.dist[x] = b.dist[v] + 2
+	// add vertex x to nodes_to_check
+	return x
+}
+
+func (b *blossomAlgo[K, V, W]) exposedVertices() []K {
+	var ev []K
+	for _, v := range b.vtx {
+		if _, ok := b.M[v.Key]; !ok {
+			ev = append(ev, v.Key)
+		}
+	}
+	return ev
+}
+
+func (b *blossomAlgo[K, V, W]) distToRoot(v K) int {
+	return b.dist[v]
+}
+
+func (b *blossomAlgo[K, V, W]) root(v K) K {
+	for b.parent[v] != v {
+		v = b.parent[v]
+	}
+	return v
+}
+
+func (b *blossomAlgo[K, V, W]) pathToAncestor(u, v K) []K {
+	var p []K
+	for {
+		p = append(p, u)
+		if u == b.parent[u] {
+			break
+		}
+		u = b.parent[u]
+		if u == v {
+			break
+		}
+	}
+	return p
+}
+
+func (b *blossomAlgo[K, V, W]) getAugmentingPath(v, w K) []K { // return a vertex slice
+	P1 := b.pathToAncestor(v, b.root(v))
+	P2 := b.pathToAncestor(w, b.root(w))
+	for i := 0; i < len(P1)/2; i++ {
+		P1[i], P1[len(P1)-i-1] = P1[len(P1)-i-1], P1[i]
+	}
+	P1 = append(P1, P2...)
+	return P1
+}
+
+func (b *blossomAlgo[K, V, W]) path(u, v K) []K { //TODO
+	return nil
+}
+
+func (b *blossomAlgo[K, V, W]) blossomRecursion(v, w K) []K { //TODO
+	B := b.path(v, w)
+	B = append(B, v)
+	/*
+		Form blossom: B = shortest_path(F,v,w)+[v]
+		G1 = G with all blossom nodes contracted into w
+		M1 = M with all blossom nodes contracted into w
+		P1 = find_aug_path(G1,M1)
+		if w ∈P then
+			P = P1 lifted with blossom B
+			return P
+		else
+			return P1
+	*/
+	return nil
+}
+
+func (b *blossomAlgo[K, V, W]) findAugmentingPath() ([]K, error) {
+	b.F = make(map[K][]K) // empty forest
+	b.parent = make(map[K]K)
+	b.dist = make(map[K]int)
+	expv := b.exposedVertices()
+	for _, v := range expv {
+		// Add v as single-node tree to F
+		// node_to_root(v) = v
+		b.F[v] = []K{}
+		b.parent[v] = v
+		b.dist[v] = 0
+	}
+	for v := range b.parent {
+		ns, err := b.g.Neighbours(v)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range ns {
+			w := n.Key
+			if b.M[v] == w {
+				continue
+			}
+			// unmarked edge e = (v,w)
+			if _, ok := b.parent[w]; !ok { // vertex w not in forest, it must be in M.
+				x := b.addToForest(v, w)
+				expv = append(expv, x)
+			} else {
+				if b.distToRoot(w)%2 == 0 {
+					var P []K
+					if b.root(w) != b.root(v) {
+						P = b.getAugmentingPath(v, w)
+					} else {
+						P = b.blossomRecursion(v, w)
+					}
+					return P, nil
+				}
+			}
+			// mark dege e
+			b.M[v] = w
+			b.M[w] = v
+		}
+	}
+	return nil, nil
+}
+
+func (b *blossomAlgo[K, V, W]) findMaxMaxthing() ([]Edge[K, W], error) {
+	var err error
+	if b.vtx, err = b.g.AllVertexes(); err != nil {
+		return nil, err
+	}
+	b.M = make(map[K]K)
+	for {
+		path, err := b.findAugmentingPath()
+		if err != nil {
+			return nil, err
+		}
+		if len(path) == 0 {
+			break
+		}
+		// Add alternating edges of P to M in parallel
+		for i := 1; i < len(path)-1; i += 2 {
+			delete(b.M, path[i])
+			delete(b.M, path[i+1])
+		}
+		for i := 0; i < len(path); i += 2 {
+			b.M[path[i]] = path[i+1]
+			b.M[path[i+1]] = path[i]
+		}
+	}
+	var res []Edge[K, W]
+	mp := make(map[K]struct{})
+	for u, v := range b.M {
+		if _, ok := mp[u]; ok {
+			continue
+		}
+		e, _ := b.g.GetEdge(u, v)
+		res = append(res, e[0])
+		mp[u] = struct{}{}
+		mp[v] = struct{}{}
+	}
+	return res, nil
+}
+
+type maxMatchingBlossom[K comparable, V any, W number] struct {
+	graph Graph[K, V, W]
+	vtx   []Vertex[K, V]
+	idx   map[K]int
+	n     int
+	m     int // m = 3*n/2
+
+	mate []int
+	// an array of length m.
+	// For each vertex/blossom u, bl[u] will be the blossom immediately containing u.
+	// If u is not contracted inside of another blossom, then bl[u] = u
+	bl []int
+	// for each blossom u, b[u] will be a list of all the vertices/blossoms that were contracted to form u.
+	// They will be listed in cyclic order, where the first vertex/blossom in the list will be the "special"
+	//  one with an outgoing matched edge.
+	b [][]int
+	// an array of length m. For each vertex/blossom u,
+	// d[u] will be a label/mark telling its status in the search forest.
+	// We will assign d[u] = 0 if it's unvisited,
+	// d[u] = 1 if it's an even depth from the root,
+	// and d[u] = 2 if it's an odd depth from the root.
+	d []int
+	// an array of length m.
+	// For each vertex/blossom u, p[u] will be the parent vertex/blossom of u in the search forest.
+	// However, we will be a bit relaxed: we also allow it if p[u] is contracted inside the real parent,
+	// or even contracted multiple times, as long as the vertex/blossom at the top is the real parent in the contracted graph.
+	p []int
+	// g is a table of size m*m, storing information about the unmatched edges.
+	// For each pair of vertices/blossoms (u,v), then g[u][v] = -1 if there is no unmatched edge between them.
+	// (which means edge (u,v) not on graph,or (u,v) in current matching)
+	// Otherwise if there's an unmatched edge, then we will use this table entry to help us with lifting augmenting paths.
+	// When we're lifting a path through a blossom, we would like to know which vertices inside the blossom need to be connected.
+	// So if u is a blossom, then g[u][v] will store the vertex inside the blossom of u that connects to v.
+	// Otherwise if u is a vertex, then g[u][v] = u.
+	g [][]int
+}
+
+func (mm *maxMatchingBlossom[K, V, W]) init() error {
+	var err error
+	if mm.vtx, err = mm.graph.AllVertexes(); err != nil {
+		return err
+	}
+	mm.n = len(mm.vtx)
+	mm.idx = make(map[K]int)
+	for i, v := range mm.vtx {
+		mm.idx[v.Key] = i
+	}
+	m := len(mm.vtx) + len(mm.vtx)/2
+	mm.mate = make([]int, m)
+	for i := 0; i < m; i++ {
+		mm.mate[i] = -1
+	}
+	mm.b = make([][]int, m)
+	mm.bl = make([]int, m)
+	mm.d = make([]int, m)
+	mm.p = make([]int, m)
+	mm.g = make([][]int, m)
+	for i := range mm.g {
+		mm.g[i] = make([]int, m)
+		for j := 0; j < m; j++ {
+			mm.g[i][j] = -1
+		}
+	}
+	mm.m = m
+	// init g
+	edges, err := mm.graph.AllEdges()
+	for _, e := range edges {
+		u, v := mm.idx[e.Head], mm.idx[e.Tail]
+		mm.addEdge(u, v)
+	}
+	return nil
+}
+
+// traces the path to the root, where we only take vertices/blossoms in the contracted graph.
+// This is done by repeatedly finding the blossom at the top of the blossom chain, and following the parent pointers par.
+func (mm *maxMatchingBlossom[K, V, W]) trace(x int) []int {
+	var p []int
+	for {
+		for mm.bl[x] != x {
+			x = mm.bl[x]
+		}
+		if len(p) != 0 && p[len(p)-1] == x {
+			break
+		}
+		p = append(p, x)
+		x = mm.p[x]
+	}
+	return p
+}
+
+// If find a edge between vertices x and y that construct a blossom in the search forest, and we need to contract it.
+// Let's say that c should be the ID of the new blossom,
+// and we've constructed the paths from x and y to the root (call the paths vx and vy).
+// First, we need to find the special vertex of the blossom, which is given by the lowest common ancestor of x and y.
+// So, we can say r is the last common element of the vectors vx and vy, and delete everything above and including r.
+
+// Next, we should define b[c] to be the blossom vertices in cyclic order, starting at r.
+// Simply append vx in reverse order, then vy in forward order.
+
+// Finally, we should make the g table correct for the blossom c.
+// Simply look at each vertex z in the blossom and each edge of z.
+func (mm *maxMatchingBlossom[K, V, W]) contract(c int, _, _ int, vx, vy []int) {
+	mm.b[c] = make([]int, 0)
+	i, j := len(vx)-1, len(vy)-1
+	r := vx[i]
+	for i >= 0 && j >= 0 && vx[i] == vy[j] {
+		r = vx[i]
+		i--
+		j--
+	}
+	mm.b[c] = append(mm.b[c], r)
+	for ; i >= 0; i-- {
+		mm.b[c] = append(mm.b[c], vx[i])
+	}
+	for k := 0; k <= j; k++ {
+		mm.b[c] = append(mm.b[c], vy[k])
+	}
+	//
+	for i := 0; i <= c; i++ {
+		mm.g[c][i] = -1
+		mm.g[i][c] = -1
+	}
+	for _, z := range mm.b[c] {
+		mm.bl[z] = c
+		for i := 0; i < c; i++ {
+			if mm.g[z][i] != -1 {
+				mm.g[c][i] = z
+				mm.g[i][c] = mm.g[i][z]
+			}
+		}
+	}
+}
+
+// Let's say that we have an augmenting path in the contracted graph, and we want to lift it back to the original graph.
+// The input will be a list of blossoms, where each one connects to the next,
+// and we want to expand all of the blossoms except the last one, and return the list A of vertices.
+//
+// The input list will work like a stack. If the top is a vertex, we will add it to the output and continue.
+// Otherwise, we will replace the top blossom with the path of blossoms/vertices inside it such that it's still
+// an alternating path. The variables represent the following information:
+//
+//	z: the top of the stack
+//	w: the next element on the stack after z
+//	i: the index in the b[z] list of the last vertex on our lifted path
+//	j: the index in the b[z] list of the first vertex on our lifted path
+//	dif: the direction we should advance i until j so that the path is correctly alternating.
+//
+// As you can see, we use the g table to find the vertices/blossoms at the level below z.
+// We also use the parity of the size of A to determine if the incoming edge is matched or unmatched.
+func (mm *maxMatchingBlossom[K, V, W]) lift(path *stack[int]) []int {
+	var A []int
+	for path.size() >= 2 {
+		z, _ := path.pop()
+		if z < mm.n {
+			A = append(A, z)
+			continue
+		}
+		w := path.top()
+		var i, j int
+		if len(A)%2 == 0 {
+			i = mm.search(mm.b[z], mm.g[z][w])
+		}
+		if len(A)%2 == 1 {
+			j = mm.search(mm.b[z], mm.g[z][A[len(A)-1]])
+		}
+		k := len(mm.b[z])
+		dif := k - 1
+		if (len(A)%2 == 0 && i%2 == 1) || (len(A)%2 != 0 && j%2 == 0) {
+			dif = 1
+		}
+		for i != j {
+			path.push(mm.b[z][i])
+			i = (i + dif) % k
+		}
+		path.push(mm.b[z][i])
+	}
+	return A
+}
+
+func (mm *maxMatchingBlossom[K, V, W]) search(arr []int, t int) int {
+	for i, n := range arr {
+		if n == t {
+			return i
+		}
+	}
+	return len(arr)
+}
+
+func (mm *maxMatchingBlossom[K, V, W]) findAugmentingPath() ([]int, error) {
+	for i := 0; i < len(mm.d); i++ {
+		mm.d[i] = 0
+	}
+	que := newFIFO[int]()
+	for i := 0; i < mm.m; i++ {
+		mm.bl[i] = i
+	}
+	for i := 0; i < mm.n; i++ {
+		if mm.mate[i] == -1 {
+			que.push(i)
+			mm.p[i] = i
+			mm.d[i] = 1
+		}
+	}
+	c := mm.n
+	for !que.empty() {
+		x, _ := que.pop()
+		if mm.bl[x] != x {
+			continue
+		}
+		var flag bool
+		for y := 0; y < c && !flag; y++ {
+			if mm.bl[y] == y && mm.g[x][y] != -1 {
+				switch mm.d[y] {
+				case 0:
+					mm.p[y] = x
+					mm.d[y] = 2
+					mm.p[mm.mate[y]] = y
+					mm.d[mm.mate[y]] = 1
+					que.push(mm.mate[y])
+				case 1:
+					vx := mm.trace(x)
+					vy := mm.trace(y)
+					if vx[len(vx)-1] == vy[len(vy)-1] {
+						mm.contract(c, x, y, vx, vy)
+						que.push(c)
+						mm.p[c] = mm.p[mm.b[c][0]]
+						mm.d[c] = 1
+						c++
+					} else {
+						// find a aug path
+						sx := mm.path(y, vx...)
+						sy := mm.path(x, vy...)
+						A := mm.lift(sx)
+						B := mm.lift(sy)
+						for i := 0; i < len(B)/2; i++ {
+							B[i], B[len(B)-i-1] = B[len(B)-i-1], B[i]
+						}
+						A = append(A, B...)
+						return A, nil
+					}
+					flag = true
+				default:
+				}
+			}
+		}
+	}
+	return nil, nil
+}
+
+func (mm *maxMatchingBlossom[K, V, W]) path(head int, tail ...int) *stack[int] {
+	s := newStack[int]()
+	s.push(head)
+	for _, n := range tail {
+		s.push(n)
+	}
+	return s
+}
+
+// First, the algorithm will repeatedly search for augmenting paths until we can't find one and return.
+// So we have one big outer loop to count the number of edges in our matching.
+// Next, to start an iteration we reset all our variables, and assume the g table is correct for the vertices.
+// We will use a BFS-like process for the search forest, but something like DFS should also work.
+// We look for all the exposed vertices and add them to the queue.
+// The variable c will be used to count the total number of vertex/blossom objects,
+// and we'll increment it with each blossom contraction.
+
+// When we dequeue a vertex x, assuming it's not contained in another blossom,
+// we look at all unmatched edges leaving it. Say we're looking at an edge to another vertex y.
+// There are several cases:
+//  1. The vertex y is not visited. In this case, we will mark y and its mate as visited, and add mate[y] to the queue.
+//  2. The vertex y is visited and has an odd distance to the root. In this case, we should do nothing.
+//  3. The vertex y is visited and has an even distance to the root. Here, we should trace the
+//     paths from x and y to the root to determine if this event is a blossom contraction or an augmenting path.
+//     In either case, we should break from the inner loop.
+func (mm *maxMatchingBlossom[K, V, W]) find() ([]Edge[K, W], error) {
+	if err := mm.init(); err != nil {
+		return nil, err
+	}
+	for {
+		A, err := mm.findAugmentingPath()
+		if err != nil {
+			return nil, err
+		}
+		if len(A) == 0 {
+			break
+		}
+		for i := 0; i < len(A); i += 2 {
+			mm.match(A[i], A[i+1])
+			if i+2 < len(A) {
+				mm.addEdge(A[i+1], A[i+2])
+			}
+		}
+	}
+	var res []Edge[K, W]
+	for u := 0; u < mm.n; u++ {
+		v := mm.mate[u]
+		if u < v {
+			e, err := mm.graph.GetEdge(mm.vtx[u].Key, mm.vtx[v].Key)
+			if err != nil {
+				return nil, err
+			} else {
+				res = append(res, e[0])
+			}
+		}
+	}
+	return res, nil
+}
+
+// We use 'addEdge' to create an unmatched edge, and 'match' to change an unmatched edge to matched.
+func (mm *maxMatchingBlossom[K, V, W]) match(u, v int) {
+	mm.g[u][v] = -1
+	mm.g[v][u] = -1
+	mm.mate[u] = v
+	mm.mate[v] = u
+}
+
+func (mm *maxMatchingBlossom[K, V, W]) addEdge(u, v int) {
+	mm.g[u][v] = u
+	mm.g[v][u] = v
+}
+
+// Micali-Vazirani algorithm for maximum cardinality matching in general graphs.
+type maxMatchingMV[K comparable, V any, W number] struct {
+	graph Graph[K, V, W]
 }

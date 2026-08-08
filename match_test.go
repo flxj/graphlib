@@ -100,14 +100,6 @@ func bwmG2() {
 	fmt.Println("=======> g2 pass")
 }
 
-func testBWM(maximum bool) {
-	if maximum {
-		bwmG2()
-	} else {
-		bwmG1()
-	}
-}
-
 func mvcG1() {
 	g, _ := NewBipartite[int, any, int](false, "g1")
 	A := []Vertex[int, any]{
@@ -238,20 +230,31 @@ func mvcG2() {
 	fmt.Println("=======> g2 pass")
 }
 
-func testMVC() {
-	mvcG1()
-	mvcG2()
+func testMaxMatching() {
+	g := PetersenGraph()
+	m, err := MaxMatchingBlossom(g)
+	if err != nil {
+		fmt.Println(g.Name())
+		panic(err.Error())
+	}
+	if len(m) != 5 {
+		panic(fmt.Sprintf("%s get mm=%d, but expected=%d", g.Name(), len(m), 5))
+	}
+
 }
 
 func TestMatching(t *testing.T) {
 	args := flag.Args()
 	switch args[0] {
 	case "mvc":
-		testMVC()
+		mvcG1()
+		mvcG2()
 	case "bwm_min":
-		testBWM(false)
+		bwmG1()
 	case "bwm_max":
-		testBWM(true)
+		bwmG2()
+	case "max":
+		testMaxMatching()
 	default:
 	}
 }

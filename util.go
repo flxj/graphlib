@@ -297,6 +297,10 @@ func newStack[K comparable]() *stack[K] {
 	return &stack[K]{}
 }
 
+func (s *stack[K]) size() int {
+	return s.idx
+}
+
 func (s *stack[K]) empty() bool {
 	return s.idx == 0
 }
@@ -346,6 +350,10 @@ func newFIFO[K comparable]() *fifo[K] {
 	return &fifo[K]{}
 }
 
+func (f *fifo[K]) size() int {
+	return f.tail - f.head
+}
+
 func (f *fifo[K]) empty() bool {
 	return f.head == f.tail
 }
@@ -365,6 +373,22 @@ func (f *fifo[K]) pop() (K, bool) {
 		k = f.elems[f.head]
 		f.head++
 		return k, true
+	}
+	return k, false
+}
+
+func (f *fifo[K]) front() (K, bool) {
+	var k K
+	if !f.empty() {
+		return f.elems[f.head], true
+	}
+	return k, false
+}
+
+func (f *fifo[K]) back() (K, bool) {
+	var k K
+	if !f.empty() {
+		return f.elems[f.tail-1], true
 	}
 	return k, false
 }
