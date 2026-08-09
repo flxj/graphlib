@@ -24,7 +24,7 @@
 
 ✔️ **Graph algorithm:**
 
-* Graph traversal (BFS, DFS)
+* Graph traversal (BFS, DFS,LexBFS/DFS)
 * Shortest path (single source, multiple sources, negative weight)
 * Calculate maximum flow
 * Bipartite matching
@@ -47,6 +47,8 @@
 * Splay tree
 * LinkCut tree
 * Disjoint set
+* Difference Array
+* Heap
 
 ### Getting started
 
