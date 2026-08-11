@@ -16,6 +16,10 @@
 
 package graphlib
 
+import (
+	"math/rand"
+)
+
 type stNode[K any, V any] struct {
 	key    K
 	val    V
@@ -220,4 +224,469 @@ func (s *SplayTree[K, V]) Compare(a, b K) int {
 
 func (s *SplayTree[K, V]) Len() int {
 	return s.count
+}
+
+func (s *SplayTree[K, V]) Min() (k K, v V, ok bool) {
+	p := s.root
+	for p != nil {
+		if p.left == nil {
+			break
+		}
+		p = p.left
+	}
+	if p != nil {
+		k, v, ok = p.key, p.val, true
+		s.splay(p)
+	}
+	return
+}
+
+func (s *SplayTree[K, V]) Max() (k K, v V, ok bool) {
+	p := s.root
+	for p != nil {
+		if p.right == nil {
+			break
+		}
+		p = p.right
+	}
+	if p != nil {
+		k, v, ok = p.key, p.val, true
+		s.splay(p)
+	}
+	return
+}
+
+type treapNode[K any, V any] struct {
+	key K
+	val V
+	pri int32
+	siz int
+	l   *treapNode[K, V]
+	r   *treapNode[K, V]
+}
+
+func (t *treapNode[K, V]) size(node *treapNode[K, V]) int {
+	if node == nil {
+		return 0
+	}
+	return node.siz
+}
+
+func (t *treapNode[K, V]) resize() {
+	t.siz = t.size(t.l) + t.size(t.r) + 1
+}
+
+// Non-rotating Treap
+type Treap[K any, V any] struct {
+	comp CompareFunc[K]
+	root *treapNode[K, V]
+}
+
+func NewTreap[K any, V any](comp CompareFunc[K]) *Treap[K, V] {
+	return &Treap[K, V]{comp: comp}
+}
+
+func (t *Treap[K, V]) Len() int {
+	if t.root != nil {
+		return t.root.siz
+	}
+	return 0
+}
+
+func (t *Treap[K, V]) Compare(a, b K) int {
+	return t.comp(a, b)
+}
+
+func (t *Treap[K, V]) newNode(k K, v V) *treapNode[K, V] {
+	return &treapNode[K, V]{
+		key: k,
+		val: v,
+		pri: rand.Int31(),
+		siz: 1,
+	}
+}
+
+func (t *Treap[K, V]) insert(root, item *treapNode[K, V]) *treapNode[K, V] {
+	if root == nil {
+		return item
+	}
+	if t.comp(root.key, item.key) == 0 {
+		root.val = item.val // just update.
+		return root
+	} else if root.pri < item.pri {
+		l, r := t.split(root, item.key)
+		p := r
+		for ; p != nil; p = p.l {
+			if p.l == nil {
+				break
+			}
+		}
+		if p == nil || t.comp(p.key, item.key) != 0 {
+			item.l, item.r = l, r
+			item.resize()
+			return item
+		}
+		if t.comp(p.key, item.key) == 0 {
+			p.val = item.val
+		}
+		p = t.merge(l, r)
+		return p
+	} else {
+		if t.comp(root.key, item.key) < 0 {
+			root.r = t.insert(root.r, item)
+		} else {
+			root.l = t.insert(root.l, item)
+		}
+		root.resize()
+		return root
+	}
+}
+
+// Insert a pair of key value data, update in place if the key already exists.
+func (t *Treap[K, V]) Insert(k K, v V) {
+	t.root = t.insert(t.root, t.newNode(k, v))
+}
+
+// Query the value data corresponding to the key. If the key does not exist,
+// return a null value and a false flag.
+func (t *Treap[K, V]) Search(k K) (v V, ok bool) {
+	for p := t.root; p != nil; {
+		if t.comp(p.key, k) == 0 {
+			return p.val, true
+		} else if t.comp(p.key, k) <= 0 {
+			p = p.r
+		} else {
+			p = p.l
+		}
+	}
+	return
+}
+
+// Return the current Treap root element.
+func (t *Treap[K, V]) Root() (k K, v V, ok bool) {
+	if t.root != nil {
+		k, v, ok = t.root.key, t.root.val, true
+	}
+	return
+}
+
+// Query the ranking of the key.
+func (t *Treap[K, V]) Rank(k K) (int, bool) {
+	var n int
+	for p := t.root; p != nil; {
+		if t.comp(p.key, k) == 0 {
+			n = n + p.size(p.l) + 1
+			return n, true
+		} else if t.comp(p.key, k) > 0 {
+			p = p.l
+		} else {
+			n = n + p.size(p.l) + 1
+			p = p.r
+		}
+	}
+	return 0, false
+}
+
+// Query data based on ranking.
+func (t *Treap[K, V]) Nth(n int) (k K, v V, ok bool) {
+	if n <= 0 || n > t.Len() {
+		return
+	}
+	for p := t.root; p != nil; {
+		if p.l != nil {
+			if p.l.siz >= n {
+				p = p.l
+				continue
+			} else {
+				n -= p.l.siz
+			}
+		}
+		if n == 1 {
+			return p.key, p.val, true
+		}
+		n--
+		p = p.r
+	}
+	return
+}
+
+func (t *Treap[K, V]) erase(cur *treapNode[K, V], k K) (p *treapNode[K, V], v V, ok bool) {
+	if cur == nil {
+		return
+	}
+	if t.comp(cur.key, k) == 0 {
+		p, v, ok = t.merge(cur.l, cur.r), cur.val, true
+		return
+	} else if t.comp(cur.key, k) > 0 {
+		cur.l, v, ok = t.erase(cur.l, k)
+	} else {
+		cur.r, v, ok = t.erase(cur.r, k)
+	}
+	if ok {
+		cur.resize()
+	}
+	return cur, v, ok
+}
+
+// Delete Element.
+func (t *Treap[K, V]) Delete(k K) (v V, ok bool) {
+	t.root, v, ok = t.erase(t.root, k)
+	return
+}
+
+// Clear the current Treap.
+func (t *Treap[K, V]) Clean() {
+	t.root = nil
+}
+
+func (t *Treap[K, V]) Min() (k K, v V, ok bool) {
+	for p := t.root; p != nil; p = p.l {
+		if p.l == nil {
+			return p.key, p.val, true
+		}
+	}
+	return
+}
+
+func (t *Treap[K, V]) Max() (k K, v V, ok bool) {
+	for p := t.root; p != nil; p = p.r {
+		if p.r == nil {
+			return p.key, p.val, true
+		}
+	}
+	return
+}
+
+func (t *Treap[K, V]) Cursor() Cursor[K, V] {
+	return &treapCursor[K, V]{
+		comp: t.comp,
+		root: t.root,
+		stk:  newStack[*treapPath[K, V]](),
+	}
+}
+
+// separates tree root in 2 subtrees l and r.
+// so that l contains all elements with key < k, and r contains all elements with key>=k.
+func (t *Treap[K, V]) split(root *treapNode[K, V], k K) (l, r *treapNode[K, V]) {
+	if root == nil {
+		return nil, nil
+	} else if t.comp(root.key, k) < 0 {
+		l, r := t.split(root.r, k)
+		root.r = l
+		root.resize()
+		return root, r
+	} else if t.comp(root.key, k) == 0 {
+		l := root.l
+		root.l = nil
+		root.resize()
+		return l, root
+	} else {
+		l, r := t.split(root.l, k)
+		root.l = r
+		root.resize()
+		return l, root
+	}
+}
+
+func (t *Treap[K, V]) splitByRank(root *treapNode[K, V], rk int) (l, m, r *treapNode[K, V]) {
+	return nil, nil, nil
+}
+
+// combines two subtrees t1 t2,and returns the new tree.
+// It works under the assumption that are ordered (all keys in t1 are smaller than keys in t2)
+func (t *Treap[K, V]) merge(t1, t2 *treapNode[K, V]) *treapNode[K, V] {
+	if t1 == nil || t2 == nil {
+		if t1 == nil {
+			return t2
+		} else {
+			return t1
+		}
+	}
+	if t1.pri > t2.pri {
+		t1.r = t.merge(t1.r, t2)
+		t1.resize()
+		return t1
+	} else {
+		t2.l = t.merge(t1, t2.l)
+		t2.resize()
+		return t2
+	}
+}
+
+func TreapBuild[K any, V any](keys []K, vals []V, comp CompareFunc[K]) *Treap[K, V] {
+	// check sorted
+	return nil
+}
+
+func TreapSplit[K any, V any](t *Treap[K, V], k K) (*Treap[K, V], *Treap[K, V]) {
+	if t == nil {
+		return nil, nil
+	}
+	l, r := t.split(t.root, k)
+	tl := &Treap[K, V]{root: l}
+	tr := &Treap[K, V]{root: r}
+	return tl, tr
+}
+
+func TreapMerge[K any, V any](t1, t2 *Treap[K, V], k K) *Treap[K, V] {
+	if t1 == nil {
+		return t2
+	}
+	if t2 == nil {
+		return t1
+	}
+	r := t1.merge(t1.root, t2.root)
+	return &Treap[K, V]{root: r}
+}
+
+type treapPath[K any, V any] struct {
+	node    *treapNode[K, V]
+	visited bool
+}
+
+type treapCursor[K any, V any] struct {
+	comp CompareFunc[K]
+	root *treapNode[K, V]
+	prev *treapNode[K, V]
+	stk  *stack[*treapPath[K, V]]
+}
+
+func (c *treapCursor[K, V]) Open() error { return nil }
+func (c *treapCursor[K, V]) Close()      {}
+
+func (c *treapCursor[K, V]) reset() {
+	c.stk.clean()
+	c.prev = nil
+}
+
+// The Seek(key) method locates the cursor at the key.
+// If the key does not exist, it locates at the next key and returns it
+func (c *treapCursor[K, V]) Seek(key K) (k K, v V, ok bool) {
+	c.reset()
+	for p := c.root; p != nil; {
+		c.stk.push(&treapPath[K, V]{node: p})
+		if c.comp(p.key, key) == 0 {
+			return p.key, p.val, true
+		} else if c.comp(p.key, key) > 0 {
+			p = p.l
+		} else {
+			p = p.r
+		}
+	}
+	if tp := c.stk.top(); tp != nil {
+		tp.visited = true
+		k, v = tp.node.key, tp.node.val
+	}
+	return
+}
+
+// The First method locates the cursor at the minimum element of the set.
+// If there is no minimum element (the set is empty), it returns false
+func (c *treapCursor[K, V]) First() (k K, v V, ok bool) {
+	c.reset()
+	for p := c.root; p != nil; p = p.l {
+		c.stk.push(&treapPath[K, V]{node: p})
+	}
+	if tp := c.stk.top(); tp != nil {
+		tp.visited = true
+		k, v, ok = tp.node.key, tp.node.val, true
+	}
+	return
+}
+
+// The Last method locates the cursor at the maximum element of the set.
+// If there is no maximum element (the set is empty), it returns false.
+func (c *treapCursor[K, V]) Last() (k K, v V, ok bool) {
+	c.reset()
+	for p := c.root; p != nil; p = p.r {
+		c.stk.push(&treapPath[K, V]{node: p})
+	}
+	if tp := c.stk.top(); tp != nil {
+		tp.visited = true
+		k, v, ok = tp.node.key, tp.node.val, true
+	}
+	return
+}
+
+// HasNext returns whether the next element exists relative to the current cursor position.
+func (c *treapCursor[K, V]) HasNext() bool {
+	var prev *treapNode[K, V]
+	for !c.stk.empty() {
+		p := c.stk.top()
+		if prev != nil && c.comp(prev.key, p.node.key) >= 0 {
+			pp, _ := c.stk.pop()
+			prev = pp.node
+			continue
+		}
+		// try to move cursor to next element,but not visited it.
+		if !p.visited {
+			return true
+		}
+		// subtree not nil
+		if p.node.r != nil {
+			if prev == nil || c.comp(prev.key, p.node.key) < 0 { // p's right subtree not visited.
+				for q := p.node.r; q != nil; q = q.l {
+					c.stk.push(&treapPath[K, V]{node: q})
+				}
+				return true
+			}
+		}
+		pp, _ := c.stk.pop()
+		prev = pp.node
+	}
+	return false
+}
+
+// Next() moves the cursor backwards and returns the element.
+// If the element does not exist, it returns a type zero value.
+func (c *treapCursor[K, V]) Next() (k K, v V) {
+	var prev *treapNode[K, V]
+	for !c.stk.empty() {
+		p := c.stk.top()
+		//
+		if prev != nil && c.comp(prev.key, p.node.key) >= 0 {
+			pp, _ := c.stk.pop()
+			prev = pp.node
+			continue
+		}
+		// current node not visited,so return it.
+		if !p.visited {
+			p.visited = true
+			return p.node.key, p.node.val
+		}
+		// subtree not nil
+		if p.node.r != nil {
+			if prev == nil || c.comp(prev.key, p.node.key) < 0 { // p's right subtree not visited.
+				for q := p.node.r; q != nil; q = q.l {
+					c.stk.push(&treapPath[K, V]{node: q})
+				}
+				pp := c.stk.top()
+				pp.visited = true
+				return pp.node.key, pp.node.val
+			}
+		}
+		pp, _ := c.stk.pop()
+		prev = pp.node
+	}
+	return
+}
+
+// HasPrev() returns whether the previous element exists relative to the current cursor position.
+func (c *treapCursor[K, V]) HasPrev() bool {
+	return false
+}
+
+// Prev() moves the cursor forward and returns the element.
+// If the element does not exist, it returns a type value of zero.
+func (c *treapCursor[K, V]) Prev() (k K, v V) {
+	return
+}
+
+type ScapegoatTree[K any, V any] struct { //Todo
+}
+
+type RedBlackTree[K any, V any] struct { //TODO
+}
+
+type VanEmdeBoasTree struct { // TODO
 }

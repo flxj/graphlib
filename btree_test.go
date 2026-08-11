@@ -276,7 +276,7 @@ func BenchmarkBTree(b *testing.B) {
 }
 
 func testSkipListRW(n int, randKey bool) {
-	fmt.Println("===========> testBTreeReadWrite")
+	fmt.Println("===========> testSkipLisReadWrite")
 	k, v := generateIntStr(0, n, randKey, 20)
 	t := NewSkipList[int, string](&SkipListConfig{}, func(a, b int) int {
 		if a > b {
@@ -315,6 +315,7 @@ func testSkipListRW(n int, randKey bool) {
 	fmt.Println("===========> 3 test insert...")
 	minK, _, _ := t.First()
 	maxK, _, _ := t.Last()
+
 	kk, vv := generateIntStr(maxK+1, n, !randKey, 10)
 	for i := 0; i < n/2; i++ {
 		kk[i] = minK - kk[i]
@@ -369,7 +370,7 @@ func testSkipListRW(n int, randKey bool) {
 }
 
 func testSkipListCursor(n int, randKey bool) {
-	fmt.Printf("========> testBTreeCursor")
+	fmt.Printf("========> testSkiplistCursor")
 	ks, vs := generateIntStr(0, n, randKey, 5)
 	t := NewSkipList[int, string](&SkipListConfig{}, func(a, b int) int {
 		if a > b {

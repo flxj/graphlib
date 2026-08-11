@@ -49,6 +49,7 @@
 * Disjoint set
 * Difference Array
 * Heap
+* Treap
 
 ### Getting started
 

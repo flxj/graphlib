@@ -340,6 +340,10 @@ func (s *stack[K]) top() (k K) {
 	return
 }
 
+func (s *stack[K]) clean() {
+	s.idx = 0
+}
+
 type fifo[K comparable] struct {
 	elems []K
 	head  int
