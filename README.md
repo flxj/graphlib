@@ -42,14 +42,15 @@
 
 ✔️ **Data Structure:**
 
-* Btree
+* BTree
 * SkipList
-* Splay tree
-* LinkCut tree
-* Disjoint set
+* Splay Tree
+* LinkCut Tree
+* Disjoint Set
 * Difference Array
 * Heap
 * Treap
+* Scapegoat Tree
 
 ### Getting started
 
