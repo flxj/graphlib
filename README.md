@@ -51,6 +51,7 @@
 * Heap
 * Treap
 * Scapegoat Tree
+* RedBlack Tree
 
 ### Getting started
 

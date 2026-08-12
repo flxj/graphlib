@@ -226,7 +226,7 @@ func testLCT() {
 }
 
 func testTreapRW(n int, randKey bool) {
-	fmt.Println("===========> testTreapReadWrite")
+	fmt.Println("===========> test Treap ReadWrite")
 	k, v := generateIntStr(0, n, randKey, 20)
 	t := NewTreap[int, string](func(a, b int) int {
 		if a > b {
@@ -321,7 +321,108 @@ func testTreapRW(n int, randKey bool) {
 }
 
 func testSGTRW(n int, randKey bool) {
-	fmt.Println("===========> testSGTReadWrite")
+	fmt.Println("===========> test SGT ReadWrite")
+	k, v := generateIntStr(0, n, randKey, 20)
+	t := NewScapegoatTree[int, string](0.75, func(a, b int) int {
+		if a > b {
+			return 1
+		} else if a == b {
+			return 0
+		}
+		return -1
+	})
+	for i := 0; i < n; i++ {
+		t.Insert(k[i], v[i])
+	}
+	oldLen := t.Len()
+	fmt.Printf("==========> 0 init date, size=%d\n", oldLen)
+	fmt.Println("=========> 1 test random read...")
+	// random read
+	for i := 0; i < n/2; i++ {
+		// read
+		j := rand.Intn(n)
+		val, ok := t.Search(k[j])
+		if !ok || val != v[j] {
+			panic(fmt.Sprintf("[ERROR] %d'th read key=%d,expected_value=%s, actual_value=%s", i, k[j], v[j], val))
+		}
+	}
+	for i := 0; i < n/4; i++ {
+		val, ok := t.Search(k[i])
+		if !ok || val != v[i] {
+			panic(fmt.Sprintf("[ERROR] read key=%d,expected_value=%s, actual_value=%s", k[i], v[i], val))
+		}
+	}
+	fmt.Println("===========> 2 test insert...")
+	minK, _, ok := t.Min()
+	if !ok {
+		panic("min error")
+	}
+	maxK, _, ok := t.Max()
+	if !ok {
+		panic("max error")
+	}
+	M := -1
+	for _, x := range k {
+		if x > M {
+			M = x
+		}
+	}
+	kk, vv := generateIntStr(maxK+1, n, !randKey, 10)
+	for i := 0; i < n/2; i++ {
+		kk[i] = minK - kk[i]
+	}
+	for i := 0; i < n; i++ {
+		t.Insert(kk[i], vv[i])
+	}
+	if t.Len() != oldLen+n {
+		panic(fmt.Sprintf("[ERROR] insert err size=%d,expected_size=%d", t.Len(), oldLen+n))
+	}
+	fmt.Printf("===========> insert %d date, now size=%d\n", n, t.Len())
+
+	fmt.Println("===========> 3 test update...")
+	for i := 0; i < n/2; i++ {
+		j := rand.Intn(n)
+		v[j] = seqStr("value-update-", i)
+		t.Insert(k[j], v[j])
+		val, ok := t.Search(k[j])
+		if !ok || val != v[j] {
+			panic(fmt.Sprintf("[ERROR] update failure key=%d, expected_value=%s, but actual_value=%s", k[j], v[j], val))
+		}
+	}
+	oldLen = t.Len()
+	fmt.Printf("===========> update %d date, now size=%d\n", n/2, oldLen)
+
+	fmt.Println("===========> 4 test delete1...")
+	for i := 0; i < n/4; i++ {
+		_, ok := t.Delete(k[i])
+		if !ok {
+			fmt.Printf("delete1 cannot del %d'th, key=%d\n", i, k[i])
+			panic("[ERROR] delete failure")
+		}
+	}
+	if t.Len() != oldLen-n/4 {
+		panic(fmt.Sprintf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), oldLen-n/4))
+	}
+	oldLen = t.Len()
+	fmt.Printf("===========> delete %d date, now size=%d\n", n/4, oldLen)
+
+	fmt.Println("===========> 5 test delete2...")
+	for i := n / 4; i < n; i++ {
+		_, ok := t.Delete(k[i])
+		if !ok {
+			panic("[ERROR] delete failure")
+		}
+	}
+	if t.Len() != oldLen+n/4-n {
+		panic(fmt.Sprintf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), n))
+	}
+	fmt.Printf("===========> delete %d date, now size=%d\n", n-n/4, t.Len())
+
+	fmt.Println("==========> test complete")
+}
+
+func testRedBlackTreeRW(n int, randKey bool) {
+	fmt.Println("===========> test RedBlackTree ReadWrite")
 	k, v := generateIntStr(0, n, randKey, 20)
 	t := NewScapegoatTree[int, string](0.75, func(a, b int) int {
 		if a > b {
@@ -432,6 +533,8 @@ func TestBST(t *testing.T) {
 		testTreapRW(100, true)
 	case "sgt":
 		testSGTRW(100, true)
+	case "rbt":
+		testRedBlackTreeRW(100, true)
 	default:
 	}
 }
