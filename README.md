@@ -42,13 +42,14 @@
 
 ✔️ **Data Structure:**
 
+* Stack/FIFO
 * BTree
 * SkipList
 * Splay Tree
 * LinkCut Tree
 * Disjoint Set
 * Difference Array
-* Heap
+* Heap/PriorityQueue
 * Treap
 * Scapegoat Tree
 * RedBlack Tree

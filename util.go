@@ -187,107 +187,6 @@ func runWithRetry(retry int, timeout time.Duration, f func() error) error {
 	}
 }
 
-type item[K comparable] struct {
-	key   K
-	value float64
-	index int // The index of the item in the heap.
-}
-
-/*
-type costHeap[K comparable] []*item[K]
-
-func (h costHeap[K]) Len() int { return len(h) }
-
-func (h costHeap[K]) Less(i, j int) bool {
-	return h[i].value > h[j].value
-}
-
-func (h costHeap[K]) Swap(i, j int) {
-	h[i], h[j] = h[j], h[i]
-	h[i].index = i
-	h[j].index = j
-}
-
-func (h *costHeap[K]) Push(x any) {
-	n := len(*h)
-	v := x.(*item[K])
-	v.index = n
-	*h = append(*h, v)
-}
-
-func (h *costHeap[K]) Pop() any {
-	old := *h
-	n := len(old)
-	item := old[n-1]
-	old[n-1] = nil  // avoid memory leak
-	item.index = -1 // for safety
-	*h = old[0 : n-1]
-	return item
-}
-
-type costQueue[K comparable] struct {
-	items    map[K]*item[K]
-	priority costHeap[K]
-}
-
-func newCostQueue[K comparable]() *costQueue[K] {
-	p := &costQueue[K]{
-		items: make(map[K]*item[K]),
-	}
-	p.Init()
-	return p
-}
-
-// update modifies the priority and value of an Item in the queue.
-func (pq *costQueue[K]) Update(k K, priority float64) {
-	v, ok := pq.items[k]
-	if ok {
-		v.value = priority
-		heap.Fix(&pq.priority, v.index)
-	}
-}
-
-func (pq *costQueue[K]) Push(item *item[K]) {
-	v, ok := pq.items[item.key]
-	if ok {
-		v.value = item.value
-		heap.Fix(&pq.priority, v.index)
-		return
-	}
-	//
-	pq.items[item.key] = item
-	pq.priority.Push(item)
-	heap.Fix(&pq.priority, item.index)
-}
-
-func (pq *costQueue[K]) Pop() *item[K] {
-	if len(pq.items) != 0 {
-		v := pq.priority.Pop().(*item[K])
-		if v != nil {
-			delete(pq.items, v.key)
-		}
-		return v
-	}
-	return nil
-}
-
-func (pq *costQueue[K]) Get(k K) float64 {
-	v, ok := pq.items[k]
-	if ok {
-		return v.value
-	}
-	return 0.0
-}
-
-func (pq *costQueue[K]) Len() int {
-	return pq.priority.Len()
-}
-
-func (pq *costQueue[K]) Init() {
-	heap.Init(&pq.priority)
-}
-*/
-
 type stack[K comparable] struct {
 	elems []K
 	idx   int
@@ -395,4 +294,114 @@ func (f *fifo[K]) back() (K, bool) {
 		return f.elems[f.tail-1], true
 	}
 	return k, false
+}
+
+type Stack[T any] struct {
+	elems []T
+	idx   int
+}
+
+func NewStack[T any]() *Stack[T] {
+	return &Stack[T]{}
+}
+
+func (s *Stack[T]) Len() int {
+	return s.idx
+}
+
+func (s *Stack[K]) IsEmpty() bool {
+	return s.idx == 0
+}
+
+func (s *stack[T]) Push(v T) {
+	if s.idx < len(s.elems) {
+		s.elems[s.idx] = v
+	} else {
+		s.elems = append(s.elems, v)
+	}
+	s.idx++
+}
+
+func (s *Stack[T]) Pop() (T, bool) {
+	var k T
+	if s.idx > 0 {
+		k = s.elems[s.idx-1]
+		s.idx--
+		return k, true
+	}
+	return k, false
+}
+
+func (s *Stack[T]) Contains(k T, comp CompareFunc[T]) bool {
+	for i := 0; i < s.idx; i++ {
+		if comp(s.elems[i], k) == 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Stack[T]) Top() (v T) {
+	if s.idx > 0 {
+		return s.elems[s.idx-1]
+	}
+	return
+}
+
+func (s *Stack[T]) Clean() {
+	s.idx = 0
+}
+
+type FIFO[T any] struct {
+	elems []T
+	head  int
+	tail  int
+}
+
+func NewFIFO[T any]() *FIFO[T] {
+	return &FIFO[T]{}
+}
+
+func (f *FIFO[T]) Len() int {
+	return f.tail - f.head
+}
+
+func (f *FIFO[T]) IsEmpty() bool {
+	return f.head == f.tail
+}
+
+func (f *FIFO[T]) Push(k T) {
+	if f.tail < len(f.elems) {
+		f.elems[f.tail] = k
+	} else {
+		f.elems = append(f.elems, k)
+	}
+	f.tail++
+}
+
+func (f *FIFO[T]) Pop() (k T, ok bool) {
+	if f.head != f.tail {
+		k = f.elems[f.head]
+		f.head++
+		return k, true
+	}
+	return k, false
+}
+
+func (f *FIFO[T]) Front() (k T, ok bool) {
+	if f.head != f.tail {
+		return f.elems[f.head], true
+	}
+	return k, false
+}
+
+func (f *FIFO[T]) Back() (k T, ok bool) {
+	if f.head != f.tail {
+		return f.elems[f.tail-1], true
+	}
+	return k, false
+}
+
+func (f *FIFO[T]) Clean() {
+	f.head, f.tail = 0, 0
 }

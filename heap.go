@@ -17,10 +17,10 @@
 package graphlib
 
 type element[K comparable, V any, P any] struct {
-	key   K
-	value V
-	rank  P
-	index int
+	key  K
+	val  V
+	rank P
+	idx  int
 }
 
 type binaryHeap[K comparable, V any, P any] struct {
@@ -60,7 +60,7 @@ func (h *binaryHeap[K, V, P]) push(e *element[K, V, P]) {
 	if h.ready {
 		// put the element to tail of heap.
 		n := h.length()
-		e.index = n
+		e.idx = n
 		h.elems = append(h.elems, e)
 		h.shift(n)
 	}
@@ -73,11 +73,11 @@ func (h *binaryHeap[K, V, P]) pop() *element[K, V, P] {
 
 	// exchange head and tail of elems.
 	h.elems[0], h.elems[h.length()-1] = h.elems[h.length()-1], h.elems[0]
-	h.elems[0].index = 0
+	h.elems[0].idx = 0
 
 	// remove the latest element.
 	e := h.elems[h.length()-1]
-	e.index = -1
+	e.idx = -1
 
 	h.elems = h.elems[0 : h.length()-1]
 
@@ -101,8 +101,8 @@ func (h *binaryHeap[K, V, P]) shiftUp(idx int) {
 			return
 		}
 		h.elems[i], h.elems[p] = h.elems[p], h.elems[i]
-		h.elems[i].index = i
-		h.elems[p].index = p
+		h.elems[i].idx = i
+		h.elems[p].idx = p
 		i = p
 	}
 }
@@ -124,16 +124,16 @@ func (h *binaryHeap[K, V, P]) shiftDown(idx int) {
 				return
 			}
 			h.elems[i], h.elems[p] = h.elems[p], h.elems[i]
-			h.elems[i].index = i
-			h.elems[p].index = p
+			h.elems[i].idx = i
+			h.elems[p].idx = p
 			i = p
 		} else if p1 < h.length() {
 			if h.less(h.elems[i].rank, h.elems[p1].rank) {
 				return
 			}
 			h.elems[i], h.elems[p1] = h.elems[p1], h.elems[i]
-			h.elems[i].index = i
-			h.elems[p1].index = p1
+			h.elems[i].idx = i
+			h.elems[p1].idx = p1
 			i = p1
 		} else {
 			return
@@ -160,7 +160,7 @@ func (q *priorityQueue[K, V, P]) Update(k K, priority P) {
 	v, ok := q.items[k]
 	if ok {
 		v.rank = priority
-		q.heap.shift(v.index)
+		q.heap.shift(v.idx)
 	}
 }
 
@@ -168,13 +168,13 @@ func (q *priorityQueue[K, V, P]) Update(k K, priority P) {
 func (q *priorityQueue[K, V, P]) Push(key K, value V, priority P) {
 	v, ok := q.items[key]
 	if ok {
-		v.value = value
+		v.val = value
 		v.rank = priority
-		q.heap.shift(v.index)
+		q.heap.shift(v.idx)
 		return
 	}
 	//
-	item := &element[K, V, P]{key: key, value: value, rank: priority}
+	item := &element[K, V, P]{key: key, val: value, rank: priority}
 	q.items[key] = item
 	q.heap.push(item)
 }
@@ -188,7 +188,7 @@ func (q *priorityQueue[K, V, P]) Pop() (K, V, P, bool) {
 		if p != nil {
 			delete(q.items, p.key)
 		}
-		return p.key, p.value, p.rank, true
+		return p.key, p.val, p.rank, true
 	}
 	return k, v, p, false
 }
@@ -246,4 +246,45 @@ func (h *Heap[K, V, P]) Pop() any {
 	v := h.elems[n-1]
 	h.elems = h.elems[:n-1]
 	return v
+}
+
+type PriorityQueue[T any, P any] struct {
+	heap *binaryHeap[int, T, P]
+}
+
+func NewPriorityQueue[T any, P any](less func(p1, p2 P) bool) *PriorityQueue[T, P] {
+	q := &PriorityQueue[T, P]{
+		heap: newBinaryHeap[int, T, P](less),
+	}
+	q.heap.init()
+	return q
+}
+
+// update modifies the priority and value of an Item in the queue.
+func (q *PriorityQueue[T, P]) Update(v T, priority P, comp CompareFunc[T]) {
+	for i := 0; i < len(q.heap.elems); i++ {
+		if comp(q.heap.elems[i].val, v) == 0 {
+			q.heap.elems[i].rank = priority
+			q.heap.shift(q.heap.elems[i].idx)
+			break
+		}
+	}
+}
+
+// update modifies the priority and value of an Item in the queue.
+func (q *PriorityQueue[T, P]) Push(value T, priority P) {
+	item := &element[int, T, P]{val: value, rank: priority}
+	q.heap.push(item)
+}
+
+func (q *PriorityQueue[T, P]) Pop() (v T, pr P, ok bool) {
+	p := q.heap.pop()
+	if p != nil {
+		v, pr, ok = p.val, p.rank, true
+	}
+	return
+}
+
+func (q *PriorityQueue[T, P]) Len() int {
+	return q.heap.length()
 }
