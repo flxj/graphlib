@@ -16,91 +16,124 @@
 
 package graphlib
 
-func isConnected[K comparable, V any, W number](g Graph[K, V, W], vertex K, edges map[K]Edge[K, W]) (bool, error) {
-	var nilK K
-	var v K
-	for {
-		rv, err := g.RandomVertex()
-		if err != nil {
-			return false, err
-		}
-		if rv.Key != vertex {
-			v = rv.Key
-			break
-		}
-	}
-	//
-	order := g.Order()
-	if vertex != nilK {
-		order--
-	}
-	visited := make(map[K]bool)
-	que := newFIFO[K]()
-	que.push(v)
-
-	for !que.empty() {
-		p, _ := que.pop()
-		if _, ok := visited[p]; !ok {
-			visited[p] = true
-		} else {
-			continue
-		}
-		//
-		es, err := g.IncidentEdges(p)
-		if err != nil {
-			return false, err
-		}
-
-		vs := make(map[K]bool)
-		for _, e := range es {
-			if e.Tail != vertex && e.Head != vertex {
-				_, ok := edges[e.Key]
-				if !ok {
-					vs[e.Tail] = true
-					vs[e.Head] = true
-				}
-			}
-		}
-		for k := range vs {
-			if k != p {
-				if _, ok := visited[k]; !ok {
-					que.push(v)
-				}
-			}
-		}
-	}
-
-	return len(visited) == order, nil
-}
-
-func IsCutvertex[K comparable, V any, W number](g Graph[K, V, W], vertex K) (bool, error) {
+func IsCutvertex[K comparable, V any, W number](g Graph[K, V, W], v K) (bool, error) {
 	if g == nil {
 		return false, errNilGraph
 	}
-	vs, err := g.Neighbours(vertex)
+	vs, err := g.Neighbours(v)
 	if err != nil {
 		return false, err
 	}
 	if len(vs) == 0 || len(vs) == 1 {
 		return false, nil
 	}
-
-	es := make(map[K]Edge[K, W])
-	for _, v := range vs {
-		ee, err := g.GetEdge(vertex, v.Key)
+	var s K
+	vtx := make(map[K]struct{})
+	for _, u := range vs {
+		vtx[u.Key] = struct{}{}
+		s = u.Key
+	}
+	visited := make(map[K]struct{})
+	// check if vtx can connected to each other when we delete vertex v
+	var dfs func(K) error
+	dfs = func(u K) error {
+		if _, ok := visited[u]; ok {
+			return nil
+		}
+		visited[u] = struct{}{}
+		if _, ok := vtx[u]; ok {
+			delete(vtx, u)
+		}
+		ns, err := g.Neighbours(u)
 		if err != nil {
-			return false, err
+			return err
 		}
-		for _, e := range ee {
-			es[e.Key] = e
+		for _, w := range ns {
+			if w.Key != v {
+				dfs(w.Key)
+			}
 		}
+		return nil
 	}
+	err = dfs(s)
+	return len(vtx) != 0, err
+}
 
-	ok, err := isConnected(g, vertex, es)
-	if err != nil {
-		return false, err
+/*
+The idea is to use DFS to track how each node connects to its ancestors using discovery time and low values.
+Here, discovery time records when a node is first visited, and the low value represents the earliest (smallest)
+discovery time reachable from that node, including via back edges.
+
+For every node, we try to determine whether its subtree has an alternative path to reach an ancestor.
+If such a path does not exist for a child subtree, then the current node becomes a critical connection point,
+and removing it would disconnect that subtree from the rest of the graph.
+By propagating these low values during DFS, we can efficiently identify all nodes whose removal increases
+the number of connected components, i.e., the articulation points.
+*/
+func FindCutVerties[K comparable, V any, W number](g Graph[K, V, W]) ([]K, error) {
+	if g == nil {
+		return nil, errNilGraph
 	}
-	return !ok, nil
+	// Articulation Point Conditions:
+	// A root vertex is an articulation point if it has two or more children in the DFS tree.
+	// A non-root vertex u is an articulation point if it has a child v such that low[v] >= disc[u].
+	disc := make(map[K]int)
+	low := make(map[K]int)
+	visited := make(map[K]int)
+
+	var time int
+	var dfs func(K, K) error
+	dfs = func(u, parent K) error {
+		visited[u] = 1
+		disc[u], low[u] = time, time
+		time++
+		var child int
+		vs, err := g.Neighbours(u)
+		if err != nil {
+			return err
+		}
+		for _, v := range vs {
+			// If v is not visited, then recursively visit it
+			if _, ok := visited[v.Key]; !ok {
+				child++
+				dfs(v.Key, u)
+				low[u] = min(low[u], low[v.Key])
+				// If u is not a root and low[v] is greater than or equal to disc[u],
+				// then u is an articulation point.
+				if parent != u && low[v.Key] >= disc[u] {
+					visited[u] = 2
+				}
+			} else {
+				// Update low value of u for back edge
+				if parent != v.Key {
+					low[u] = min(low[u], disc[v.Key])
+				}
+			}
+		}
+		if parent == u && child > 1 {
+			// u is a root vertex and has more than one dfs tree from it,so its a cut.
+			visited[u] = 2
+		}
+		return nil
+	}
+	vtx := g.AllVertexes()
+	for len(visited) != len(vtx) {
+		for _, v := range vtx {
+			if _, ok := visited[v.Key]; !ok {
+				err := dfs(v.Key, v.Key)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+	var cv []K
+	for k, v := range visited {
+		if v == 2 {
+			cv = append(cv, k)
+		}
+	}
+	return cv, nil
 }
 
 /*
