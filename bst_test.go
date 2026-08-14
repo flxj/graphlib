@@ -522,6 +522,61 @@ func testRedBlackTreeRW(n int, randKey bool) {
 	fmt.Println("==========> test complete")
 }
 
+func testTrieRW(n int) {
+	str := []string{
+		"a",
+		"b",
+		"abc",
+		"abcd",
+		"abcdefg",
+		"bcde",
+		"bcdef",
+		"bcdefghi",
+		"bgty",
+		"bgtyhn",
+		"nhy",
+		"nhyujm", //12
+		"abcdedtgb",
+		"abcdolp",
+		"abcdyhnvv",
+	}
+	t := &Trie[int]{}
+	for i, s := range str {
+		t.Insert([]byte(s), i)
+	}
+	fmt.Println("trie len=", t.Len()) // 15
+
+	for i := 0; i < 10; i++ {
+		j := rand.Intn(len(str))
+		if _, ok := t.Search([]byte(str[j])); !ok {
+			panic("search error")
+		}
+	}
+	for _, s := range []string{"abcdxxx", "bcdehyu", "nhyj", "qaz"} {
+		if _, ok := t.Search([]byte(s)); ok {
+			panic("search error 2")
+		}
+	}
+	// "abcd" --> 5
+	res, _ := t.Prefix([]byte("abcd"))
+	if len(res) != 5 {
+		panic("prefix search error")
+	}
+
+	var st []string
+	fn := func(k []byte, _ int) error {
+		st = append(st, string(k))
+		return nil
+	}
+	_ = t.Scan(fn)
+	for _, s := range st {
+		fmt.Println(s)
+	}
+
+	_ = t.DeleteByPrefix([]byte("abc"))
+	fmt.Println("after delete ,trie len=", t.Len()) // 9
+}
+
 func TestBST(t *testing.T) {
 	args := flag.Args()
 	switch args[0] {
@@ -535,6 +590,8 @@ func TestBST(t *testing.T) {
 		testSGTRW(100, true)
 	case "rbt":
 		testRedBlackTreeRW(100, true)
+	case "trie":
+		testTrieRW(100)
 	default:
 	}
 }

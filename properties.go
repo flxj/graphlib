@@ -41,9 +41,7 @@ func IsCutvertex[K comparable, V any, W number](g Graph[K, V, W], v K) (bool, er
 			return nil
 		}
 		visited[u] = struct{}{}
-		if _, ok := vtx[u]; ok {
-			delete(vtx, u)
-		}
+		delete(vtx, u)
 		ns, err := g.Neighbours(u)
 		if err != nil {
 			return err

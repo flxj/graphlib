@@ -259,3 +259,11 @@ func GreedyEdgeColouring[K comparable, V any, W number](g Graph[K, V, W]) (map[K
 	}
 	return col, cnt + 1, nil
 }
+
+func MaximalIndependentSet[K comparable, V any, W number](g Graph[K, V, W]) ([]K, error) {
+	return nil, errNotImplement
+}
+
+func MaximumIndependentSet[K comparable, V any, W number](g Graph[K, V, W]) ([]K, error) {
+	return nil, errNotImplement
+}

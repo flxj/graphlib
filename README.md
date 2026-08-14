@@ -53,6 +53,7 @@
 * Treap
 * Scapegoat Tree
 * RedBlack Tree
+* Trie
 
 ### Getting started
 
