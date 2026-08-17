@@ -28,7 +28,7 @@ package graphlib
 //	2.3) Increase the flow along the augmenting path by the determined amount.
 //
 // 3.Return the maximum flow.
-func mfEdmondsKarp[K comparable, V any, W number](g Graph[K, V, W], source, sink K) (W, error) {
+func mfEdmondsKarp[K comparable, W number](g Graph[K, W], source, sink K) (W, error) {
 	var (
 		flow     W
 		from, to int
@@ -59,7 +59,7 @@ func mfEdmondsKarp[K comparable, V any, W number](g Graph[K, V, W], source, sink
 		visited := make(map[int]bool)
 		visited[s] = true
 
-		err := BFS(g, vertexes[s], func(v Vertex[K, V]) error {
+		err := BFS(g, vertexes[s], func(v Vertex[K, W]) error {
 			u := index[v.Key]
 			for p := 0; p < len(vertexes); p++ {
 				if !visited[p] && rg[u][p] > 0 {
@@ -144,7 +144,7 @@ func send[K comparable, W number](vertexes []K, flows, capacity [][]W, level map
 // In level graph, we assign levels to all nodes, level of a node is shortest distance
 // (in terms of number of edges) of the node from source.
 // Once level graph is constructed, we send multiple flows using this level graph.
-func mfDinic[K comparable, V any, W number](g Graph[K, V, W], source, sink K) (W, error) {
+func mfDinic[K comparable, W number](g Graph[K, W], source, sink K) (W, error) {
 	var (
 		flow     W
 		from, to int
@@ -176,7 +176,7 @@ func mfDinic[K comparable, V any, W number](g Graph[K, V, W], source, sink K) (W
 		}
 		level[s] = 0
 
-		err := BFS(g, vertexes[s], func(v Vertex[K, V]) error {
+		err := BFS(g, vertexes[s], func(v Vertex[K, W]) error {
 			u := index[v.Key]
 			for p := 0; p < len(vertexes); p++ {
 				if level[p] < 0 && flows[u][p] < capacity[u][p] {
@@ -210,12 +210,12 @@ func mfDinic[K comparable, V any, W number](g Graph[K, V, W], source, sink K) (W
 }
 
 // Highest Label Preflow Push
-func mfHLPP[K comparable, V any, W number](g Graph[K, V, W], source, sink K) (W, error) {
+func mfHLPP[K comparable, W number](g Graph[K, W], source, sink K) (W, error) {
 	return 0, errNotImplement
 }
 
 // Calculate the maximum flow from the source vertex to the sink vertex.
-func MaxFlow[K comparable, V any, W number](g Graph[K, V, W], source, sink K) (W, error) {
+func MaxFlow[K comparable, W number](g Graph[K, W], source, sink K) (W, error) {
 	var w W
 	if g == nil {
 		return w, errNilGraph

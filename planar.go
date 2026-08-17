@@ -21,7 +21,7 @@ import (
 	"sort"
 )
 
-func CheckPlanarity[K comparable, V any, W number](g Graph[K, V, W]) bool {
+func CheckPlanarity[K comparable, W number](g Graph[K, W]) bool {
 	if g == nil {
 		return false
 	}
@@ -29,28 +29,28 @@ func CheckPlanarity[K comparable, V any, W number](g Graph[K, V, W]) bool {
 }
 
 // Boyer-Myrvold
-func CheckPlanarityBM[K comparable, V any, W number](g Graph[K, V, W]) bool { // TODO
+func CheckPlanarityBM[K comparable, W number](g Graph[K, W]) bool { // TODO
 	panic("not implement now")
 }
 
 // Hopcroft-Tarjan
-func CheckPlanarityHT[K comparable, V any, W number](g Graph[K, V, W]) bool { // TODO
+func CheckPlanarityHT[K comparable, W number](g Graph[K, W]) bool { // TODO
 	/*
 		if g == nil {
 			return false
 		}
-		p := &planarTestHT[K, V, W]{g: g}
+		p := &planarTestHT[K,W]{g: g}
 		return p.planarity()
 	*/
 	panic("not implement now")
 }
 
 // Left-Right
-func CheckPlanarityLR[K comparable, V any, W number](g Graph[K, V, W]) bool {
+func CheckPlanarityLR[K comparable, W number](g Graph[K, W]) bool {
 	if g == nil {
 		return false
 	}
-	p := &planarTestLR[K, V, W]{g: g}
+	p := &planarTestLR[K, W]{g: g}
 	return p.planarity(false)
 }
 
@@ -67,9 +67,9 @@ type pair struct {
 	R interval
 }
 
-type planarTestLR[K comparable, V any, W number] struct {
-	g       Graph[K, V, W]
-	vtx     []Vertex[K, V]
+type planarTestLR[K comparable, W number] struct {
+	g       Graph[K, W]
+	vtx     []Vertex[K, W]
 	edges   []Edge[K, W]
 	vtxIdx  map[K]int
 	edgeIdx map[K]int
@@ -93,17 +93,17 @@ type planarTestLR[K comparable, V any, W number] struct {
 	stackBottom []*pair
 }
 
-func (p *planarTestLR[K, V, W]) orient(e int, tail, head int) {
+func (p *planarTestLR[K, W]) orient(e int, tail, head int) {
 	p.oriented[e] = [2]int{tail, head}
 	p.orderedAdj[tail] = append(p.orderedAdj[tail], e)
 }
 
-func (p *planarTestLR[K, V, W]) getEdge(u, v int) int {
+func (p *planarTestLR[K, W]) getEdge(u, v int) int {
 	es, _ := p.g.GetEdge(p.vtx[u].Key, p.vtx[v].Key)
 	return p.edgeIdx[es[0].Key]
 }
 
-func (p *planarTestLR[K, V, W]) init(embedding bool) {
+func (p *planarTestLR[K, W]) init(embedding bool) {
 	p.vtx = p.g.AllVertexes()
 	p.edges = p.g.AllEdges()
 	p.vtxIdx = make(map[K]int)
@@ -144,7 +144,7 @@ func (p *planarTestLR[K, V, W]) init(embedding bool) {
 	}
 }
 
-func (p *planarTestLR[K, V, W]) dfsOrient(v int) {
+func (p *planarTestLR[K, W]) dfsOrient(v int) {
 	e := p.parentEdge[v]
 	nbs, _ := p.g.Neighbours(p.vtx[v].Key)
 	for _, n := range nbs {
@@ -181,19 +181,19 @@ func (p *planarTestLR[K, V, W]) dfsOrient(v int) {
 	}
 }
 
-func (p *planarTestLR[K, V, W]) getOutEdges(u int) []int {
+func (p *planarTestLR[K, W]) getOutEdges(u int) []int {
 	return p.orderedAdj[u]
 }
 
-func (p *planarTestLR[K, V, W]) target(e int) int {
+func (p *planarTestLR[K, W]) target(e int) int {
 	return p.oriented[e][1]
 }
 
-func (p *planarTestLR[K, V, W]) source(e int) int {
+func (p *planarTestLR[K, W]) source(e int) int {
 	return p.oriented[e][0]
 }
 
-func (p *planarTestLR[K, V, W]) dfsTesting(v int) bool {
+func (p *planarTestLR[K, W]) dfsTesting(v int) bool {
 	e := p.parentEdge[v]
 	for i, ei := range p.getOutEdges(v) {
 		p.stackBottom[ei] = p.S.top()
@@ -235,7 +235,7 @@ func (p *planarTestLR[K, V, W]) dfsTesting(v int) bool {
 	return true
 }
 
-func (p *planarTestLR[K, V, W]) addConstraints(e, ei int) bool {
+func (p *planarTestLR[K, W]) addConstraints(e, ei int) bool {
 	P := &pair{L: interval{-1, -1}, R: interval{-1, -1}}
 	// merge return edges of ei into P.R
 	for {
@@ -287,11 +287,11 @@ func (p *planarTestLR[K, V, W]) addConstraints(e, ei int) bool {
 	return true
 }
 
-func (p *planarTestLR[K, V, W]) conflicting(it interval, e int) bool {
+func (p *planarTestLR[K, W]) conflicting(it interval, e int) bool {
 	return !it.isEmpty() && p.lowpt[it.high] > p.lowpt[e]
 }
 
-func (p *planarTestLR[K, V, W]) trimBackEdges(u int) {
+func (p *planarTestLR[K, W]) trimBackEdges(u int) {
 	// drop entire conflict pairs
 	for !p.S.empty() && p.lowest(p.S.top()) == p.height[u] {
 		P, _ := p.S.pop()
@@ -323,7 +323,7 @@ func (p *planarTestLR[K, V, W]) trimBackEdges(u int) {
 	}
 }
 
-func (p *planarTestLR[K, V, W]) lowest(P *pair) int {
+func (p *planarTestLR[K, W]) lowest(P *pair) int {
 	if P.L.isEmpty() {
 		return p.lowpt[P.R.low]
 	}
@@ -333,7 +333,7 @@ func (p *planarTestLR[K, V, W]) lowest(P *pair) int {
 	return min(p.lowpt[P.L.low], p.lowpt[P.R.low])
 }
 
-func (p *planarTestLR[K, V, W]) sign(e int) int {
+func (p *planarTestLR[K, W]) sign(e int) int {
 	if p.ref[e] != -1 {
 		p.side[e] = p.side[e] * p.sign(p.ref[e])
 		p.ref[e] = -1
@@ -341,7 +341,7 @@ func (p *planarTestLR[K, V, W]) sign(e int) int {
 	return p.side[e]
 }
 
-func (p *planarTestLR[K, V, W]) planarity(embedding bool) bool {
+func (p *planarTestLR[K, W]) planarity(embedding bool) bool {
 	n, m := p.g.Order(), p.g.Size()
 	if n > 2 && m > 3*n-6 {
 		return false
@@ -384,7 +384,7 @@ func (p *planarTestLR[K, V, W]) planarity(embedding bool) bool {
 }
 
 // sort adjacency lists according to non-decreasing nesting_depth
-func (p *planarTestLR[K, V, W]) sortEdges() {
+func (p *planarTestLR[K, W]) sortEdges() {
 	for _, e := range p.orderedAdj {
 		sort.Slice(e, func(i, j int) bool {
 			return p.nestingDepth[e[i]] < p.nestingDepth[e[j]]
@@ -392,7 +392,7 @@ func (p *planarTestLR[K, V, W]) sortEdges() {
 	}
 }
 
-func (p *planarTestLR[K, V, W]) dfsEmbedding(v int) {
+func (p *planarTestLR[K, W]) dfsEmbedding(v int) {
 	for _, ei := range p.getOutEdges(v) {
 		w := p.target(ei)
 		if ei == p.parentEdge[w] {
@@ -411,9 +411,9 @@ func (p *planarTestLR[K, V, W]) dfsEmbedding(v int) {
 	}
 }
 
-type planarTestHT[K comparable, V any, W number] struct {
-	g       Graph[K, V, W]
-	vtx     []Vertex[K, V]
+type planarTestHT[K comparable, W number] struct {
+	g       Graph[K, W]
+	vtx     []Vertex[K, W]
 	edges   []Edge[K, W]
 	vtxIdx  map[K]int // key: v.Key, value: index of vtx
 	edgeIdx map[K]int // key: e.Key, value: index of edges
@@ -437,12 +437,12 @@ type planarTestHT[K comparable, V any, W number] struct {
 	FREE int
 }
 
-func (p *planarTestHT[K, V, W]) getEdge(u, v int) int {
+func (p *planarTestHT[K, W]) getEdge(u, v int) int {
 	es, _ := p.g.GetEdge(p.vtx[u].Key, p.vtx[v].Key)
 	return p.edgeIdx[es[0].Key]
 }
 
-func (p *planarTestHT[K, V, W]) init() {
+func (p *planarTestHT[K, W]) init() {
 	p.vtx = p.g.AllVertexes()
 	p.edges = p.g.AllEdges()
 	p.vtxIdx = make(map[K]int)
@@ -460,11 +460,11 @@ func (p *planarTestHT[K, V, W]) init() {
 	p.oriented = make([][3]int, m)
 }
 
-func (p *planarTestHT[K, V, W]) orient(e int, tail, head int, frond int) {
+func (p *planarTestHT[K, W]) orient(e int, tail, head int, frond int) {
 	p.oriented[e] = [3]int{tail, head, frond}
 }
 
-func (p *planarTestHT[K, V, W]) dfs(u, v int) { // u is father node of v
+func (p *planarTestHT[K, W]) dfs(u, v int) { // u is father node of v
 	p.number[v] = p.num
 	p.num++
 
@@ -509,7 +509,7 @@ func (p *planarTestHT[K, V, W]) dfs(u, v int) { // u is father node of v
 	}
 }
 
-func (p *planarTestHT[K, V, W]) sortEdges() {
+func (p *planarTestHT[K, W]) sortEdges() {
 	n, m := len(p.vtx), len(p.edges)
 	bucket := make([][]int, 2*n+2)
 	p.orderedAdj = make(map[int][][2]int)
@@ -553,26 +553,26 @@ R which correspond to fronds such that the placement of any one of the fronds de
 The blocks change as the content of the stacks change, but the blocks always partition the stack entries.
 */
 
-func (p *planarTestHT[K, V, W]) STACK(i int) int { // L
+func (p *planarTestHT[K, W]) STACK(i int) int { // L
 	return -1
 }
 
-func (p *planarTestHT[K, V, W]) NEXT(i int) int { // R
+func (p *planarTestHT[K, W]) NEXT(i int) int { // R
 	return -1
 }
 
-func (p *planarTestHT[K, V, W]) SETNEXT(i int, val int) {
+func (p *planarTestHT[K, W]) SETNEXT(i int, val int) {
 }
 
-func (p *planarTestHT[K, V, W]) SETSTACK(i int, val int) {
+func (p *planarTestHT[K, W]) SETSTACK(i int, val int) {
 }
 
 // If i is the number of a path, F(i) denotes the last vertex on the path numbered i.
-func (p *planarTestHT[K, V, W]) F(i int) int {
+func (p *planarTestHT[K, W]) F(i int) int {
 	return -1
 }
 
-func (p *planarTestHT[K, V, W]) pathFinder(v int) bool {
+func (p *planarTestHT[K, W]) pathFinder(v int) bool {
 	vn := p.number[v]
 	for _, out := range p.orderedAdj[v] {
 		e, w := out[0], out[1]
@@ -761,7 +761,7 @@ began
 
 end;
 */
-func (p *planarTestHT[K, V, W]) embed(r int) bool {
+func (p *planarTestHT[K, W]) embed(r int) bool {
 	// integer array STACK(0 :: E), NEXT(-1 :: E), f(1 :: E - V + 1), PATH(1 :: V); B(1 :: E);
 	m := len(p.edges)
 
@@ -778,7 +778,7 @@ func (p *planarTestHT[K, V, W]) embed(r int) bool {
 	return p.pathFinder(r)
 }
 
-func (p *planarTestHT[K, V, W]) planarity() bool {
+func (p *planarTestHT[K, W]) planarity() bool {
 	n, m := p.g.Order(), p.g.Size()
 	if n > 2 && m > 3*n-6 {
 		return false

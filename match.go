@@ -27,7 +27,7 @@ var inf = math.MaxInt
 //
 //	from vertex k(in partA and not in current matching)
 //	find the successor vertex of k in augmenting path.
-func updateMatching[K comparable, V any, W number](g Bipartite[K, V, W], pairU, pairV map[K]K, dist map[K]int, u, dummyK K) (bool, error) {
+func updateMatching[K comparable, W number](g Bipartite[K, W], pairU, pairV map[K]K, dist map[K]int, u, dummyK K) (bool, error) {
 	if u != dummyK {
 		// get u's neighbours(in partB).
 		// and check the already matched neighbour
@@ -87,7 +87,7 @@ func updateMatching[K comparable, V any, W number](g Bipartite[K, V, W], pairU, 
 
 // Once an augmenting path is found, DFS (Depth First Search) is used to add augmenting paths to current matching.
 // DFS simply follows the distance map setup by BFS. It fills values in pairU[u] and pairV[v] if v is next to u in BFS.
-func mmHopcroftKarp[K comparable, V any, W number](partA, partB []Vertex[K, V], g Bipartite[K, V, W]) ([]Edge[K, W], error) {
+func mmHopcroftKarp[K comparable, W number](partA, partB []Vertex[K, W], g Bipartite[K, W]) ([]Edge[K, W], error) {
 	var dummyK K
 	pairU := make(map[K]K)
 	pairV := make(map[K]K)
@@ -188,7 +188,7 @@ func mmHopcroftKarp[K comparable, V any, W number](partA, partB []Vertex[K, V], 
 }
 
 // Calculate the maximum matching of bipartite graph.
-func BipartiteMaxMatching[K comparable, V any, W number](g Bipartite[K, V, W]) ([]Edge[K, W], error) {
+func BipartiteMaxMatching[K comparable, W number](g Bipartite[K, W]) ([]Edge[K, W], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
@@ -196,8 +196,8 @@ func BipartiteMaxMatching[K comparable, V any, W number](g Bipartite[K, V, W]) (
 		return []Edge[K, W]{}, nil
 	}
 	var err error
-	var partA []Vertex[K, V]
-	var partB []Vertex[K, V]
+	var partA []Vertex[K, W]
+	var partB []Vertex[K, W]
 	if partA, err = g.Part(true); err != nil {
 		return nil, err
 	}
@@ -208,7 +208,7 @@ func BipartiteMaxMatching[K comparable, V any, W number](g Bipartite[K, V, W]) (
 }
 
 // Attempt to obtain a perfect match for the bipartite graph. If the match does not exist, return an error.
-func BipartitePerfectMatching[K comparable, V any, W number](g Bipartite[K, V, W]) ([]Edge[K, W], error) {
+func BipartitePerfectMatching[K comparable, W number](g Bipartite[K, W]) ([]Edge[K, W], error) {
 	mm, err := BipartiteMaxMatching(g)
 	if err != nil {
 		return nil, err
@@ -233,14 +233,14 @@ func BipartitePerfectMatching[K comparable, V any, W number](g Bipartite[K, V, W
 
 // Hungarian algorithm (also known as the Kuhn–Munkres algorithm) solving the maximum/minimum weighted matching problem for bipartite graphs.
 // we assume that all weight of edges are non-negative.
-func BipartiteWeightedMatching[K comparable, V any, W number](g Bipartite[K, V, W], maximum bool) ([]Edge[K, W], error) {
+func BipartiteWeightedMatching[K comparable, W number](g Bipartite[K, W], maximum bool) ([]Edge[K, W], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
 	if g.Order() == 0 || g.Size() == 0 {
 		return []Edge[K, W]{}, nil
 	}
-	var A, B []Vertex[K, V]
+	var A, B []Vertex[K, W]
 	var err error
 	if A, err = g.Part(true); err != nil {
 		return nil, err
@@ -314,10 +314,10 @@ func BipartiteWeightedMatching[K comparable, V any, W number](g Bipartite[K, V, 
 }
 
 // Disposal method
-func maxMatchingHungarian0[K comparable, V any, W number](V1, V2 []Vertex[K, V], weight [][]W, g Bipartite[K, V, W]) ([]Edge[K, W], error) {
+func maxMatchingHungarian0[K comparable, W number](V1, V2 []Vertex[K, W], weight [][]W, g Bipartite[K, W]) ([]Edge[K, W], error) {
 	// init
 	n := len(V1)
-	Y, Z := make([]Vertex[int, any], n), make([]Vertex[int, any], n)
+	Y, Z := make([]Vertex[int, int], n), make([]Vertex[int, int], n)
 	for i := 0; i < n; i++ {
 		Y[i].Key = i
 		Z[i].Key = i + n
@@ -335,7 +335,7 @@ func maxMatchingHungarian0[K comparable, V any, W number](V1, V2 []Vertex[K, V],
 		ek++
 		return Edge[int, int]{Key: ek, Head: u, Tail: v}
 	}
-	Gyz := NewBipartite[int, any, int](false, "")
+	Gyz := NewBipartite[int, int](false, "")
 	for i := 0; i < n; i++ {
 		_ = Gyz.AddVertexTo(Y[i], true)
 		_ = Gyz.AddVertexTo(Z[i], false)
@@ -661,14 +661,14 @@ func minMatchingHungarian[W number](n int, weight [][]W) []int {
 }
 
 // Obtain the minimum vertex cover of a bipartite graph.
-func BipartiteMinimumVertexCover[K comparable, V any, W number](g Bipartite[K, V, W]) (map[K]struct{}, error) {
+func BipartiteMinimumVertexCover[K comparable, W number](g Bipartite[K, W]) (map[K]struct{}, error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
 	if g.Order() == 0 || g.Size() == 0 {
 		return make(map[K]struct{}), nil
 	}
-	var A, B []Vertex[K, V]
+	var A, B []Vertex[K, W]
 	var err error
 	if A, err = g.Part(true); err != nil {
 		return nil, err
@@ -683,7 +683,7 @@ func BipartiteMinimumVertexCover[K comparable, V any, W number](g Bipartite[K, V
 	return bipartiteMVC(A, B, M, g)
 }
 
-func bipartiteMVC[K comparable, V any, W number](A, B []Vertex[K, V], M []Edge[K, W], g Bipartite[K, V, W]) (map[K]struct{}, error) {
+func bipartiteMVC[K comparable, W number](A, B []Vertex[K, W], M []Edge[K, W], g Bipartite[K, W]) (map[K]struct{}, error) {
 	VA := make(map[K]int8)
 	for _, v := range A {
 		VA[v.Key] = 1
@@ -754,17 +754,17 @@ func bipartiteMVC[K comparable, V any, W number](A, B []Vertex[K, V], M []Edge[K
 }
 
 // Calculate the maximum matching of any graph and return the set of edges.
-func MaxMatchingBlossom[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W], error) {
+func MaxMatchingBlossom[K comparable, W number](g Graph[K, W]) ([]Edge[K, W], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
-	mm := &maxMatchingBlossom[K, V, W]{graph: g}
+	mm := &maxMatchingBlossom[K, W]{graph: g}
 	return mm.find()
 }
 
 // Calculate the perfect matching of any graph, if it exists, return the set of edges,
 // otherwise return non-existent.
-func PerfectMatching[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W], error) {
+func PerfectMatching[K comparable, W number](g Graph[K, W]) ([]Edge[K, W], error) {
 	mm, err := MaxMatchingBlossom(g)
 	if err != nil {
 		return nil, err
@@ -802,24 +802,24 @@ and flip all the matched and unmatched edges.
 
 3.The edge creates neither case 1 nor case 2. Here, we do nothing and continue our search.
 */
-func mmBlossom[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W], error) {
+func mmBlossom[K comparable, W number](g Graph[K, W]) ([]Edge[K, W], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
-	b := &blossomAlgo[K, V, W]{g: g}
+	b := &blossomAlgo[K, W]{g: g}
 	return b.findMaxMaxthing()
 }
 
-type blossomAlgo[K comparable, V any, W number] struct {
-	g      Graph[K, V, W]
-	vtx    []Vertex[K, V]
+type blossomAlgo[K comparable, W number] struct {
+	g      Graph[K, W]
+	vtx    []Vertex[K, W]
 	F      map[K][]K
 	dist   map[K]int // distince to its root.
 	parent map[K]K
 	M      map[K]K // current matching
 }
 
-func (b *blossomAlgo[K, V, W]) addToForest(v, w K) K {
+func (b *blossomAlgo[K, W]) addToForest(v, w K) K {
 	x := b.M[w]
 	// add edges (v,w),(w,x) to tree(v) in F
 	b.parent[w] = v
@@ -830,7 +830,7 @@ func (b *blossomAlgo[K, V, W]) addToForest(v, w K) K {
 	return x
 }
 
-func (b *blossomAlgo[K, V, W]) exposedVertices() []K {
+func (b *blossomAlgo[K, W]) exposedVertices() []K {
 	var ev []K
 	for _, v := range b.vtx {
 		if _, ok := b.M[v.Key]; !ok {
@@ -840,18 +840,18 @@ func (b *blossomAlgo[K, V, W]) exposedVertices() []K {
 	return ev
 }
 
-func (b *blossomAlgo[K, V, W]) distToRoot(v K) int {
+func (b *blossomAlgo[K, W]) distToRoot(v K) int {
 	return b.dist[v]
 }
 
-func (b *blossomAlgo[K, V, W]) root(v K) K {
+func (b *blossomAlgo[K, W]) root(v K) K {
 	for b.parent[v] != v {
 		v = b.parent[v]
 	}
 	return v
 }
 
-func (b *blossomAlgo[K, V, W]) pathToAncestor(u, v K) []K {
+func (b *blossomAlgo[K, W]) pathToAncestor(u, v K) []K {
 	var p []K
 	for {
 		p = append(p, u)
@@ -866,7 +866,7 @@ func (b *blossomAlgo[K, V, W]) pathToAncestor(u, v K) []K {
 	return p
 }
 
-func (b *blossomAlgo[K, V, W]) getAugmentingPath(v, w K) []K { // return a vertex slice
+func (b *blossomAlgo[K, W]) getAugmentingPath(v, w K) []K { // return a vertex slice
 	P1 := b.pathToAncestor(v, b.root(v))
 	P2 := b.pathToAncestor(w, b.root(w))
 	for i := 0; i < len(P1)/2; i++ {
@@ -876,11 +876,11 @@ func (b *blossomAlgo[K, V, W]) getAugmentingPath(v, w K) []K { // return a verte
 	return P1
 }
 
-func (b *blossomAlgo[K, V, W]) path(u, v K) []K { //TODO
+func (b *blossomAlgo[K, W]) path(u, v K) []K { //TODO
 	return nil
 }
 
-func (b *blossomAlgo[K, V, W]) blossomRecursion(v, w K) []K { //TODO
+func (b *blossomAlgo[K, W]) blossomRecursion(v, w K) []K { //TODO
 	B := b.path(v, w)
 	B = append(B, v)
 	/*
@@ -897,7 +897,7 @@ func (b *blossomAlgo[K, V, W]) blossomRecursion(v, w K) []K { //TODO
 	return nil
 }
 
-func (b *blossomAlgo[K, V, W]) findAugmentingPath() ([]K, error) {
+func (b *blossomAlgo[K, W]) findAugmentingPath() ([]K, error) {
 	b.F = make(map[K][]K) // empty forest
 	b.parent = make(map[K]K)
 	b.dist = make(map[K]int)
@@ -942,7 +942,7 @@ func (b *blossomAlgo[K, V, W]) findAugmentingPath() ([]K, error) {
 	return nil, nil
 }
 
-func (b *blossomAlgo[K, V, W]) findMaxMaxthing() ([]Edge[K, W], error) {
+func (b *blossomAlgo[K, W]) findMaxMaxthing() ([]Edge[K, W], error) {
 	b.vtx = b.g.AllVertexes()
 	b.M = make(map[K]K)
 	for {
@@ -977,9 +977,9 @@ func (b *blossomAlgo[K, V, W]) findMaxMaxthing() ([]Edge[K, W], error) {
 	return res, nil
 }
 
-type maxMatchingBlossom[K comparable, V any, W number] struct {
-	graph Graph[K, V, W]
-	vtx   []Vertex[K, V]
+type maxMatchingBlossom[K comparable, W number] struct {
+	graph Graph[K, W]
+	vtx   []Vertex[K, W]
 	idx   map[K]int
 	n     int
 	m     int // m = 3*n/2
@@ -1014,7 +1014,7 @@ type maxMatchingBlossom[K comparable, V any, W number] struct {
 	g [][]int
 }
 
-func (mm *maxMatchingBlossom[K, V, W]) init() {
+func (mm *maxMatchingBlossom[K, W]) init() {
 	mm.vtx = mm.graph.AllVertexes()
 	mm.n = len(mm.vtx)
 	mm.idx = make(map[K]int)
@@ -1048,7 +1048,7 @@ func (mm *maxMatchingBlossom[K, V, W]) init() {
 
 // traces the path to the root, where we only take vertices/blossoms in the contracted graph.
 // This is done by repeatedly finding the blossom at the top of the blossom chain, and following the parent pointers par.
-func (mm *maxMatchingBlossom[K, V, W]) trace(x int) []int {
+func (mm *maxMatchingBlossom[K, W]) trace(x int) []int {
 	var p []int
 	for {
 		for mm.bl[x] != x {
@@ -1074,7 +1074,7 @@ func (mm *maxMatchingBlossom[K, V, W]) trace(x int) []int {
 
 // Finally, we should make the g table correct for the blossom c.
 // Simply look at each vertex z in the blossom and each edge of z.
-func (mm *maxMatchingBlossom[K, V, W]) contract(c int, _, _ int, vx, vy []int) {
+func (mm *maxMatchingBlossom[K, W]) contract(c int, _, _ int, vx, vy []int) {
 	mm.b[c] = make([]int, 0)
 	i, j := len(vx)-1, len(vy)-1
 	r := vx[i]
@@ -1122,7 +1122,7 @@ func (mm *maxMatchingBlossom[K, V, W]) contract(c int, _, _ int, vx, vy []int) {
 //
 // As you can see, we use the g table to find the vertices/blossoms at the level below z.
 // We also use the parity of the size of A to determine if the incoming edge is matched or unmatched.
-func (mm *maxMatchingBlossom[K, V, W]) lift(path *stack[int]) []int {
+func (mm *maxMatchingBlossom[K, W]) lift(path *stack[int]) []int {
 	var A []int
 	for path.size() >= 2 {
 		z, _ := path.pop()
@@ -1152,7 +1152,7 @@ func (mm *maxMatchingBlossom[K, V, W]) lift(path *stack[int]) []int {
 	return A
 }
 
-func (mm *maxMatchingBlossom[K, V, W]) search(arr []int, t int) int {
+func (mm *maxMatchingBlossom[K, W]) search(arr []int, t int) int {
 	for i, n := range arr {
 		if n == t {
 			return i
@@ -1161,7 +1161,7 @@ func (mm *maxMatchingBlossom[K, V, W]) search(arr []int, t int) int {
 	return len(arr)
 }
 
-func (mm *maxMatchingBlossom[K, V, W]) findAugmentingPath() ([]int, error) {
+func (mm *maxMatchingBlossom[K, W]) findAugmentingPath() ([]int, error) {
 	for i := 0; i < len(mm.d); i++ {
 		mm.d[i] = 0
 	}
@@ -1222,7 +1222,7 @@ func (mm *maxMatchingBlossom[K, V, W]) findAugmentingPath() ([]int, error) {
 	return nil, nil
 }
 
-func (mm *maxMatchingBlossom[K, V, W]) path(head int, tail ...int) *stack[int] {
+func (mm *maxMatchingBlossom[K, W]) path(head int, tail ...int) *stack[int] {
 	s := newStack[int]()
 	s.push(head)
 	for _, n := range tail {
@@ -1247,7 +1247,7 @@ func (mm *maxMatchingBlossom[K, V, W]) path(head int, tail ...int) *stack[int] {
 //  3. The vertex y is visited and has an even distance to the root. Here, we should trace the
 //     paths from x and y to the root to determine if this event is a blossom contraction or an augmenting path.
 //     In either case, we should break from the inner loop.
-func (mm *maxMatchingBlossom[K, V, W]) find() ([]Edge[K, W], error) {
+func (mm *maxMatchingBlossom[K, W]) find() ([]Edge[K, W], error) {
 	mm.init()
 	for {
 		A, err := mm.findAugmentingPath()
@@ -1280,19 +1280,19 @@ func (mm *maxMatchingBlossom[K, V, W]) find() ([]Edge[K, W], error) {
 }
 
 // We use 'addEdge' to create an unmatched edge, and 'match' to change an unmatched edge to matched.
-func (mm *maxMatchingBlossom[K, V, W]) match(u, v int) {
+func (mm *maxMatchingBlossom[K, W]) match(u, v int) {
 	mm.g[u][v] = -1
 	mm.g[v][u] = -1
 	mm.mate[u] = v
 	mm.mate[v] = u
 }
 
-func (mm *maxMatchingBlossom[K, V, W]) addEdge(u, v int) {
+func (mm *maxMatchingBlossom[K, W]) addEdge(u, v int) {
 	mm.g[u][v] = u
 	mm.g[v][u] = v
 }
 
 // Micali-Vazirani algorithm for maximum cardinality matching in general graphs.
-type maxMatchingMV[K comparable, V any, W number] struct {
-	graph Graph[K, V, W]
+type maxMatchingMV[K comparable, W number] struct {
+	graph Graph[K, W]
 }

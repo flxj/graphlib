@@ -54,12 +54,12 @@ type d3NetworkData struct {
 	Links []*d3Link `json:"links"`
 }
 
-type d3Network[K comparable, V any, W number] struct {
+type d3Network[K comparable, W number] struct {
 	Digraph     bool                    `json:"digraph"`
 	RandomColor bool                    `json:"random_color"`
 	ShowWeight  bool                    `json:"show_weight"`
 	Data        *d3NetworkData          `json:"data"`
-	Vertexes    []graphlib.Vertex[K, V] `json:"vertexes"`
+	Vertexes    []graphlib.Vertex[K, W] `json:"vertexes"`
 	Edges       []graphlib.Edge[K, W]   `json:"edges"`
 }
 
@@ -85,7 +85,7 @@ func getHTMLTemplate(digraph bool) (string, error) {
 	return digraphHTML, nil
 }
 
-func RenderHTML[K comparable, V any, W number](g graphlib.Graph[K, V, W], showWeight bool, dir string) (string, error) {
+func RenderHTML[K comparable, W number](g graphlib.Graph[K, W], showWeight bool, dir string) (string, error) {
 	var (
 		err  error
 		data d3NetworkData
@@ -119,7 +119,7 @@ func RenderHTML[K comparable, V any, W number](g graphlib.Graph[K, V, W], showWe
 		data.Links = append(data.Links, l)
 	}
 	//
-	net := &d3Network[K, V, W]{
+	net := &d3Network[K, W]{
 		Digraph:    g.IsDigraph(),
 		ShowWeight: showWeight,
 		Data:       &data,
@@ -165,7 +165,7 @@ type graphDOT struct {
 	Edges    []string
 }
 
-func getDOT[K comparable, V any, W number](g graphlib.Graph[K, V, W], vertexShape string, attr []string, showWeight bool) ([]byte, error) {
+func getDOT[K comparable, W number](g graphlib.Graph[K, W], vertexShape string, attr []string, showWeight bool) ([]byte, error) {
 	var err error
 	vs := g.AllVertexes()
 	es := g.AllEdges()
@@ -225,11 +225,11 @@ func getDOT[K comparable, V any, W number](g graphlib.Graph[K, V, W], vertexShap
 	return buf.Bytes(), nil
 }
 
-func GetDOT[K comparable, V any, W number](g graphlib.Graph[K, V, W], vertexShape string, attr []string, showWeight bool) ([]byte, error) {
+func GetDOT[K comparable, W number](g graphlib.Graph[K, W], vertexShape string, attr []string, showWeight bool) ([]byte, error) {
 	return getDOT(g, vertexShape, attr, showWeight)
 }
 
-func RenderSVG[K comparable, V any, W number](g graphlib.Graph[K, V, W], vertexShape string, attr []string, showEdgeWeight bool, dir string) (string, error) {
+func RenderSVG[K comparable, W number](g graphlib.Graph[K, W], vertexShape string, attr []string, showEdgeWeight bool, dir string) (string, error) {
 	var (
 		f   *os.File
 		err error

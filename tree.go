@@ -36,7 +36,7 @@ import "sort"
 // 10:    replace w(T) by w(T) + c(u)
 // 11: end while
 // 12: return (p, w(T))
-func mstPrim[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K, W], W, error) {
+func mstPrim[K comparable, W number](g Graph[K, W]) ([]K, []Edge[K, W], W, error) {
 	vertexes := g.AllVertexes()
 	if len(vertexes) == 0 {
 		return nil, nil, 0.0, errEmptyGraph
@@ -105,7 +105,7 @@ func mstPrim[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K, W]
 }
 
 // use priority queue.
-func mstPrimWithPQ[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K, W], W, error) {
+func mstPrimWithPQ[K comparable, W number](g Graph[K, W]) ([]K, []Edge[K, W], W, error) {
 	vertexes := g.AllVertexes()
 	if len(vertexes) == 0 {
 		return nil, nil, 0.0, errEmptyGraph
@@ -164,7 +164,7 @@ func mstPrimWithPQ[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge
 	return keys, edges, wT, nil
 }
 
-func msfPrim[K comparable, V any, W number](g Graph[K, V, W]) ([][]K, [][]Edge[K, W], []W, error) {
+func msfPrim[K comparable, W number](g Graph[K, W]) ([][]K, [][]Edge[K, W], []W, error) {
 	vertexes := g.AllVertexes()
 
 	if len(vertexes) == 0 {
@@ -268,7 +268,7 @@ func msfPrim[K comparable, V any, W number](g Graph[K, V, W]) ([][]K, [][]Edge[K
 // 7         A = A Union {(u,v)}
 // 8         UNION(u,v)
 // 9 return A
-func mstKruskal[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K, W], W, error) {
+func mstKruskal[K comparable, W number](g Graph[K, W]) ([]K, []Edge[K, W], W, error) {
 	vertexes := g.AllVertexes()
 	if len(vertexes) == 0 {
 		return nil, nil, 0.0, errEmptyGraph
@@ -338,7 +338,7 @@ func mstKruskal[K comparable, V any, W number](g Graph[K, V, W]) ([]K, []Edge[K,
 // Generate the minimum spanning tree of a weighted connected graph,
 // return the set of edges of the tree, and the sum of tree weights.
 // If the graph is non connected, an error will be returned.
-func MinWeightSpanningTree[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W], W, error) {
+func MinWeightSpanningTree[K comparable, W number](g Graph[K, W]) ([]Edge[K, W], W, error) {
 	var w W
 	if g == nil {
 		return nil, w, errNilGraph
@@ -350,7 +350,7 @@ func MinWeightSpanningTree[K comparable, V any, W number](g Graph[K, V, W]) ([]E
 // Generate the minimum spanning forest of a weighted graph,
 // which generates a corresponding minimum spanning tree for each connected component,
 // returns the set of vertices and edges for each tree, as well as the sum of tree weights.
-func MinWeightSpanningForest[K comparable, V any, W number](g Graph[K, V, W]) ([][]K, [][]Edge[K, W], []W, error) {
+func MinWeightSpanningForest[K comparable, W number](g Graph[K, W]) ([][]K, [][]Edge[K, W], []W, error) {
 	if g == nil {
 		return nil, nil, nil, errNilGraph
 	}

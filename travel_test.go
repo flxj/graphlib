@@ -22,7 +22,7 @@ import (
 )
 
 func TestDFS1(t *testing.T) {
-	g := NewGraph[int, int, int](false, "test-g")
+	g := NewGraph[int, int](false, "test-g")
 
 	vs := []Vertex[int, int]{
 		{Key: 1, Value: 1},
@@ -76,7 +76,7 @@ v3     v4-----v5----v6
 }
 
 func TestDFS2(t *testing.T) {
-	g := NewGraph[int, int, int](true, "test-g")
+	g := NewGraph[int, int](true, "test-g")
 
 	vs := []Vertex[int, int]{
 		{Key: 1, Value: 1},
@@ -142,7 +142,7 @@ v3---->v4---->v5--->v6
 }
 
 func TestBFS1(t *testing.T) {
-	g := NewGraph[int, int, int](false, "test-g")
+	g := NewGraph[int, int](false, "test-g")
 
 	vs := []Vertex[int, int]{
 		{Key: 1, Value: 1},
@@ -200,7 +200,7 @@ v3      v5-----v6
 }
 
 func TestBFS2(t *testing.T) {
-	g := NewGraph[int, int, int](true, "test-g")
+	g := NewGraph[int, int](true, "test-g")
 
 	vs := []Vertex[int, int]{
 		{Key: 1, Value: 1},

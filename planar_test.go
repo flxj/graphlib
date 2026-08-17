@@ -23,7 +23,7 @@ import (
 )
 
 func checkPlanar() {
-	g1 := []Graph[int, any, int]{
+	g1 := []Graph[int, int]{
 		PetersenGraph(),         // false
 		CompleteGraph(4),        // true
 		CompleteGraph(5),        // false

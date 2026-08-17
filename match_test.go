@@ -22,13 +22,13 @@ import (
 	"testing"
 )
 
-func bwmTestGraph(maximum bool) Bipartite[int, any, int] {
-	g := NewBipartite[int, any, int](false, "g1")
+func bwmTestGraph(maximum bool) Bipartite[int, int] {
+	g := NewBipartite[int, int](false, "g1")
 	for i := 1; i < 9; i++ {
 		if i <= 4 {
-			_ = g.AddVertexTo(Vertex[int, any]{Key: i}, true)
+			_ = g.AddVertexTo(Vertex[int, int]{Key: i}, true)
 		} else {
-			_ = g.AddVertexTo(Vertex[int, any]{Key: i}, false)
+			_ = g.AddVertexTo(Vertex[int, int]{Key: i}, false)
 		}
 	}
 	E := []Edge[int, int]{
@@ -101,14 +101,14 @@ func bwmG2() {
 }
 
 func mvcG1() {
-	g := NewBipartite[int, any, int](false, "g1")
-	A := []Vertex[int, any]{
+	g := NewBipartite[int, int](false, "g1")
+	A := []Vertex[int, int]{
 		{Key: 1},
 		{Key: 2},
 		{Key: 3},
 		{Key: 4},
 	}
-	B := []Vertex[int, any]{
+	B := []Vertex[int, int]{
 		{Key: 5},
 		{Key: 6},
 		{Key: 7},
@@ -152,8 +152,8 @@ func mvcG1() {
 }
 
 func mvcG2() {
-	g := NewBipartite[string, any, int](false, "g2")
-	A := []Vertex[string, any]{
+	g := NewBipartite[string, int](false, "g2")
+	A := []Vertex[string, int]{
 		{Key: "r1"},
 		{Key: "r2"},
 		{Key: "r3"},
@@ -163,7 +163,7 @@ func mvcG2() {
 		{Key: "r7"},
 		{Key: "r8"},
 	}
-	B := []Vertex[string, any]{
+	B := []Vertex[string, int]{
 		{Key: "c1"},
 		{Key: "c2"},
 		{Key: "c3"},

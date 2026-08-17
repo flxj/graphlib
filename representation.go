@@ -21,7 +21,7 @@ import (
 )
 
 // Create weight matrix for graph.
-func NewWeightMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*WeightMatrix[K, W], error) {
+func NewWeightMatrix[K comparable, W number](g Graph[K, W]) (*WeightMatrix[K, W], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
@@ -69,7 +69,7 @@ func NewWeightMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*WeightMa
 }
 
 // Create adjacency matrix for graph.
-func NewAdjacencytMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*AdjacencyMatrix[K], error) {
+func NewAdjacencytMatrix[K comparable, V any, W number](g Graph[K, W]) (*AdjacencyMatrix[K], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
@@ -100,7 +100,7 @@ func NewAdjacencytMatrix[K comparable, V any, W number](g Graph[K, V, W]) (*Adja
 	return am, nil
 }
 
-func NewDegreeMatrix[K comparable, W number](g Graph[K, any, W]) (*DegreeMatrix[K], error) {
+func NewDegreeMatrix[K comparable, W number](g Graph[K, W]) (*DegreeMatrix[K], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
@@ -222,7 +222,7 @@ func newAdjacencyLis[K comparable, W number](digraph bool) *adjacencyList[K, W] 
 	return adj
 }
 
-func newAdjacencyListFromGraph[K comparable, V any, W number](g Graph[K, V, W]) (*adjacencyList[K, W], error) {
+func newAdjacencyListFromGraph[K comparable, W number](g Graph[K, W]) (*adjacencyList[K, W], error) {
 	var (
 		err error
 		adj *adjacencyList[K, W]

@@ -22,7 +22,7 @@ import (
 )
 
 func TestBasicOp(t *testing.T) {
-	g := NewGraph[int, int, int](false, "test-g")
+	g := NewGraph[int, int](false, "test-g")
 
 	vs := []Vertex[int, int]{
 		{Key: 1, Value: 1},
@@ -266,7 +266,7 @@ v3   v4------/
 }
 
 func TestConnected(t *testing.T) {
-	g := NewGraph[int, int, int](false, "test-g")
+	g := NewGraph[int, int](false, "test-g")
 
 	vs := []Vertex[int, int]{
 		{Key: 1, Value: 1},

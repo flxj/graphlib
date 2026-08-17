@@ -24,8 +24,8 @@ import (
 //
 // The concept of directed graphs can be referenced:
 // https://mathworld.wolfram.com/DirectedGraph.html
-type Digraph[K comparable, V any, W number] interface {
-	Graph[K, V, W]
+type Digraph[K comparable, W number] interface {
+	Graph[K, W]
 	//
 	// indegree of vertex v.
 	InDegree(v K) (int, error)
@@ -34,10 +34,10 @@ type Digraph[K comparable, V any, W number] interface {
 	OutDegree(v K) (int, error)
 	//
 	// The set composed of head vertexes of all v's inedges.
-	InNeighbours(v K) ([]Vertex[K, V], error)
+	InNeighbours(v K) ([]Vertex[K, W], error)
 	//
 	// The set composed of tail vertexes of all v's outedges.
-	OutNeighbours(v K) ([]Vertex[K, V], error)
+	OutNeighbours(v K) ([]Vertex[K, W], error)
 	//
 	// All arcs with v as the tail vertex.
 	// For example [a->v, b->v,...,x->v].
@@ -48,10 +48,10 @@ type Digraph[K comparable, V any, W number] interface {
 	OutEdges(v K) ([]Edge[K, W], error)
 	//
 	// All vertices with an in degree of 0.
-	Sources() ([]Vertex[K, V], error)
+	Sources() ([]Vertex[K, W], error)
 	//
 	// All vertices with degree 0.
-	Sinks() ([]Vertex[K, V], error)
+	Sinks() ([]Vertex[K, W], error)
 	//
 	DetectCycle() ([][]K, error)
 	//
@@ -60,27 +60,27 @@ type Digraph[K comparable, V any, W number] interface {
 }
 
 // Create a new directed graph.
-func NewDigraph[K comparable, V any, W number](name string) Digraph[K, V, W] {
-	return newGraph[K, V, W](true, name)
+func NewDigraph[K comparable, W number](name string) Digraph[K, W] {
+	return newGraph[K, W](true, name)
 }
 
-func NewDigraphFromFile[K comparable, V any, W number](path string) (Digraph[K, V, W], error) {
+func NewDigraphFromFile[K comparable, W number](path string) (Digraph[K, W], error) {
 	s, err := readFile(path)
 	if err != nil {
 		return nil, err
 	}
-	return UnmarshalDigraph[K, V, W](s)
+	return UnmarshalDigraph[K, W](s)
 }
 
-func (g *graph[K, V, W]) InDegree(vertex K) (int, error) {
+func (g *graph[K, W]) InDegree(vertex K) (int, error) {
 	return g.adjList.inDegree(vertex)
 }
 
-func (g *graph[K, V, W]) OutDegree(vertex K) (int, error) {
+func (g *graph[K, W]) OutDegree(vertex K) (int, error) {
 	return g.adjList.outDegree(vertex)
 }
 
-func (g *graph[K, V, W]) InNeighbours(vertex K) ([]Vertex[K, V], error) {
+func (g *graph[K, W]) InNeighbours(vertex K) ([]Vertex[K, W], error) {
 	vs, err := g.adjList.inNeighbours(vertex, false)
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (g *graph[K, V, W]) InNeighbours(vertex K) ([]Vertex[K, V], error) {
 	return g.getVertexes(vs)
 }
 
-func (g *graph[K, V, W]) OutNeighbours(vertex K) ([]Vertex[K, V], error) {
+func (g *graph[K, W]) OutNeighbours(vertex K) ([]Vertex[K, W], error) {
 	vs, err := g.adjList.outNeighbours(vertex, false)
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (g *graph[K, V, W]) OutNeighbours(vertex K) ([]Vertex[K, V], error) {
 	return g.getVertexes(vs)
 }
 
-func (g *graph[K, V, W]) InEdges(vertex K) ([]Edge[K, W], error) {
+func (g *graph[K, W]) InEdges(vertex K) ([]Edge[K, W], error) {
 	es, err := g.adjList.inEdges(vertex)
 	if err != nil {
 		return nil, err
@@ -104,7 +104,7 @@ func (g *graph[K, V, W]) InEdges(vertex K) ([]Edge[K, W], error) {
 	return g.getEdges(es)
 }
 
-func (g *graph[K, V, W]) OutEdges(vertex K) ([]Edge[K, W], error) {
+func (g *graph[K, W]) OutEdges(vertex K) ([]Edge[K, W], error) {
 	es, err := g.adjList.outEdges(vertex)
 	if err != nil {
 		return nil, err
@@ -112,7 +112,7 @@ func (g *graph[K, V, W]) OutEdges(vertex K) ([]Edge[K, W], error) {
 	return g.getEdges(es)
 }
 
-func (g *graph[K, V, W]) Sources() ([]Vertex[K, V], error) {
+func (g *graph[K, W]) Sources() ([]Vertex[K, W], error) {
 	vs, err := g.adjList.sources()
 	if err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ func (g *graph[K, V, W]) Sources() ([]Vertex[K, V], error) {
 	return g.getVertexes(vs)
 }
 
-func (g *graph[K, V, W]) Sinks() ([]Vertex[K, V], error) {
+func (g *graph[K, W]) Sinks() ([]Vertex[K, W], error) {
 	vs, err := g.adjList.sinks()
 	if err != nil {
 		return nil, err
@@ -128,11 +128,11 @@ func (g *graph[K, V, W]) Sinks() ([]Vertex[K, V], error) {
 	return g.getVertexes(vs)
 }
 
-func (g *graph[K, V, W]) DetectCycle() ([][]K, error) {
+func (g *graph[K, W]) DetectCycle() ([][]K, error) {
 	return nil, errNotImplement
 }
 
-func (g *graph[K, V, W]) Reverse() error {
+func (g *graph[K, W]) Reverse() error {
 	if !g.IsDigraph() {
 		return nil
 	}
@@ -146,14 +146,14 @@ func (g *graph[K, V, W]) Reverse() error {
 	return nil
 }
 
-func (g *graph[K, V, W]) getVertexes(vs []K) ([]Vertex[K, V], error) {
-	res := make([]Vertex[K, V], len(vs))
+func (g *graph[K, W]) getVertexes(vs []K) ([]Vertex[K, W], error) {
+	res := make([]Vertex[K, W], len(vs))
 	for i, v := range vs {
 		vv, ok := g.vertexes[v]
 		if !ok {
 			return nil, fmt.Errorf("not found neighbour %v info", v)
 		}
-		res[i] = Vertex[K, V]{
+		res[i] = Vertex[K, W]{
 			Key:    vv.Key,
 			Value:  vv.Value,
 			Labels: vv.Labels,
@@ -162,7 +162,7 @@ func (g *graph[K, V, W]) getVertexes(vs []K) ([]Vertex[K, V], error) {
 	return res, nil
 }
 
-func (g *graph[K, V, W]) getEdges(es []K) ([]Edge[K, W], error) {
+func (g *graph[K, W]) getEdges(es []K) ([]Edge[K, W], error) {
 	res := make([]Edge[K, W], len(es))
 	for i, e := range es {
 		ee, ok := g.edges[e]

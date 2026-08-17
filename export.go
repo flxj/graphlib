@@ -24,15 +24,15 @@ import (
 
 // GraphInfo represents the basic information of a graph,
 // used for serialization of graph objects.
-type GraphInfo[K comparable, V any, W number] struct {
+type GraphInfo[K comparable, W number] struct {
 	Name     string         `json:"name" yaml:"name"`
 	Digraph  bool           `json:"digraph" yaml:"digraph"`
-	Vertexes []Vertex[K, V] `json:"vertexes" yaml:"vertexes"`
+	Vertexes []Vertex[K, W] `json:"vertexes" yaml:"vertexes"`
 	Edges    []Edge[K, W]   `json:"edges" yaml:"edges"`
 }
 
 // Serialize Graph in JSON format.
-func MarshalGraphToJSON[K comparable, V any, W number](g Graph[K, V, W]) ([]byte, error) {
+func MarshalGraphToJSON[K comparable, W number](g Graph[K, W]) ([]byte, error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
@@ -40,7 +40,7 @@ func MarshalGraphToJSON[K comparable, V any, W number](g Graph[K, V, W]) ([]byte
 	vs := g.AllVertexes()
 	es := g.AllEdges()
 
-	gi := GraphInfo[K, V, W]{
+	gi := GraphInfo[K, W]{
 		Name:     g.Name(),
 		Digraph:  g.IsDigraph(),
 		Vertexes: vs,
@@ -51,7 +51,7 @@ func MarshalGraphToJSON[K comparable, V any, W number](g Graph[K, V, W]) ([]byte
 }
 
 // Serialize Graph in yaml format.
-func MarshalGraphToYaml[K comparable, V any, W number](g Graph[K, V, W]) ([]byte, error) {
+func MarshalGraphToYaml[K comparable, W number](g Graph[K, W]) ([]byte, error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
@@ -59,7 +59,7 @@ func MarshalGraphToYaml[K comparable, V any, W number](g Graph[K, V, W]) ([]byte
 	vs := g.AllVertexes()
 	es := g.AllEdges()
 
-	gi := GraphInfo[K, V, W]{
+	gi := GraphInfo[K, W]{
 		Name:     g.Name(),
 		Digraph:  g.IsDigraph(),
 		Vertexes: vs,
@@ -69,8 +69,8 @@ func MarshalGraphToYaml[K comparable, V any, W number](g Graph[K, V, W]) ([]byte
 	return yaml.Marshal(gi)
 }
 
-func UnmarshalGraph[K comparable, V any, W number](s []byte) (Graph[K, V, W], error) {
-	gi := GraphInfo[K, V, W]{}
+func UnmarshalGraph[K comparable, W number](s []byte) (Graph[K, W], error) {
+	gi := GraphInfo[K, W]{}
 	if json.Valid(s) {
 		if err := json.Unmarshal(s, &gi); err != nil {
 			return nil, err
@@ -80,7 +80,7 @@ func UnmarshalGraph[K comparable, V any, W number](s []byte) (Graph[K, V, W], er
 			return nil, err
 		}
 	}
-	g := NewGraph[K, V, W](gi.Digraph, gi.Name)
+	g := NewGraph[K, W](gi.Digraph, gi.Name)
 	for _, v := range gi.Vertexes {
 		if err := g.AddVertex(v); err != nil {
 			return nil, err
@@ -94,8 +94,8 @@ func UnmarshalGraph[K comparable, V any, W number](s []byte) (Graph[K, V, W], er
 	return g, nil
 }
 
-func UnmarshalDigraph[K comparable, V any, W number](s []byte) (Digraph[K, V, W], error) {
-	gi := GraphInfo[K, V, W]{}
+func UnmarshalDigraph[K comparable, W number](s []byte) (Digraph[K, W], error) {
+	gi := GraphInfo[K, W]{}
 	if json.Valid(s) {
 		if err := json.Unmarshal(s, &gi); err != nil {
 			return nil, err
@@ -105,7 +105,7 @@ func UnmarshalDigraph[K comparable, V any, W number](s []byte) (Digraph[K, V, W]
 			return nil, err
 		}
 	}
-	g := NewDigraph[K, V, W](gi.Name)
+	g := NewDigraph[K, W](gi.Name)
 	for _, v := range gi.Vertexes {
 		if err := g.AddVertex(v); err != nil {
 			return nil, err

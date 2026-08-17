@@ -60,7 +60,7 @@ type basicPropertySet[T any] struct {
 }
 
 // graph default implement base on adjacency list.
-type graph[K comparable, V any, W number] struct {
+type graph[K comparable, W number] struct {
 	version    int // start from 1
 	name       string
 	properties basicPropertySet[bool] // version start from 0
@@ -68,16 +68,16 @@ type graph[K comparable, V any, W number] struct {
 	maxDe      property[int]
 	avgDe      property[float64]
 	multi      property[int]
-	vertexes   map[K]*Vertex[K, V]
+	vertexes   map[K]*Vertex[K, W]
 	edges      map[K]*Edge[K, W]
 	adjList    *adjacencyList[K, W]
 }
 
-func newGraph[K comparable, V any, W number](digraph bool, name string) *graph[K, V, W] {
-	g := &graph[K, V, W]{
+func newGraph[K comparable, W number](digraph bool, name string) *graph[K, W] {
+	g := &graph[K, W]{
 		version:  1,
 		name:     name,
-		vertexes: make(map[K]*Vertex[K, V]),
+		vertexes: make(map[K]*Vertex[K, W]),
 		edges:    make(map[K]*Edge[K, W]),
 	}
 	g.properties.digraph = digraph
@@ -87,27 +87,27 @@ func newGraph[K comparable, V any, W number](digraph bool, name string) *graph[K
 }
 
 // Create a new graph.
-func NewGraph[K comparable, V any, W number](digraph bool, name string) Graph[K, V, W] {
-	return newGraph[K, V, W](digraph, name)
+func NewGraph[K comparable, W number](digraph bool, name string) Graph[K, W] {
+	return newGraph[K, W](digraph, name)
 }
 
 // Create a new undirected graph
-func NewUnDigraph[K comparable, V any, W number](name string) Graph[K, V, W] {
-	return newGraph[K, V, W](false, name)
+func NewUnDigraph[K comparable, V any, W number](name string) Graph[K, W] {
+	return newGraph[K, W](false, name)
 }
 
 // Load graph from json or yaml file.
-func NewGraphFromFile[K comparable, V any, W number](path string) (Graph[K, V, W], error) {
+func NewGraphFromFile[K comparable, V any, W number](path string) (Graph[K, W], error) {
 	s, err := readFile(path)
 	if err != nil {
 		return nil, err
 	}
-	return UnmarshalGraph[K, V, W](s)
+	return UnmarshalGraph[K, W](s)
 }
 
 // Create a graph using vertex and edge sets.
-func ConstructGraph[K comparable, V any, W number](digraph bool, name string, vertexes []Vertex[K, V], edges []Edge[K, W]) (Graph[K, V, W], error) {
-	g := newGraph[K, V, W](digraph, name)
+func ConstructGraph[K comparable, W number](digraph bool, name string, vertexes []Vertex[K, W], edges []Edge[K, W]) (Graph[K, W], error) {
+	g := newGraph[K, W](digraph, name)
 	for _, v := range vertexes {
 		if err := g.AddVertex(v); err != nil {
 			return nil, err
@@ -121,19 +121,19 @@ func ConstructGraph[K comparable, V any, W number](digraph bool, name string, ve
 	return g, nil
 }
 
-func (g *graph[K, V, W]) Name() string {
+func (g *graph[K, W]) Name() string {
 	return g.name
 }
 
-func (g *graph[K, V, W]) SetName(name string) {
+func (g *graph[K, W]) SetName(name string) {
 	g.name = name
 }
 
-func (g *graph[K, V, W]) IsDigraph() bool {
+func (g *graph[K, W]) IsDigraph() bool {
 	return g.adjList.digraph
 }
 
-func (g *graph[K, V, W]) IsSimple() bool {
+func (g *graph[K, W]) IsSimple() bool {
 	if g.properties.simple.version == g.version {
 		return g.properties.simple.value
 	}
@@ -145,7 +145,7 @@ func (g *graph[K, V, W]) IsSimple() bool {
 	return p.value
 }
 
-func (g *graph[K, V, W]) HasNegativeWeight() bool {
+func (g *graph[K, W]) HasNegativeWeight() bool {
 	if g.properties.negativeWeight.version == g.version {
 		return g.properties.negativeWeight.value
 	}
@@ -156,7 +156,7 @@ func (g *graph[K, V, W]) HasNegativeWeight() bool {
 	return p.value
 }
 
-func (g *graph[K, V, W]) IsRegular() bool {
+func (g *graph[K, W]) IsRegular() bool {
 	if g.properties.regular.version == g.version {
 		return g.properties.regular.value
 	}
@@ -167,7 +167,7 @@ func (g *graph[K, V, W]) IsRegular() bool {
 	return p.value
 }
 
-func (g *graph[K, V, W]) IsAcyclic() bool {
+func (g *graph[K, W]) IsAcyclic() bool {
 	if g.properties.acyclic.version == g.version {
 		return g.properties.acyclic.value
 	}
@@ -177,7 +177,7 @@ func (g *graph[K, V, W]) IsAcyclic() bool {
 
 	return p.value
 }
-func (g *graph[K, V, W]) IsConnected(unidirectional bool) bool {
+func (g *graph[K, W]) IsConnected(unidirectional bool) bool {
 	if unidirectional && g.IsDigraph() {
 		if g.properties.unilateralConnected.version == g.version {
 			return g.properties.unilateralConnected.value
@@ -198,18 +198,18 @@ func (g *graph[K, V, W]) IsConnected(unidirectional bool) bool {
 	return p.value
 }
 
-func (g *graph[K, V, W]) IsCompleted() bool {
+func (g *graph[K, W]) IsCompleted() bool {
 	if g.IsSimple() {
 		return g.MinDegree() == g.Order()-1 // TODO for bipartite graph
 	}
 	return false
 }
 
-func (g *graph[K, V, W]) IsTree() bool {
+func (g *graph[K, W]) IsTree() bool {
 	return g.IsConnected(false) && g.IsForest()
 }
 
-func (g *graph[K, V, W]) IsForest() bool {
+func (g *graph[K, W]) IsForest() bool {
 	if g.properties.forest.version == g.version {
 		return g.properties.forest.value
 	}
@@ -220,7 +220,7 @@ func (g *graph[K, V, W]) IsForest() bool {
 	return p.value
 }
 
-func (g *graph[K, V, W]) HasLoop() bool {
+func (g *graph[K, W]) HasLoop() bool {
 	if g.properties.loop.version == g.version {
 		return g.properties.loop.value
 	}
@@ -231,15 +231,15 @@ func (g *graph[K, V, W]) HasLoop() bool {
 	return p.value
 }
 
-func (g *graph[K, V, W]) Order() int {
+func (g *graph[K, W]) Order() int {
 	return len(g.vertexes)
 }
 
-func (g *graph[K, V, W]) Size() int {
+func (g *graph[K, W]) Size() int {
 	return len(g.edges)
 }
 
-func (g *graph[K, V, W]) MinDegree() int {
+func (g *graph[K, W]) MinDegree() int {
 	if g.minDe.version == g.version {
 		return g.minDe.value
 	}
@@ -252,7 +252,7 @@ func (g *graph[K, V, W]) MinDegree() int {
 	return d
 }
 
-func (g *graph[K, V, W]) MaxDegree() int {
+func (g *graph[K, W]) MaxDegree() int {
 	if g.maxDe.version == g.version {
 		return g.maxDe.value
 	}
@@ -265,7 +265,7 @@ func (g *graph[K, V, W]) MaxDegree() int {
 	return d
 }
 
-func (g *graph[K, V, W]) AvgDegree() float64 {
+func (g *graph[K, W]) AvgDegree() float64 {
 	if g.avgDe.version == g.version {
 		return g.avgDe.value
 	}
@@ -278,7 +278,7 @@ func (g *graph[K, V, W]) AvgDegree() float64 {
 	return avg
 }
 
-func (g *graph[K, V, W]) Multiplicity() int {
+func (g *graph[K, W]) Multiplicity() int {
 	if g.multi.version == g.version {
 		return g.multi.value
 	}
@@ -295,7 +295,7 @@ func (g *graph[K, V, W]) Multiplicity() int {
 	return d
 }
 
-func (g *graph[K, V, W]) Property(p PropertyName) (GraphProperty[any], error) {
+func (g *graph[K, W]) Property(p PropertyName) (GraphProperty[any], error) {
 	gp := GraphProperty[any]{Name: p}
 	switch p {
 	case PropertyDigraph:
@@ -340,12 +340,12 @@ func (g *graph[K, V, W]) Property(p PropertyName) (GraphProperty[any], error) {
 	return gp, nil
 }
 
-func (g *graph[K, V, W]) AllVertexes() []Vertex[K, V] {
-	vs := make([]Vertex[K, V], len(g.vertexes))
+func (g *graph[K, W]) AllVertexes() []Vertex[K, W] {
+	vs := make([]Vertex[K, W], len(g.vertexes))
 	var i int
 	for _, v := range g.vertexes {
 		/*
-			vs[i] = Vertex[K, V]{
+			vs[i] = Vertex[K,W]{
 				Key:    v.Key,
 				Value:  v.Value,
 				Labels: v.Labels,
@@ -357,7 +357,7 @@ func (g *graph[K, V, W]) AllVertexes() []Vertex[K, V] {
 	return vs
 }
 
-func (g *graph[K, V, W]) AllEdges() []Edge[K, W] {
+func (g *graph[K, W]) AllEdges() []Edge[K, W] {
 	es := make([]Edge[K, W], len(g.edges))
 	var i int
 	for _, e := range g.edges {
@@ -377,7 +377,7 @@ func (g *graph[K, V, W]) AllEdges() []Edge[K, W] {
 	return es
 }
 
-func (g *graph[K, V, W]) AddVertex(v Vertex[K, V]) error {
+func (g *graph[K, W]) AddVertex(v Vertex[K, W]) error {
 	if _, ok := g.vertexes[v.Key]; ok {
 		return errVertexExists
 	}
@@ -389,7 +389,7 @@ func (g *graph[K, V, W]) AddVertex(v Vertex[K, V]) error {
 	return nil
 }
 
-func (g *graph[K, V, W]) RemoveVertex(key K) error {
+func (g *graph[K, W]) RemoveVertex(key K) error {
 	if _, ok := g.vertexes[key]; !ok {
 		return errVertexNotExists
 	}
@@ -411,7 +411,7 @@ func (g *graph[K, V, W]) RemoveVertex(key K) error {
 	return nil
 }
 
-func (g *graph[K, V, W]) AddEdge(edge Edge[K, W]) error {
+func (g *graph[K, W]) AddEdge(edge Edge[K, W]) error {
 	if any(edge.Key) != nil {
 		if _, ok := g.edges[edge.Key]; ok {
 			return errEdgeExists
@@ -432,7 +432,7 @@ func (g *graph[K, V, W]) AddEdge(edge Edge[K, W]) error {
 	return nil
 }
 
-func (g *graph[K, V, W]) RemoveEdgeByKey(key K) error {
+func (g *graph[K, W]) RemoveEdgeByKey(key K) error {
 	e, ok := g.edges[key]
 	if !ok {
 		return errEdgeNotExists
@@ -445,7 +445,7 @@ func (g *graph[K, V, W]) RemoveEdgeByKey(key K) error {
 	return nil
 }
 
-func (g *graph[K, V, W]) RemoveEdge(v1, v2 K) error {
+func (g *graph[K, W]) RemoveEdge(v1, v2 K) error {
 	var edges []*edge[K, W]
 	for _, v := range g.edges {
 		ok := (v.Head == v1 && v.Tail == v2)
@@ -470,32 +470,32 @@ func (g *graph[K, V, W]) RemoveEdge(v1, v2 K) error {
 	return nil
 }
 
-func (g *graph[K, V, W]) RemoveAllEdge() error {
+func (g *graph[K, W]) RemoveAllEdge() error {
 	g.adjList.delAllEdge()
 	g.edges = make(map[K]*Edge[K, W])
 	g.version++
 	return nil
 }
 
-func (g *graph[K, V, W]) Degree(key K) (int, error) {
+func (g *graph[K, W]) Degree(key K) (int, error) {
 	if _, ok := g.vertexes[key]; !ok {
 		return 0, errVertexNotExists
 	}
 	return g.adjList.degree(key)
 }
 
-func (g *graph[K, V, W]) Neighbours(v K) ([]Vertex[K, V], error) {
+func (g *graph[K, W]) Neighbours(v K) ([]Vertex[K, W], error) {
 	vs, err := g.adjList.neighbours(v, false)
 	if err != nil {
 		return nil, err
 	}
-	var res []Vertex[K, V]
+	var res []Vertex[K, W]
 	for _, key := range vs {
 		ver, ok := g.vertexes[key]
 		if !ok {
 			return nil, fmt.Errorf("neighbour(%v) of %v not exists", key, v)
 		}
-		res = append(res, Vertex[K, V]{
+		res = append(res, Vertex[K, W]{
 			Key:    key,
 			Value:  ver.Value,
 			Labels: ver.Labels,
@@ -504,15 +504,15 @@ func (g *graph[K, V, W]) Neighbours(v K) ([]Vertex[K, V], error) {
 	return res, nil
 }
 
-func (g *graph[K, V, W]) GetVertex(key K) (Vertex[K, V], error) {
+func (g *graph[K, W]) GetVertex(key K) (Vertex[K, W], error) {
 	v, ok := g.vertexes[key]
 	if !ok {
-		return Vertex[K, V]{}, errVertexNotExists
+		return Vertex[K, W]{}, errVertexNotExists
 	}
-	return Vertex[K, V]{Key: v.Key, Value: v.Value, Labels: v.Labels}, nil
+	return Vertex[K, W]{Key: v.Key, Value: v.Value, Labels: v.Labels}, nil
 }
 
-func (g *graph[K, V, W]) GetEdge(v1, v2 K) ([]Edge[K, W], error) {
+func (g *graph[K, W]) GetEdge(v1, v2 K) ([]Edge[K, W], error) {
 	var edges []Edge[K, W]
 	for _, e := range g.edges {
 		ok := e.Head == v1 && e.Tail == v2
@@ -536,7 +536,7 @@ func (g *graph[K, V, W]) GetEdge(v1, v2 K) ([]Edge[K, W], error) {
 	return edges, nil
 }
 
-func (g *graph[K, V, W]) GetEdgeByKey(key K) (Edge[K, W], error) {
+func (g *graph[K, W]) GetEdgeByKey(key K) (Edge[K, W], error) {
 	e, ok := g.edges[key]
 	if !ok {
 		return Edge[K, W]{}, errEdgeNotExists
@@ -551,8 +551,8 @@ func (g *graph[K, V, W]) GetEdgeByKey(key K) (Edge[K, W], error) {
 	}, nil
 }
 
-func (g *graph[K, V, W]) GetVertexesByLabel(labels map[string]string) []Vertex[K, V] {
-	var ves []Vertex[K, V]
+func (g *graph[K, W]) GetVertexesByLabel(labels map[string]string) []Vertex[K, W] {
+	var ves []Vertex[K, W]
 	if labels != nil {
 		for _, u := range g.vertexes {
 			if u.Labels != nil {
@@ -573,7 +573,7 @@ func (g *graph[K, V, W]) GetVertexesByLabel(labels map[string]string) []Vertex[K
 	return ves
 }
 
-func (g *graph[K, V, W]) GetEdgesByLabel(labels map[string]string) []Edge[K, W] {
+func (g *graph[K, W]) GetEdgesByLabel(labels map[string]string) []Edge[K, W] {
 	var edges []Edge[K, W]
 	if labels != nil {
 		for _, e := range g.edges {
@@ -595,7 +595,7 @@ func (g *graph[K, V, W]) GetEdgesByLabel(labels map[string]string) []Edge[K, W] 
 	return edges
 }
 
-func (g *graph[K, V, W]) SetVertexValue(key K, value V) error {
+func (g *graph[K, W]) SetVertexValue(key K, value any) error {
 	v, ok := g.vertexes[key]
 	if !ok {
 		return errVertexNotExists
@@ -604,7 +604,7 @@ func (g *graph[K, V, W]) SetVertexValue(key K, value V) error {
 	return nil
 }
 
-func (g *graph[K, V, W]) SetVertexLabel(key K, labelKey, labelVal string) error {
+func (g *graph[K, W]) SetVertexLabel(key K, labelKey, labelVal string) error {
 	v, ok := g.vertexes[key]
 	if !ok {
 		return errVertexNotExists
@@ -616,7 +616,7 @@ func (g *graph[K, V, W]) SetVertexLabel(key K, labelKey, labelVal string) error 
 	return nil
 }
 
-func (g *graph[K, V, W]) DeleteVertexLabel(key K, labelKey string) error {
+func (g *graph[K, W]) DeleteVertexLabel(key K, labelKey string) error {
 	v, ok := g.vertexes[key]
 	if !ok {
 		return errVertexNotExists
@@ -627,7 +627,7 @@ func (g *graph[K, V, W]) DeleteVertexLabel(key K, labelKey string) error {
 	return nil
 }
 
-func (g *graph[K, V, W]) SetEdgeValueByKey(key K, value any) error {
+func (g *graph[K, W]) SetEdgeValueByKey(key K, value any) error {
 	e, ok := g.edges[key]
 	if !ok {
 		return errEdgeNotExists
@@ -636,7 +636,7 @@ func (g *graph[K, V, W]) SetEdgeValueByKey(key K, value any) error {
 	return nil
 }
 
-func (g *graph[K, V, W]) SetEdgeLabelByKey(key K, labelKey, labelVal string) error {
+func (g *graph[K, W]) SetEdgeLabelByKey(key K, labelKey, labelVal string) error {
 	e, ok := g.edges[key]
 	if !ok {
 		return errEdgeNotExists
@@ -648,7 +648,7 @@ func (g *graph[K, V, W]) SetEdgeLabelByKey(key K, labelKey, labelVal string) err
 	return nil
 }
 
-func (g *graph[K, V, W]) DeleteEdgeLabelByKey(key K, labelKey string) error {
+func (g *graph[K, W]) DeleteEdgeLabelByKey(key K, labelKey string) error {
 	e, ok := g.edges[key]
 	if !ok {
 		return errEdgeNotExists
@@ -659,7 +659,7 @@ func (g *graph[K, V, W]) DeleteEdgeLabelByKey(key K, labelKey string) error {
 	return nil
 }
 
-func (g *graph[K, V, W]) SetEdgeValue(endpoint1, endpoint2 K, value any) error {
+func (g *graph[K, W]) SetEdgeValue(endpoint1, endpoint2 K, value any) error {
 	edges, err := g.GetEdge(endpoint1, endpoint2)
 	if err != nil {
 		return err
@@ -674,7 +674,7 @@ func (g *graph[K, V, W]) SetEdgeValue(endpoint1, endpoint2 K, value any) error {
 	return nil
 }
 
-func (g *graph[K, V, W]) SetEdgeLabel(endpoint1, endpoint2 K, labelKey, labelVal string) error {
+func (g *graph[K, W]) SetEdgeLabel(endpoint1, endpoint2 K, labelKey, labelVal string) error {
 	edges, err := g.GetEdge(endpoint1, endpoint2)
 	if err != nil {
 		return err
@@ -692,7 +692,7 @@ func (g *graph[K, V, W]) SetEdgeLabel(endpoint1, endpoint2 K, labelKey, labelVal
 	return nil
 }
 
-func (g *graph[K, V, W]) DeleteEdgeLabel(endpoint1, endpoint2 K, labelKey string) error {
+func (g *graph[K, W]) DeleteEdgeLabel(endpoint1, endpoint2 K, labelKey string) error {
 	edges, err := g.GetEdge(endpoint1, endpoint2)
 	if err != nil {
 		return err
@@ -709,10 +709,10 @@ func (g *graph[K, V, W]) DeleteEdgeLabel(endpoint1, endpoint2 K, labelKey string
 	return nil
 }
 
-func (g *graph[K, V, W]) Clone() (Graph[K, V, W], error) {
+func (g *graph[K, W]) Clone() (Graph[K, W], error) {
 	adjList := newAdjacencyLis[K, W](g.properties.digraph)
 	ng := *g
-	ng.vertexes = make(map[K]*Vertex[K, V])
+	ng.vertexes = make(map[K]*Vertex[K, W])
 	ng.edges = make(map[K]*Edge[K, W])
 	ng.adjList = adjList
 
@@ -733,7 +733,7 @@ func (g *graph[K, V, W]) Clone() (Graph[K, V, W], error) {
 	return &ng, nil
 }
 
-func (g *graph[K, V, W]) RandomVertex() (Vertex[K, V], error) {
+func (g *graph[K, W]) RandomVertex() (Vertex[K, W], error) {
 	n := rand.Intn(len(g.vertexes))
 	i := 0
 	for _, v := range g.vertexes {
@@ -742,10 +742,10 @@ func (g *graph[K, V, W]) RandomVertex() (Vertex[K, V], error) {
 		}
 		i++
 	}
-	return Vertex[K, V]{}, errVertexNotExists
+	return Vertex[K, W]{}, errVertexNotExists
 }
 
-func (g *graph[K, V, W]) RandomEdge() (Edge[K, W], error) {
+func (g *graph[K, W]) RandomEdge() (Edge[K, W], error) {
 	n := rand.Intn(len(g.edges))
 	i := 0
 	for _, e := range g.edges {
@@ -757,7 +757,7 @@ func (g *graph[K, V, W]) RandomEdge() (Edge[K, W], error) {
 	return Edge[K, W]{}, errEdgeNotExists
 }
 
-func (g *graph[K, V, W]) NeighbourEdgesByKey(edge K) ([]Edge[K, W], error) {
+func (g *graph[K, W]) NeighbourEdgesByKey(edge K) ([]Edge[K, W], error) {
 	e, ok := g.edges[edge]
 	if !ok {
 		return nil, errEdgeNotExists
@@ -773,7 +773,7 @@ func (g *graph[K, V, W]) NeighbourEdgesByKey(edge K) ([]Edge[K, W], error) {
 	return res, nil
 }
 
-func (g *graph[K, V, W]) NeighbourEdges(endpoint1, endpoint2 K) ([]Edge[K, W], error) {
+func (g *graph[K, W]) NeighbourEdges(endpoint1, endpoint2 K) ([]Edge[K, W], error) {
 	es, err := g.GetEdge(endpoint1, endpoint2)
 	if err != nil {
 		return es, nil
@@ -784,7 +784,7 @@ func (g *graph[K, V, W]) NeighbourEdges(endpoint1, endpoint2 K) ([]Edge[K, W], e
 	return g.NeighbourEdgesByKey(es[0].Key)
 }
 
-func (g *graph[K, V, W]) IncidentEdges(vertex K) ([]Edge[K, W], error) {
+func (g *graph[K, W]) IncidentEdges(vertex K) ([]Edge[K, W], error) {
 	if _, ok := g.vertexes[vertex]; !ok {
 		return nil, errVertexNotExists
 	}
@@ -800,7 +800,16 @@ func (g *graph[K, V, W]) IncidentEdges(vertex K) ([]Edge[K, W], error) {
 	return res, nil
 }
 
-func (g *graph[K, V, W]) SetEdgeWeight(key K, weight W) error {
+func (g *graph[K, W]) SetVertexWeight(key K, weight W) error {
+	v, ok := g.vertexes[key]
+	if !ok {
+		return errVertexNotExists
+	}
+	v.Weight = weight
+	return nil
+}
+
+func (g *graph[K, W]) SetEdgeWeight(key K, weight W) error {
 	e, ok := g.edges[key]
 	if !ok {
 		return errEdgeNotExists

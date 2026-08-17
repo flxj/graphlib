@@ -17,7 +17,7 @@
 package graphlib
 
 // backtracking
-func vertexColouring[K comparable, V any, W number](g Graph[K, V, W], n int) (map[K]int, error) {
+func vertexColouring[K comparable, W number](g Graph[K, W], n int) (map[K]int, error) {
 	p, err := g.Property(PropertyMaxDegree)
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func vertexColouring[K comparable, V any, W number](g Graph[K, V, W], n int) (ma
 		return colouring,nil
 	*/
 	//
-	safe := func(c int, vs []Vertex[K, V]) bool {
+	safe := func(c int, vs []Vertex[K, W]) bool {
 		for _, v := range vs {
 			if colouring[v.Key] == c {
 				return false
@@ -102,14 +102,14 @@ func vertexColouring[K comparable, V any, W number](g Graph[K, V, W], n int) (ma
 }
 
 // Graph vertex coloring, returning a feasible coloring scheme.
-func TryVertexColouring[K comparable, V any, W number](g Graph[K, V, W], colours int) (map[K]int, error) {
+func TryVertexColouring[K comparable, W number](g Graph[K, W], colours int) (map[K]int, error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
 	return vertexColouring(g, colours)
 }
 
-func edgeColouring[K comparable, V any, W number](g Graph[K, V, W], n int) (map[K]int, error) {
+func edgeColouring[K comparable, W number](g Graph[K, W], n int) (map[K]int, error) {
 	p, err := g.Property(PropertyMaxDegree)
 	if err != nil {
 		return nil, err
@@ -188,7 +188,7 @@ func edgeColouring[K comparable, V any, W number](g Graph[K, V, W], n int) (map[
 }
 
 // Graph edge coloring, returning a feasible coloring scheme.
-func TryEdgeColouring[K comparable, V any, W number](g Graph[K, V, W], colours int) (map[K]int, error) {
+func TryEdgeColouring[K comparable, W number](g Graph[K, W], colours int) (map[K]int, error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
@@ -196,7 +196,7 @@ func TryEdgeColouring[K comparable, V any, W number](g Graph[K, V, W], colours i
 }
 
 // Graph edge coloring, returning a feasible coloring scheme.
-func GreedyVertexColouring[K comparable, V any, W number](g Graph[K, V, W]) (map[K]int, int, error) {
+func GreedyVertexColouring[K comparable, W number](g Graph[K, W]) (map[K]int, int, error) {
 	if g == nil {
 		return nil, 0, errNilGraph
 	}
@@ -228,7 +228,7 @@ func GreedyVertexColouring[K comparable, V any, W number](g Graph[K, V, W]) (map
 	return col, cnt + 1, nil
 }
 
-func GreedyEdgeColouring[K comparable, V any, W number](g Graph[K, V, W]) (map[K]int, int, error) {
+func GreedyEdgeColouring[K comparable, W number](g Graph[K, W]) (map[K]int, int, error) {
 	if g == nil {
 		return nil, 0, errNilGraph
 	}
@@ -260,10 +260,10 @@ func GreedyEdgeColouring[K comparable, V any, W number](g Graph[K, V, W]) (map[K
 	return col, cnt + 1, nil
 }
 
-func MaximalIndependentSet[K comparable, V any, W number](g Graph[K, V, W]) ([]K, error) {
+func MaximalIndependentSet[K comparable, W number](g Graph[K, W]) ([]K, error) {
 	return nil, errNotImplement
 }
 
-func MaximumIndependentSet[K comparable, V any, W number](g Graph[K, V, W]) ([]K, error) {
+func MaximumIndependentSet[K comparable, W number](g Graph[K, W]) ([]K, error) {
 	return nil, errNotImplement
 }

@@ -216,7 +216,7 @@ type ExecGraph[K comparable, J job] interface {
 
 // Create an empty ExecGraph.
 func NewExecGraph[K comparable, J job](name string) (ExecGraph[K, J], error) {
-	dag := NewDigraph[K, any, int](name)
+	dag := NewDigraph[K, int](name)
 	eg := &execGraph[K, J]{
 		dag:        dag,
 		complete:   make(chan struct{}),
@@ -231,20 +231,20 @@ func NewExecGraph[K comparable, J job](name string) (ExecGraph[K, J], error) {
 }
 
 // Load a DAG from text data and create an ExecGraph based on it.
-func NewExecGraphFromFile[K comparable, V any, W number, J job](path string) (ExecGraph[K, J], error) {
+func NewExecGraphFromFile[K comparable, W number, J job](path string) (ExecGraph[K, J], error) {
 	s, err := readFile(path)
 	if err != nil {
 		return nil, err
 	}
-	dg, err := UnmarshalDigraph[K, V, W](s)
+	dg, err := UnmarshalDigraph[K, W](s)
 	if err != nil {
 		return nil, err
 	}
-	return NewExecGraphFromDAG[K, V, W, J](dg)
+	return NewExecGraphFromDAG[K, W, J](dg)
 }
 
 // Create an ExecGraph based on an existing DAG object.
-func NewExecGraphFromDAG[K comparable, V any, W number, J job](g Digraph[K, V, W]) (ExecGraph[K, J], error) {
+func NewExecGraphFromDAG[K comparable, W number, J job](g Digraph[K, W]) (ExecGraph[K, J], error) {
 	p, err := g.Property(PropertyAcyclic)
 	if err != nil {
 		return nil, err
@@ -253,11 +253,11 @@ func NewExecGraphFromDAG[K comparable, V any, W number, J job](g Digraph[K, V, W
 		return nil, errExistsCycle
 	}
 
-	dag := NewDigraph[K, any, int](g.Name() + "-exec")
+	dag := NewDigraph[K, int](g.Name() + "-exec")
 	vs := g.AllVertexes()
 	es := g.AllEdges()
 	for _, v := range vs {
-		nv := Vertex[K, any]{Key: v.Key}
+		nv := Vertex[K, int]{Key: v.Key}
 		if err = dag.AddVertex(nv); err != nil {
 			return nil, err
 		}
@@ -455,7 +455,7 @@ type execGraph[K comparable, J job] struct {
 	mu sync.RWMutex
 	//limit int
 	// using DAG to orchestrate the execution workflow of Jobs.
-	dag Digraph[K, any, int]
+	dag Digraph[K, int]
 	// to stop the start() goroutinue.
 	complete  chan struct{}
 	completed bool
@@ -832,7 +832,7 @@ func (g *execGraph[K, J]) addJob(key K, job J, d time.Duration, n int) error {
 		return nil
 	}
 
-	v := Vertex[K, any]{
+	v := Vertex[K, int]{
 		Key: key,
 	}
 	if err := g.dag.AddVertex(v); err != nil {

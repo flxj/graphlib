@@ -22,10 +22,10 @@ import (
 	"testing"
 )
 
-func testBridgeG() Graph[int, any, int] {
-	g := NewGraph[int, any, int](false, "")
+func testBridgeG() Graph[int, int] {
+	g := NewGraph[int, int](false, "")
 	for i := 0; i < 8; i++ {
-		err := g.AddVertex(Vertex[int, any]{Key: i})
+		err := g.AddVertex(Vertex[int, int]{Key: i})
 		if err != nil {
 			panic(err.Error())
 		}

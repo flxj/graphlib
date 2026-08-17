@@ -21,16 +21,16 @@ import "fmt"
 // A line graph L(G) (also called an adjoint/edge-to-vertex dual graph) of a simple graph G
 // is obtained by associating a vertex with each edge of the graph and connecting two vertices
 // with an edge iff the corresponding edges of G have a vertex in common.
-func LineGraph[K comparable, V any, W number](g Graph[K, V, W]) (Graph[int, any, int], error) {
+func LineGraph[K comparable, W number](g Graph[K, W]) (Graph[int, int], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
 	edges := g.AllEdges()
 	idx := make(map[K]int)
-	lg := NewGraph[int, any, int](false, g.Name()+"_line")
+	lg := NewGraph[int, int](false, g.Name()+"_line")
 	for i, e := range edges {
 		idx[e.Key] = i
-		err := lg.AddVertex(Vertex[int, any]{
+		err := lg.AddVertex(Vertex[int, int]{
 			Key:   i,
 			Value: e.Labels,
 			Labels: map[string]string{
@@ -79,16 +79,16 @@ func LineGraph[K comparable, V any, W number](g Graph[K, V, W]) (Graph[int, any,
 	return lg, nil
 }
 
-func LineDigraph[K comparable, V any, W number](g Digraph[K, V, W]) (Digraph[int, any, int], error) {
+func LineDigraph[K comparable, W number](g Digraph[K, W]) (Digraph[int, int], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
 	edges := g.AllEdges()
 	idx := make(map[K]int)
-	lg := NewDigraph[int, any, int](g.Name() + "_line")
+	lg := NewDigraph[int, int](g.Name() + "_line")
 	for i, e := range edges {
 		idx[e.Key] = i
-		err := lg.AddVertex(Vertex[int, any]{
+		err := lg.AddVertex(Vertex[int, int]{
 			Key:   i,
 			Value: e.Labels,
 			Labels: map[string]string{

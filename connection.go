@@ -18,12 +18,12 @@ package graphlib
 
 // Determine whether the start and end vertices in graph g are connected.
 // If it is a directed graph, determine if there is a directed path from start to end.
-func Connected[K comparable, V any, W number](g Graph[K, V, W], start, end K) (bool, error) {
+func Connected[K comparable, W number](g Graph[K, W], start, end K) (bool, error) {
 	if g == nil {
 		return false, errNilGraph
 	}
 	var connected bool
-	visitor := func(v Vertex[K, V]) error {
+	visitor := func(v Vertex[K, W]) error {
 		if v.Key == end {
 			connected = true
 			return errNone
@@ -37,15 +37,15 @@ func Connected[K comparable, V any, W number](g Graph[K, V, W], start, end K) (b
 	return true, nil
 }
 
-func auxiliaryGraphEDP[K comparable, V any, W number](g Graph[K, V, W]) (Graph[K, V, int], error) {
+func auxiliaryGraphEDP[K comparable, W number](g Graph[K, W]) (Graph[K, int], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
-	aux := NewGraph[K, V, int](g.IsDigraph(), "")
+	aux := NewGraph[K, int](g.IsDigraph(), "")
 	vs := g.AllVertexes()
 	es := g.AllEdges()
 	for _, v := range vs {
-		if err := aux.AddVertex(Vertex[K, V]{Key: v.Key}); err != nil {
+		if err := aux.AddVertex(Vertex[K, int]{Key: v.Key}); err != nil {
 			return nil, err
 		}
 	}
@@ -58,20 +58,20 @@ func auxiliaryGraphEDP[K comparable, V any, W number](g Graph[K, V, W]) (Graph[K
 }
 
 // The edge disjoint paths in the auxiliary digraph correspond to the node disjoint paths in the original graph.
-func auxiliaryGraphVDP[K comparable, V any, W number](g Graph[K, V, W], source, target K) (Graph[int, any, int], int, int, error) {
+func auxiliaryGraphVDP[K comparable, W number](g Graph[K, W], source, target K) (Graph[int, int], int, int, error) {
 	if g == nil {
 		return nil, 0, 0, errNilGraph
 	}
-	aux := NewGraph[int, any, int](g.IsDigraph(), "")
+	aux := NewGraph[int, int](g.IsDigraph(), "")
 	vs := g.AllVertexes()
 	es := g.AllEdges()
 	idx := make(map[K]int)
 	var ek, s, t int
 	for i, v := range vs {
-		if err := aux.AddVertex(Vertex[int, any]{Key: -(i + 1)}); err != nil {
+		if err := aux.AddVertex(Vertex[int, int]{Key: -(i + 1)}); err != nil {
 			return nil, 0, 0, err
 		}
-		if err := aux.AddVertex(Vertex[int, any]{Key: i + 1}); err != nil {
+		if err := aux.AddVertex(Vertex[int, int]{Key: i + 1}); err != nil {
 			return nil, 0, 0, err
 		}
 		if v.Key == source {
@@ -98,7 +98,7 @@ func auxiliaryGraphVDP[K comparable, V any, W number](g Graph[K, V, W], source, 
 }
 
 // Find maximum number of edge disjoint paths between two vertices.
-func EdgeDisjointPath[K comparable, V any, W number](g Graph[K, V, W], source, target K) (int, error) {
+func EdgeDisjointPath[K comparable, W number](g Graph[K, W], source, target K) (int, error) {
 	aux, err := auxiliaryGraphEDP(g)
 	if err != nil {
 		return 0, err
@@ -107,7 +107,7 @@ func EdgeDisjointPath[K comparable, V any, W number](g Graph[K, V, W], source, t
 }
 
 // Find maximum number of vertex disjoint paths between two vertices.
-func VertexDisjointPath[K comparable, V any, W number](g Graph[K, V, W], source, target K) (int, error) {
+func VertexDisjointPath[K comparable, W number](g Graph[K, W], source, target K) (int, error) {
 	aux, s, t, err := auxiliaryGraphVDP(g, source, target)
 	if err != nil {
 		return 0, err
@@ -116,16 +116,16 @@ func VertexDisjointPath[K comparable, V any, W number](g Graph[K, V, W], source,
 }
 
 // Find maximum number of edge disjoint paths between two vertices.
-func DigraphEdgeDisjointPath[K comparable, V any, W number](g Digraph[K, V, W], source, target K) (int, error) {
+func DigraphEdgeDisjointPath[K comparable, W number](g Digraph[K, W], source, target K) (int, error) {
 	return EdgeDisjointPath(g, source, target)
 }
 
 // Find maximum number of vertex disjoint paths between two vertices.
-func DigraphVertexDisjointPath[K comparable, V any, W number](g Graph[K, V, W], source, target K) (int, error) {
+func DigraphVertexDisjointPath[K comparable, W number](g Graph[K, W], source, target K) (int, error) {
 	return VertexDisjointPath(g, source, target)
 }
 
-func DigraphCut[K comparable, V any, W number](g Digraph[K, V, W], X []K, incut bool) ([]Edge[K, W], error) {
+func DigraphCut[K comparable, W number](g Digraph[K, W], X []K, incut bool) ([]Edge[K, W], error) {
 	var res []Edge[K, W]
 	xm := make(map[K]struct{})
 	for _, v := range X {
@@ -154,7 +154,7 @@ func DigraphCut[K comparable, V any, W number](g Digraph[K, V, W], X []K, incut 
 	return res, nil
 }
 
-func DigraphArcs[K comparable, V any, W number](g Digraph[K, V, W], from, to []K) ([]Edge[K, W], error) {
+func DigraphArcs[K comparable, W number](g Digraph[K, W], from, to []K) ([]Edge[K, W], error) {
 	var res []Edge[K, W]
 	xm := make(map[K]struct{})
 	ym := make(map[K]struct{})
@@ -178,7 +178,7 @@ func DigraphArcs[K comparable, V any, W number](g Digraph[K, V, W], from, to []K
 	return res, nil
 }
 
-func GraphCoboundary[K comparable, V any, W number](g Graph[K, V, W], X []K) ([]Edge[K, W], error) {
+func GraphCoboundary[K comparable, W number](g Graph[K, W], X []K) ([]Edge[K, W], error) {
 	var res []Edge[K, W]
 	xm := make(map[K]struct{})
 	for _, v := range X {
@@ -201,7 +201,7 @@ func GraphCoboundary[K comparable, V any, W number](g Graph[K, V, W], X []K) ([]
 	return res, nil
 }
 
-func GraphEdges[K comparable, V any, W number](g Graph[K, V, W], X, Y []K) ([]Edge[K, W], error) {
+func GraphEdges[K comparable, W number](g Graph[K, W], X, Y []K) ([]Edge[K, W], error) {
 	xm := make(map[K]struct{})
 	ym := make(map[K]struct{})
 	for _, v := range X {
@@ -248,7 +248,7 @@ which has no incoming edges in the condensation graph.
 Now we want to run some type of search from this vertex u so that it will
 visit all vertices in its strongly connected component, but not other vertices.
 */
-func sccKosaraju[K comparable, V any, W number](g Digraph[K, V, W], condensation bool) ([][]K, Digraph[K, []K, W], error) {
+func sccKosaraju[K comparable, W number](g Digraph[K, W], condensation bool) ([][]K, Digraph[K, W], error) {
 	if g == nil {
 		return nil, nil, errNilGraph
 	}
@@ -317,9 +317,9 @@ func sccKosaraju[K comparable, V any, W number](g Digraph[K, V, W], condensation
 		return components, nil, nil
 	}
 	// build condensation graph
-	cond := NewDigraph[K, []K, W](g.Name() + "_condensation")
+	cond := NewDigraph[K, W](g.Name() + "_condensation")
 	for _, c := range components {
-		_ = cond.AddVertex(Vertex[K, []K]{Key: c[0], Value: c})
+		_ = cond.AddVertex(Vertex[K, W]{Key: c[0], Value: c})
 	}
 	for _, v := range vtx {
 		out, err := g.OutNeighbours(v.Key)
@@ -337,7 +337,7 @@ func sccKosaraju[K comparable, V any, W number](g Digraph[K, V, W], condensation
 
 // Calculate the strongly connected components of a directed graph and
 // return the set of vertices for each strongly connected component.
-func StronglyConnectedComponent[K comparable, V any, W number](g Digraph[K, V, W], condensation bool) ([][]K, Digraph[K, []K, W], error) {
+func StronglyConnectedComponent[K comparable, W number](g Digraph[K, W], condensation bool) ([][]K, Digraph[K, W], error) {
 	return sccKosaraju(g, condensation)
 }
 
@@ -355,7 +355,7 @@ When all calls finish, all roots will have been detected and all vertices will h
 we define the entry time in[v]  for each vertex v  which corresponds to the 'timestamp' at which the DFS was called on v.
 By definition, the root is the first vertex of an SCC to be visited by the DFS so it will have the minimal value of in[v]  of its SCC.
 */
-func sccTarjan[K comparable, V any, W number](g Digraph[K, V, W], condensation bool) ([][]K, Digraph[K, []K, W], error) {
+func sccTarjan[K comparable, W number](g Digraph[K, W], condensation bool) ([][]K, Digraph[K, W], error) {
 	if g == nil {
 		return nil, nil, errNilGraph
 	}
@@ -438,9 +438,9 @@ func sccTarjan[K comparable, V any, W number](g Digraph[K, V, W], condensation b
 		return components, nil, nil
 	}
 	// build condensation graph
-	cond := NewDigraph[K, []K, W](g.Name() + "_condensation")
+	cond := NewDigraph[K, W](g.Name() + "_condensation")
 	for _, c := range components {
-		_ = cond.AddVertex(Vertex[K, []K]{Key: c[0], Value: c})
+		_ = cond.AddVertex(Vertex[K, W]{Key: c[0], Value: c})
 	}
 	for i, v := range vtx {
 		out, err := g.OutNeighbours(v.Key)
@@ -459,12 +459,12 @@ func sccTarjan[K comparable, V any, W number](g Digraph[K, V, W], condensation b
 
 // Calculate the strongly connected components of a directed graph and
 // return the set of vertices for each strongly connected component.
-func StronglyConnectedComponentTarjan[K comparable, V any, W number](g Digraph[K, V, W], condensation bool) ([][]K, Digraph[K, []K, W], error) {
+func StronglyConnectedComponentTarjan[K comparable, W number](g Digraph[K, W], condensation bool) ([][]K, Digraph[K, W], error) {
 	return sccTarjan(g, condensation)
 }
 
 // Calculate the strongly connected components of a directed graph and
 // return the set of vertices for each strongly connected component.
-func StronglyConnectedComponentKosaraju[K comparable, V any, W number](g Digraph[K, V, W], condensation bool) ([][]K, Digraph[K, []K, W], error) {
+func StronglyConnectedComponentKosaraju[K comparable, W number](g Digraph[K, W], condensation bool) ([][]K, Digraph[K, W], error) {
 	return sccKosaraju(g, condensation)
 }

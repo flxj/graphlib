@@ -33,13 +33,13 @@ import "container/heap"
 //  2. For each u ∈ N+(v) do: if tvisit(u) = 0 then pred(u) :=v and perform
 //     DFS-PROC(u).
 //  3. Set time := time+1, texpl(v):=time.
-func dfs[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(Vertex[K, V]) error, neighbours func(K) ([]Vertex[K, V], error)) error {
+func dfs[K comparable, W number](g Graph[K, W], start K, visitor func(Vertex[K, W]) error, neighbours func(K) ([]Vertex[K, W], error)) error {
 	startV, err := g.GetVertex(start)
 	if err != nil {
 		return err
 	}
 	visited := make(map[K]struct{})
-	stack := newStack[*Vertex[K, V]]()
+	stack := newStack[*Vertex[K, W]]()
 	stack.push(&startV)
 
 	for !stack.empty() {
@@ -65,22 +65,22 @@ func dfs[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(
 }
 
 // Start depth first search from the specified source vertex, where g can be a directed or undirected graph.
-func DFS[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(Vertex[K, V]) error) error {
+func DFS[K comparable, W number](g Graph[K, W], start K, visitor func(Vertex[K, W]) error) error {
 	if g == nil {
 		return errNilGraph
 	}
 	neighbours := g.Neighbours
 	if g.IsDigraph() {
-		dg, ok := g.(Digraph[K, V, W])
+		dg, ok := g.(Digraph[K, W])
 		if ok {
 			neighbours = dg.OutNeighbours
 		} else {
-			neighbours = func(v K) ([]Vertex[K, V], error) {
+			neighbours = func(v K) ([]Vertex[K, W], error) {
 				es, err := g.IncidentEdges(v)
 				if err != nil {
 					return nil, err
 				}
-				var res []Vertex[K, V]
+				var res []Vertex[K, W]
 				for _, e := range es {
 					if e.Tail == v {
 						w, err := g.GetVertex(e.Head)
@@ -99,11 +99,11 @@ func DFS[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(
 
 // Perform depth first search in a directed graph, and specify the search direction using the in parameter:
 // if in is set to true, search from source in the order of the incident vertices of the current vertex.
-func DFSDigraph[K comparable, V any, W number](dg Digraph[K, V, W], start K, in bool, visitor func(Vertex[K, V]) error) error {
+func DFSDigraph[K comparable, W number](dg Digraph[K, W], start K, in bool, visitor func(Vertex[K, W]) error) error {
 	if dg == nil {
 		return errNilGraph
 	}
-	var neighbours func(K) ([]Vertex[K, V], error)
+	var neighbours func(K) ([]Vertex[K, W], error)
 	if in {
 		neighbours = dg.InNeighbours
 	} else {
@@ -121,14 +121,14 @@ func DFSDigraph[K comparable, V any, W number](dg Digraph[K, V, W], start K, in 
 //		from Q and consider the out-neighbours of u in D one by one. If, for an
 //		out-neighbour v of u,dist(s,v)=∞,thensetdist(s,v):=dist(s,u)+1,
 //		pred(v):=u, and put v to the end of Q.
-func bfs[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(Vertex[K, V]) error, neighbours func(K) ([]Vertex[K, V], error)) error {
+func bfs[K comparable, W number](g Graph[K, W], start K, visitor func(Vertex[K, W]) error, neighbours func(K) ([]Vertex[K, W], error)) error {
 	startV, err := g.GetVertex(start)
 	if err != nil {
 		return err
 	}
 	visited := make(map[K]struct{})
 	// use a fifo queue.
-	queue := newFIFO[*Vertex[K, V]]()
+	queue := newFIFO[*Vertex[K, W]]()
 	queue.push(&startV)
 
 	// visit current vertex,and push all neighbours of it to queue.
@@ -155,22 +155,22 @@ func bfs[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(
 }
 
 // Start breadth first search from the specified source vertex, where g can be a directed or undirected graph.
-func BFS[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(Vertex[K, V]) error) error {
+func BFS[K comparable, W number](g Graph[K, W], start K, visitor func(Vertex[K, W]) error) error {
 	if g == nil {
 		return errNilGraph
 	}
 	neighbours := g.Neighbours
 	if g.IsDigraph() {
-		dg, ok := g.(Digraph[K, V, W])
+		dg, ok := g.(Digraph[K, W])
 		if ok {
 			neighbours = dg.OutNeighbours
 		} else {
-			neighbours = func(v K) ([]Vertex[K, V], error) {
+			neighbours = func(v K) ([]Vertex[K, W], error) {
 				es, err := g.IncidentEdges(v)
 				if err != nil {
 					return nil, err
 				}
-				var res []Vertex[K, V]
+				var res []Vertex[K, W]
 				for _, e := range es {
 					if e.Tail == v {
 						w, err := g.GetVertex(e.Head)
@@ -189,11 +189,11 @@ func BFS[K comparable, V any, W number](g Graph[K, V, W], start K, visitor func(
 
 // Perform breadth first search in a directed graph, and specify the search direction using the in parameter:
 // if in is set to true, search from source in the order of the incident vertices of the current vertex.
-func BFSDigraph[K comparable, V any, W number](dg Digraph[K, V, W], start K, in bool, visitor func(Vertex[K, V]) error) error {
+func BFSDigraph[K comparable, W number](dg Digraph[K, W], start K, in bool, visitor func(Vertex[K, W]) error) error {
 	if dg == nil {
 		return errNilGraph
 	}
-	var neighbours func(K) ([]Vertex[K, V], error)
+	var neighbours func(K) ([]Vertex[K, W], error)
 	if in {
 		neighbours = dg.InNeighbours
 	} else {
@@ -232,7 +232,7 @@ Procedure TOPSORT (G; topnr,acyclic)：
 	(14) od;
 	(15) if N = n+1 then acyclic ← true else acyclic ← false fi
 */
-func topologicalSort[K comparable, V any, W number](g Digraph[K, V, W]) ([]Vertex[K, V], error) {
+func topologicalSort[K comparable, W number](g Digraph[K, W]) ([]Vertex[K, W], error) {
 	vertexes := g.AllVertexes()
 
 	inDegree := make(map[K]int)
@@ -244,7 +244,7 @@ func topologicalSort[K comparable, V any, W number](g Digraph[K, V, W]) ([]Verte
 		inDegree[v.Key] = d
 	}
 
-	var vs []Vertex[K, V]
+	var vs []Vertex[K, W]
 	for len(inDegree) > 0 {
 		var d0 []K
 		for k, d := range inDegree {
@@ -278,7 +278,7 @@ func topologicalSort[K comparable, V any, W number](g Digraph[K, V, W]) ([]Verte
 
 // Perform topological sorting on a directed graph and return a sequence of vertices.
 // If there is a cycle in the graph, return an error.
-func TopologicalSort[K comparable, V any, W number](g Digraph[K, V, W]) ([]Vertex[K, V], error) {
+func TopologicalSort[K comparable, W number](g Digraph[K, W]) ([]Vertex[K, W], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
@@ -290,7 +290,7 @@ func TopologicalSort[K comparable, V any, W number](g Digraph[K, V, W]) ([]Verte
 // the layers of a normal BFS but refines the choiceof vertices inside each layer by
 // a deterministic rule.The algorithm is often used as a sub‑routine for recognizing
 // chordal graphs and for computing perfect elimination orderings.
-func LexBFS[K comparable, V any, W number](g Graph[K, V, W], start K, f func(Vertex[K, V]) error) error {
+func LexBFS[K comparable, W number](g Graph[K, W], start K, f func(Vertex[K, W]) error) error {
 	// At each step a vertex is chosen according to a priority that is defined by a label stored on every vertex.
 	// The label is a finite sequence of integers that records, for each previously visited vertex,
 	// whether it was a neighbour of the current vertex or not.
@@ -362,7 +362,7 @@ func LexBFS[K comparable, V any, W number](g Graph[K, V, W], start K, f func(Ver
 	return nil
 }
 
-func LexDFS[K comparable, V any, W number](g Graph[K, V, W], start K, f func(Vertex[K, V]) error) error {
+func LexDFS[K comparable, W number](g Graph[K, W], start K, f func(Vertex[K, W]) error) error {
 	if g == nil {
 		return errNilGraph
 	}

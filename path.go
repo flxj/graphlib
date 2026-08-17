@@ -33,7 +33,7 @@ type Path[K comparable, W number] struct {
 // (but if negative loops are detected during the calculation process, an error will be returned).
 // If the source and target are not connected, the shortest path does not exist,
 // and the corresponding length is MaxDistance.
-func ShortestPath[K comparable, V any, W number](g Graph[K, V, W], source K, target K) (Path[K, W], error) {
+func ShortestPath[K comparable, W number](g Graph[K, W], source K, target K) (Path[K, W], error) {
 	if g == nil {
 		return Path[K, W]{}, errNilGraph
 	}
@@ -59,7 +59,7 @@ func ShortestPath[K comparable, V any, W number](g Graph[K, V, W], source K, tar
 // Calculate the shortest path from the source vertex to all other vertices in the graph,
 // where g can be an undirected or directed graph, with negative weights allowed
 // (however, if negative loops are detected during the calculation process, an error will be returned)。
-func ShortestPaths[K comparable, V any, W number](g Graph[K, V, W], source K) ([]Path[K, W], error) {
+func ShortestPaths[K comparable, W number](g Graph[K, W], source K) ([]Path[K, W], error) {
 	if g == nil {
 		return []Path[K, W]{}, errNilGraph
 	}
@@ -74,7 +74,7 @@ func ShortestPaths[K comparable, V any, W number](g Graph[K, V, W], source K) ([
 }
 
 // get edge from v1 to v2(or v2 to v1) with the minimum weight.
-func getMinWeightEdge[K comparable, V any, W number](g Graph[K, V, W], v1, v2 K) (*Edge[K, W], W, error) {
+func getMinWeightEdge[K comparable, W number](g Graph[K, W], v1, v2 K) (*Edge[K, W], W, error) {
 	es, err := g.GetEdge(v1, v2)
 	if err != nil {
 		if !IsNotExists(err) {
@@ -116,7 +116,7 @@ func getMinWeightEdge[K comparable, V any, W number](g Graph[K, V, W], v1, v2 K)
 // 7:     end for
 // 8: end while
 // 9: return (p, L)
-func shortestPathDijkstra[K comparable, V any, W number](g Graph[K, V, W], source K, target K, all bool) ([]Path[K, W], error) {
+func shortestPathDijkstra[K comparable, W number](g Graph[K, W], source K, target K, all bool) ([]Path[K, W], error) {
 	vertexes := g.AllVertexes()
 
 	// use the map to record edges of the shortest paths.
@@ -205,7 +205,7 @@ func shortestPathDijkstra[K comparable, V any, W number](g Graph[K, V, W], sourc
 }
 
 // Implement Dijkstra algorithm using priority queue.
-func shortestPathDijkstraWithPQ[K comparable, V any, W number](g Graph[K, V, W], source K, target K, all bool) ([]Path[K, W], error) {
+func shortestPathDijkstraWithPQ[K comparable, W number](g Graph[K, W], source K, target K, all bool) ([]Path[K, W], error) {
 	vertexes := g.AllVertexes()
 	trace := make(map[K]*Edge[K, W])
 	unvisited := make(map[K]bool)
@@ -352,7 +352,7 @@ BELLMAN-FORD(G,w,s)
 7         return FALSE
 8 return TRUE
 */
-func shortestPathBellmanFord[K comparable, V any, W number](g Graph[K, V, W], source K, target K, all bool) ([]Path[K, W], error) {
+func shortestPathBellmanFord[K comparable, W number](g Graph[K, W], source K, target K, all bool) ([]Path[K, W], error) {
 	vertexes := g.AllVertexes()
 	edges := g.AllEdges()
 
@@ -431,7 +431,7 @@ FLOYD-WARSHALL(W)
 7            d(ij)(k) = min{d(ij)(k-1); d(ik)(k-1)+d(kj)(k-1)}
 8 return D(n)
 */
-func shortestPathsFloyd[K comparable, V any, W number](g Graph[K, V, W]) ([]Path[K, W], error) {
+func shortestPathsFloyd[K comparable, W number](g Graph[K, W]) ([]Path[K, W], error) {
 	WM, err := NewWeightMatrix(g)
 	if err != nil {
 		return nil, err
@@ -513,7 +513,7 @@ func shortestPathsFloyd[K comparable, V any, W number](g Graph[K, V, W]) ([]Path
 // Solve the shortest path between all vertex pairs in the graph
 // If a pair of vertices are unreachable between them,
 // the corresponding shortest path value is MaxDistance.
-func AllShortestPaths[K comparable, V any, W number](g Graph[K, V, W]) ([]Path[K, W], error) {
+func AllShortestPaths[K comparable, W number](g Graph[K, W]) ([]Path[K, W], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
@@ -521,7 +521,7 @@ func AllShortestPaths[K comparable, V any, W number](g Graph[K, V, W]) ([]Path[K
 }
 
 //
-func CountCycles[K comparable, V any, W number](g Graph[K, V, W], length int) (int, error) {
+func CountCycles[K comparable, W number](g Graph[K, W], length int) (int, error) {
 	if g == nil {
 		return 0, errNilGraph
 	}
@@ -580,7 +580,7 @@ func CountCycles[K comparable, V any, W number](g Graph[K, V, W], length int) (i
 }
 
 // n is the vertexes number in search path.
-func countPaths[K comparable, V any, W number](g Graph[K, V, W], start, end K, n int, visited map[K]bool) (int, error) {
+func countPaths[K comparable, W number](g Graph[K, W], start, end K, n int, visited map[K]bool) (int, error) {
 	visited[start] = true
 	defer func() { delete(visited, start) }()
 

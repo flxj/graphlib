@@ -64,7 +64,7 @@ const (
 //
 // The concept of graph can be referenced:
 // https://mathworld.wolfram.com/Graph.html
-type Graph[K comparable, V any, W number] interface {
+type Graph[K comparable, W number] interface {
 	//
 	// The name of current graph object.
 	Name() string
@@ -130,13 +130,13 @@ type Graph[K comparable, V any, W number] interface {
 	Property(p PropertyName) (GraphProperty[any], error)
 	//
 	// The unordered set of all vertices in a graph.
-	AllVertexes() []Vertex[K, V]
+	AllVertexes() []Vertex[K, W]
 	//
 	// The unordered set of all edges in the graph.
 	AllEdges() []Edge[K, W]
 	//
 	// Add vertices to the graph.
-	AddVertex(vertex Vertex[K, V]) error
+	AddVertex(vertex Vertex[K, W]) error
 	//
 	// Delete a vertex, and all edges corresponding to that vertex
 	// will also be deleted. If the vertex does not exist, return an error.
@@ -162,10 +162,10 @@ type Graph[K comparable, V any, W number] interface {
 	Degree(vertex K) (int, error)
 	//
 	// Query the adjacent vertices of a specified vertex.
-	Neighbours(vertex K) ([]Vertex[K, V], error)
+	Neighbours(vertex K) ([]Vertex[K, W], error)
 	//
 	// Query specified vertex.
-	GetVertex(key K) (Vertex[K, V], error)
+	GetVertex(key K) (Vertex[K, W], error)
 	//
 	// Query all edges with endpoints 1 and 2 as their respective endpoints.
 	GetEdge(endpoint1, endpoint2 K) ([]Edge[K, W], error)
@@ -176,7 +176,7 @@ type Graph[K comparable, V any, W number] interface {
 	// Filter vertices based on label information,
 	// and eligible vertices need to include all label items in
 	// the label parameter simultaneously.
-	GetVertexesByLabel(labels map[string]string) []Vertex[K, V]
+	GetVertexesByLabel(labels map[string]string) []Vertex[K, W]
 	//
 	// Filter edges based on label information,
 	// and eligible edges need to include all label items
@@ -184,7 +184,7 @@ type Graph[K comparable, V any, W number] interface {
 	GetEdgesByLabel(labels map[string]string) []Edge[K, W]
 	//
 	// Update vertex data.
-	SetVertexValue(key K, value V) error
+	SetVertexValue(key K, value any) error
 	//
 	// Update vertex label.
 	SetVertexLabel(key K, labelKey, labelVal string) error
@@ -192,7 +192,8 @@ type Graph[K comparable, V any, W number] interface {
 	// Remove vertex label.
 	DeleteVertexLabel(key K, labelKey string) error
 	//
-	//
+	// Update edge weight.
+	SetVertexWeight(key K, weight W) error
 	// Update edge weight.
 	SetEdgeWeight(key K, weight W) error
 	// Update edge data.
@@ -220,10 +221,10 @@ type Graph[K comparable, V any, W number] interface {
 	DeleteEdgeLabel(endpoint1, endpoint2 K, labelKey string) error
 	//
 	// Copy the current graph.
-	Clone() (Graph[K, V, W], error)
+	Clone() (Graph[K, W], error)
 	//
 	// Randomly select a vertex from the graph.
-	RandomVertex() (Vertex[K, V], error)
+	RandomVertex() (Vertex[K, W], error)
 	//
 	// Randomly select a edge from the graph
 	RandomEdge() (Edge[K, W], error)
@@ -238,11 +239,13 @@ type Graph[K comparable, V any, W number] interface {
 	IncidentEdges(vertex K) ([]Edge[K, W], error)
 }
 
-type Vertex[K comparable, V any] struct {
+type Vertex[K comparable, W number] struct {
 	// The unique identifier of this vertex.
 	Key K `json:"key" yaml:"key"`
 	// The data object of this vertex .
-	Value V `json:"value" yaml:"value"`
+	Value any `json:"value" yaml:"value"`
+	// vertex weight.
+	Weight W `json:"weight" yaml:"weight"`
 	// The label of this vertex.
 	Labels map[string]string `json:"labels" yaml:"labels"`
 }

@@ -22,7 +22,7 @@ import (
 )
 
 func TestPath1(t *testing.T) {
-	g := NewGraph[int, int, int](false, "test-g")
+	g := NewGraph[int, int](false, "test-g")
 
 	vs := []Vertex[int, int]{
 		{Key: 1, Value: 1},
@@ -60,7 +60,7 @@ func TestPath1(t *testing.T) {
 		}
 	}
 
-	paths, err := ShortestPaths[int, int, int](g, 1)
+	paths, err := ShortestPaths[int, int](g, 1)
 	if err != nil {
 		fmt.Println("[Err] ", err)
 		return

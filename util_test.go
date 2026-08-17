@@ -55,7 +55,7 @@ func TestLCA(t *testing.T) {
 		{Head: 23, Tail: 30},
 	}
 	for i := 1; i <= 30; i++ {
-		if err := tree.AddVertex(Vertex[int, any]{
+		if err := tree.AddVertex(Vertex[int, int]{
 			Key: i,
 		}); err != nil {
 			panic(err.Error())

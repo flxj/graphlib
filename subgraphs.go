@@ -17,7 +17,7 @@
 package graphlib
 
 // Does g1 include g2 as a subgraph.
-func Contains[K comparable, V any, W number](g1 Graph[K, V, W], g2 Graph[K, V, W]) (bool, error) {
+func Contains[K comparable, W number](g1 Graph[K, W], g2 Graph[K, W]) (bool, error) {
 	if g1 == nil || g2 == nil {
 		return false, errNilGraph
 	}
@@ -56,7 +56,7 @@ func Contains[K comparable, V any, W number](g1 Graph[K, V, W], g2 Graph[K, V, W
 
 // Generate a spanning subgraph of g, and the new graph will not include edges in the edges list.
 // The format of the edges list is [] [] K {head1, tail1} {headN, tailN}}.
-func SpanningSubgraph[K comparable, V any, W number](g Graph[K, V, W], edges [][]K) (Graph[K, V, W], error) {
+func SpanningSubgraph[K comparable, W number](g Graph[K, W], edges [][]K) (Graph[K, W], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
@@ -75,7 +75,7 @@ func SpanningSubgraph[K comparable, V any, W number](g Graph[K, V, W], edges [][
 }
 
 // Generate a spanning supergraph of g, and add edges to the edges list in the new graph.
-func SpanningSupergraph[K comparable, V any, W number](g Graph[K, V, W], edges []*Edge[K, W]) (Graph[K, V, W], error) {
+func SpanningSupergraph[K comparable, W number](g Graph[K, W], edges []*Edge[K, W]) (Graph[K, W], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
@@ -93,7 +93,7 @@ func SpanningSupergraph[K comparable, V any, W number](g Graph[K, V, W], edges [
 }
 
 // Generate an induced subgraph of g, where the new graph will not contain vertices in vertices.
-func InducedSubgraph[K comparable, V any, W number](g Graph[K, V, W], vertexes []K) (Graph[K, V, W], error) {
+func InducedSubgraph[K comparable, W number](g Graph[K, W], vertexes []K) (Graph[K, W], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}

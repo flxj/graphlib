@@ -16,7 +16,7 @@
 
 package graphlib
 
-func IsCutvertex[K comparable, V any, W number](g Graph[K, V, W], v K) (bool, error) {
+func IsCutvertex[K comparable, W number](g Graph[K, W], v K) (bool, error) {
 	if g == nil {
 		return false, errNilGraph
 	}
@@ -68,7 +68,7 @@ and removing it would disconnect that subtree from the rest of the graph.
 By propagating these low values during DFS, we can efficiently identify all nodes whose removal increases
 the number of connected components, i.e., the articulation points.
 */
-func FindCutVerties[K comparable, V any, W number](g Graph[K, V, W]) ([]K, error) {
+func FindCutVerties[K comparable, W number](g Graph[K, W]) ([]K, error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
@@ -140,7 +140,7 @@ Let's say we are in the DFS, looking through the edges starting from vertex v 
 The current edge (v, w)  is a bridge if and only if none of the vertices w and its descendants in the DFS traversal tree has a back-edge to
 vertex v or any of its ancestors. Indeed, this condition means that there is no other way from v  to w  except for edge (v, w).
 */
-func isBridge[K comparable, V any, W number](g Graph[K, V, W], edge Edge[K, W]) (bool, error) {
+func isBridge[K comparable, W number](g Graph[K, W], edge Edge[K, W]) (bool, error) {
 	var bri bool
 	var t int
 	visited := make(map[K]struct{})
@@ -186,7 +186,7 @@ func isBridge[K comparable, V any, W number](g Graph[K, V, W], edge Edge[K, W]) 
 	return bri, nil
 }
 
-func IsBridge[K comparable, V any, W number](g Graph[K, V, W], edge K) (bool, error) {
+func IsBridge[K comparable, W number](g Graph[K, W], edge K) (bool, error) {
 	if g == nil {
 		return false, errNilGraph
 	}
@@ -197,7 +197,7 @@ func IsBridge[K comparable, V any, W number](g Graph[K, V, W], edge K) (bool, er
 	return isBridge(g, e)
 }
 
-func FindBridges[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W], error) {
+func FindBridges[K comparable, W number](g Graph[K, W]) ([]Edge[K, W], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
@@ -256,8 +256,8 @@ func FindBridges[K comparable, V any, W number](g Graph[K, V, W]) ([]Edge[K, W],
 	return bri, nil
 }
 
-type FindBridgesOnline[K comparable, V any, W number] struct {
-	g   Graph[K, V, W]
+type FindBridgesOnline[K comparable, W number] struct {
+	g   Graph[K, W]
 	vtx []K
 	idx map[K]int
 	bri map[int]int
@@ -274,13 +274,13 @@ type FindBridgesOnline[K comparable, V any, W number] struct {
 	visit  []int
 }
 
-func NewFindBridgesOnline[K comparable, V any, W number](g Graph[K, V, W]) (*FindBridgesOnline[K, V, W], error) {
+func NewFindBridgesOnline[K comparable, W number](g Graph[K, W]) (*FindBridgesOnline[K, W], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
 	vs := g.AllVertexes()
 	es := g.AllEdges()
-	fb := &FindBridgesOnline[K, V, W]{
+	fb := &FindBridgesOnline[K, W]{
 		g:       g,
 		vtx:     make([]K, g.Order()),
 		idx:     make(map[K]int),
@@ -305,7 +305,7 @@ func NewFindBridgesOnline[K comparable, V any, W number](g Graph[K, V, W]) (*Fin
 	return fb, nil
 }
 
-func (f *FindBridgesOnline[K, V, W]) AddVertex(v Vertex[K, V]) error {
+func (f *FindBridgesOnline[K, W]) AddVertex(v Vertex[K, W]) error {
 	if err := f.g.AddVertex(v); err != nil {
 		return err
 	}
@@ -318,7 +318,7 @@ func (f *FindBridgesOnline[K, V, W]) AddVertex(v Vertex[K, V]) error {
 	return nil
 }
 
-func (f *FindBridgesOnline[K, V, W]) AddEdge(e Edge[K, W]) error {
+func (f *FindBridgesOnline[K, W]) AddEdge(e Edge[K, W]) error {
 	if err := f.g.AddEdge(e); err != nil {
 		return err
 	}
@@ -346,7 +346,7 @@ func (f *FindBridgesOnline[K, V, W]) AddEdge(e Edge[K, W]) error {
 	return nil
 }
 
-func (f *FindBridgesOnline[K, V, W]) makeRoot(v int) {
+func (f *FindBridgesOnline[K, W]) makeRoot(v int) {
 	root, child := v, -1
 	for v != -1 {
 		p := f.two_ecc.Find(f.parent[v])
@@ -356,7 +356,7 @@ func (f *FindBridgesOnline[K, V, W]) makeRoot(v int) {
 	}
 }
 
-func (f *FindBridgesOnline[K, V, W]) addBridge(a, b int) {
+func (f *FindBridgesOnline[K, W]) addBridge(a, b int) {
 	c, ok := f.bri[a]
 	if ok {
 		if c == b {
@@ -368,7 +368,7 @@ func (f *FindBridgesOnline[K, V, W]) addBridge(a, b int) {
 	}
 }
 
-func (f *FindBridgesOnline[K, V, W]) deleteBridge(a, b int) {
+func (f *FindBridgesOnline[K, W]) deleteBridge(a, b int) {
 	c, ok := f.bri[a]
 	if ok && c == b {
 		delete(f.bri, a)
@@ -379,7 +379,7 @@ func (f *FindBridgesOnline[K, V, W]) deleteBridge(a, b int) {
 	}
 }
 
-func (f *FindBridgesOnline[K, V, W]) connect(a, b int) {
+func (f *FindBridgesOnline[K, W]) connect(a, b int) {
 	// The vertices a and b are in one connected component, but in different 2-edge-connected components.
 	// In this case,this edge forms a cycle along with some of the old bridges.
 	// All these bridges end being bridges, and the resulting cycle must be compressed into a new 2-edge-connected component.
@@ -432,11 +432,11 @@ func (f *FindBridgesOnline[K, V, W]) connect(a, b int) {
 	}
 }
 
-func (f *FindBridgesOnline[K, V, W]) Graph() Graph[K, V, W] {
+func (f *FindBridgesOnline[K, W]) Graph() Graph[K, W] {
 	return f.g
 }
 
-func (f *FindBridgesOnline[K, V, W]) IsBridge(e Edge[K, W]) bool {
+func (f *FindBridgesOnline[K, W]) IsBridge(e Edge[K, W]) bool {
 	i, j := f.idx[e.Head], f.idx[e.Tail]
 	if v, ok := f.bri[i]; ok {
 		return v == j
@@ -447,7 +447,7 @@ func (f *FindBridgesOnline[K, V, W]) IsBridge(e Edge[K, W]) bool {
 	return false
 }
 
-func (f *FindBridgesOnline[K, V, W]) Bridges() ([]Edge[K, W], error) {
+func (f *FindBridgesOnline[K, W]) Bridges() ([]Edge[K, W], error) {
 	res := make([]Edge[K, W], len(f.bri))
 	var i int
 	for a, b := range f.bri {
@@ -461,10 +461,10 @@ func (f *FindBridgesOnline[K, V, W]) Bridges() ([]Edge[K, W], error) {
 	return res, nil
 }
 
-func (f *FindBridgesOnline[K, V, W]) BridgeCount() int {
+func (f *FindBridgesOnline[K, W]) BridgeCount() int {
 	return len(f.bri)
 }
 
-func (f *FindBridgesOnline[K, V, W]) Components() int {
+func (f *FindBridgesOnline[K, W]) Components() int {
 	return f.cc.Component()
 }

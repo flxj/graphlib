@@ -22,7 +22,7 @@ import (
 )
 
 // Calculate the intersection of two graphs.
-func Union[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K, V, W], error) {
+func Union[K comparable, W number](g1, g2 Graph[K, W]) (Graph[K, W], error) {
 	if g1.IsDigraph() != g2.IsDigraph() {
 		return nil, errNotSameType
 	}
@@ -31,7 +31,7 @@ func Union[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K, V, W]
 	vs2 := g2.AllVertexes()
 	es2 := g2.AllEdges()
 
-	uv := make(map[K]*Vertex[K, V])
+	uv := make(map[K]*Vertex[K, W])
 	ue := make(map[K]*Edge[K, W])
 	for _, v := range vs1 {
 		vv := v
@@ -50,7 +50,7 @@ func Union[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K, V, W]
 		ue[ee.Key] = &ee
 	}
 
-	ug := NewGraph[K, V, W](g1.IsDigraph(), fmt.Sprintf("%s-union-%s", g1.Name(), g2.Name()))
+	ug := NewGraph[K, W](g1.IsDigraph(), fmt.Sprintf("%s-union-%s", g1.Name(), g2.Name()))
 
 	for _, v := range uv {
 		if err := ug.AddVertex(*v); err != nil {
@@ -67,7 +67,7 @@ func Union[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K, V, W]
 }
 
 // Calculate the union of two graphs.
-func Intersection[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K, V, W], error) {
+func Intersection[K comparable, W number](g1, g2 Graph[K, W]) (Graph[K, W], error) {
 	if g1.IsDigraph() != g2.IsDigraph() {
 		return nil, errNotSameType
 	}
@@ -80,7 +80,7 @@ func Intersection[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K
 	iv := make(map[K]bool)
 	ie := make(map[K]bool)
 
-	uv := make(map[K]*Vertex[K, V])
+	uv := make(map[K]*Vertex[K, W])
 	ue := make(map[K]*Edge[K, W])
 	for _, v := range vs1 {
 		iv[v.Key] = true
@@ -100,7 +100,7 @@ func Intersection[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K
 			ue[ee.Key] = &ee
 		}
 	}
-	ug := NewGraph[K, V, W](g1.IsDigraph(), fmt.Sprintf("%s-intersection-%s", g1.Name(), g2.Name()))
+	ug := NewGraph[K, W](g1.IsDigraph(), fmt.Sprintf("%s-intersection-%s", g1.Name(), g2.Name()))
 
 	for _, v := range uv {
 		if err := ug.AddVertex(*v); err != nil {
@@ -116,7 +116,7 @@ func Intersection[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[K
 	return ug, nil
 }
 
-func CartesianProduct[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Graph[string, V, W], error) {
+func CartesianProduct[K comparable, W number](g1, g2 Graph[K, W]) (Graph[string, W], error) {
 	if g1.IsDigraph() != g2.IsDigraph() {
 		return nil, errors.New("not support operation")
 	}
@@ -126,10 +126,10 @@ func CartesianProduct[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Gra
 	g1es := g1.AllEdges()
 	g2es := g2.AllEdges()
 
-	g := NewGraph[string, V, W](g1.IsDigraph(), g1.Name()+"X"+g2.Name())
+	g := NewGraph[string, W](g1.IsDigraph(), g1.Name()+"X"+g2.Name())
 	for _, v1 := range g1vs {
 		for _, v2 := range g2vs {
-			v := Vertex[string, V]{
+			v := Vertex[string, W]{
 				Key: fmt.Sprintf("(%v,%v)", v1.Key, v2.Key),
 				Labels: map[string]string{
 					g1.Name(): fmt.Sprintf("%v", v1.Key),
@@ -175,11 +175,11 @@ func CartesianProduct[K comparable, V any, W number](g1, g2 Graph[K, V, W]) (Gra
 	return g, nil
 }
 
-func Identify[K comparable, V any, W number](g Graph[K, V, W], v1, v2 K, newVertex Vertex[K, V], createGraph bool) (Graph[K, V, W], error) {
+func Identify[K comparable, W number](g Graph[K, W], v1, v2 K, newVertex Vertex[K, W], createGraph bool) (Graph[K, W], error) {
 	return Contract(g, v1, v2, newVertex, createGraph)
 }
 
-func Contract[K comparable, V any, W number](g Graph[K, V, W], v1, v2 K, newVertex Vertex[K, V], createGraph bool) (Graph[K, V, W], error) {
+func Contract[K comparable, W number](g Graph[K, W], v1, v2 K, newVertex Vertex[K, W], createGraph bool) (Graph[K, W], error) {
 	var err error
 	if _, err = g.GetVertex(v1); err != nil {
 		return nil, err
@@ -288,7 +288,7 @@ func Contract[K comparable, V any, W number](g Graph[K, V, W], v1, v2 K, newVert
 	return g2, nil
 }
 
-func Split[K comparable, V any, W number](g Graph[K, V, W], vertex K, edge Edge[K, W], newEdgeKey func(Edge[K, W]) K, createGraph bool) (Graph[K, V, W], error) {
+func Split[K comparable, W number](g Graph[K, W], vertex K, edge Edge[K, W], newEdgeKey func(Edge[K, W]) K, createGraph bool) (Graph[K, W], error) {
 	var err error
 	if _, err = g.GetVertex(edge.Head); err == nil {
 		return nil, fmt.Errorf("vertex %v already exists", edge.Head)
@@ -365,7 +365,7 @@ func Split[K comparable, V any, W number](g Graph[K, V, W], vertex K, edge Edge[
 	return g2, nil
 }
 
-func Subdivide[K comparable, V any, W number](g Graph[K, V, W], edge K, vertex Vertex[K, V], newEdgeKey func(Edge[K, W]) K, createGraph bool) (Graph[K, V, W], error) {
+func Subdivide[K comparable, W number](g Graph[K, W], edge K, vertex Vertex[K, W], newEdgeKey func(Edge[K, W]) K, createGraph bool) (Graph[K, W], error) {
 	_, err := g.GetVertex(vertex.Key)
 	if err == nil {
 		return nil, fmt.Errorf("vertex %v already exists", vertex.Key)

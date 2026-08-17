@@ -23,8 +23,8 @@ import (
 	"testing"
 )
 
-func exportTestGraph1() (Graph[int, int, int], bool) {
-	g := NewGraph[int, int, int](false, "test-g")
+func exportTestGraph1() (Graph[int, int], bool) {
+	g := NewGraph[int, int](false, "test-g")
 	vs := []Vertex[int, int]{
 		{Key: 1, Value: 1},
 		{Key: 2, Value: 2},
@@ -74,7 +74,7 @@ func TestMarshalJSON(t *testing.T) {
 	fmt.Printf("size:%d\n", g.Size())
 
 	fmt.Println("==================> marshal")
-	s, err := MarshalGraphToJSON[int, int, int](g)
+	s, err := MarshalGraphToJSON[int, int](g)
 	if err != nil {
 		fmt.Printf("marshal graph error:%v\n", err)
 		return
@@ -97,13 +97,13 @@ func TestUnmarshalJSON(t *testing.T) {
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 	fmt.Println("==================> marshal")
-	s, err := MarshalGraphToJSON[int, int, int](g)
+	s, err := MarshalGraphToJSON[int, int](g)
 	if err != nil {
 		fmt.Printf("marshal graph error:%v\n", err)
 		return
 	}
 	fmt.Println("==================> unmarshal")
-	g2, err := UnmarshalGraph[int, int, int](s)
+	g2, err := UnmarshalGraph[int, int](s)
 	if err != nil {
 		fmt.Printf("unmarshal graph error:%v\n", err)
 		return
