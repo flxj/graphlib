@@ -23,7 +23,7 @@ import (
 )
 
 func bwmTestGraph(maximum bool) Bipartite[int, any, int] {
-	g, _ := NewBipartite[int, any, int](false, "g1")
+	g := NewBipartite[int, any, int](false, "g1")
 	for i := 1; i < 9; i++ {
 		if i <= 4 {
 			_ = g.AddVertexTo(Vertex[int, any]{Key: i}, true)
@@ -101,7 +101,7 @@ func bwmG2() {
 }
 
 func mvcG1() {
-	g, _ := NewBipartite[int, any, int](false, "g1")
+	g := NewBipartite[int, any, int](false, "g1")
 	A := []Vertex[int, any]{
 		{Key: 1},
 		{Key: 2},
@@ -152,7 +152,7 @@ func mvcG1() {
 }
 
 func mvcG2() {
-	g, _ := NewBipartite[string, any, int](false, "g2")
+	g := NewBipartite[string, any, int](false, "g2")
 	A := []Vertex[string, any]{
 		{Key: "r1"},
 		{Key: "r2"},

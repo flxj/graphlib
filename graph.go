@@ -176,12 +176,12 @@ type Graph[K comparable, V any, W number] interface {
 	// Filter vertices based on label information,
 	// and eligible vertices need to include all label items in
 	// the label parameter simultaneously.
-	GetVertexesByLabel(labels map[string]string) ([]Vertex[K, V], error)
+	GetVertexesByLabel(labels map[string]string) []Vertex[K, V]
 	//
 	// Filter edges based on label information,
 	// and eligible edges need to include all label items
 	// in the label parameter simultaneously.
-	GetEdgesByLabel(labels map[string]string) ([]Edge[K, W], error)
+	GetEdgesByLabel(labels map[string]string) []Edge[K, W]
 	//
 	// Update vertex data.
 	SetVertexValue(key K, value V) error
@@ -247,8 +247,8 @@ type Vertex[K comparable, V any] struct {
 	Labels map[string]string `json:"labels" yaml:"labels"`
 }
 
-func (v *Vertex[K, V]) Clone() *Vertex[K, V] {
-	vv := &Vertex[K, V]{
+func (v Vertex[K, V]) Clone() Vertex[K, V] {
+	vv := Vertex[K, V]{
 		Key:   v.Key,
 		Value: v.Value,
 	}
@@ -279,8 +279,8 @@ type Edge[K comparable, W number] struct {
 	Labels map[string]string `json:"labels" yaml:"labels"`
 }
 
-func (e *Edge[K, W]) Clone() *Edge[K, W] {
-	ee := &Edge[K, W]{
+func (e Edge[K, W]) Clone() Edge[K, W] {
+	ee := Edge[K, W]{
 		Key:    e.Key,
 		Head:   e.Head,
 		Tail:   e.Tail,

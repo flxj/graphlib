@@ -23,6 +23,8 @@ type Bipartite[K comparable, V any, W number] interface {
 	AddVertexTo(v Vertex[K, V], partA bool) error
 	Part(partA bool) ([]Vertex[K, V], error)
 	InPartA(K) bool
+	PartOrder(partA bool) int
+	RemovePart(partA bool) error
 }
 
 type bipartite[K comparable, V any, W number] struct {
@@ -32,13 +34,13 @@ type bipartite[K comparable, V any, W number] struct {
 	partB map[K]bool
 }
 
-func NewBipartite[K comparable, V any, W number](digraph bool, name string) (Bipartite[K, V, W], error) {
+func NewBipartite[K comparable, V any, W number](digraph bool, name string) Bipartite[K, V, W] {
 	g := newGraph[K, V, W](digraph, name)
 	return &bipartite[K, V, W]{
 		g:     g,
 		partA: make(map[K]bool),
 		partB: make(map[K]bool),
-	}, nil
+	}
 }
 
 func (bg *bipartite[K, V, W]) Name() string {
@@ -55,6 +57,13 @@ func (bg *bipartite[K, V, W]) IsDigraph() bool {
 
 func (bg *bipartite[K, V, W]) Order() int {
 	return bg.g.Order()
+}
+
+func (bg *bipartite[K, V, W]) PartOrder(partA bool) int {
+	if partA {
+		return len(bg.partA)
+	}
+	return len(bg.partB)
 }
 
 func (bg *bipartite[K, V, W]) Size() int {
@@ -124,6 +133,25 @@ func (bg *bipartite[K, V, W]) RemoveVertex(key K) error {
 	return nil
 }
 
+func (bg *bipartite[K, V, W]) RemovePart(partA bool) error {
+	if partA {
+		for v := range bg.partA {
+			if err := bg.g.RemoveVertex(v); err != nil {
+				return err
+			}
+		}
+		bg.partA = make(map[K]bool)
+	} else {
+		for v := range bg.partB {
+			if err := bg.g.RemoveVertex(v); err != nil {
+				return err
+			}
+		}
+		bg.partB = make(map[K]bool)
+	}
+	return nil
+}
+
 func (bg *bipartite[K, V, W]) AddEdge(edge Edge[K, W]) error {
 	if bg.partA[edge.Head] && bg.partA[edge.Tail] {
 		return errViolateBipartite
@@ -162,11 +190,11 @@ func (bg *bipartite[K, V, W]) GetEdgeByKey(key K) (Edge[K, W], error) {
 	return bg.g.GetEdgeByKey(key)
 }
 
-func (bg *bipartite[K, V, W]) GetVertexesByLabel(labels map[string]string) ([]Vertex[K, V], error) {
+func (bg *bipartite[K, V, W]) GetVertexesByLabel(labels map[string]string) []Vertex[K, V] {
 	return bg.g.GetVertexesByLabel(labels)
 }
 
-func (bg *bipartite[K, V, W]) GetEdgesByLabel(labels map[string]string) ([]Edge[K, W], error) {
+func (bg *bipartite[K, V, W]) GetEdgesByLabel(labels map[string]string) []Edge[K, W] {
 	return bg.g.GetEdgesByLabel(labels)
 }
 

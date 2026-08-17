@@ -280,7 +280,7 @@ func CompleteBipartite(a, b int) Bipartite[int, any, int] {
 	if a < 1 || b < 1 {
 		return nil
 	}
-	g, _ := NewBipartite[int, any, int](false, fmt.Sprintf("K%d_%d", a, b))
+	g := NewBipartite[int, any, int](false, fmt.Sprintf("K%d_%d", a, b))
 	for i := 0; i < a; i++ {
 		_ = g.AddVertexTo(Vertex[int, any]{Key: i}, true)
 	}

@@ -551,33 +551,29 @@ func (g *graph[K, V, W]) GetEdgeByKey(key K) (Edge[K, W], error) {
 	}, nil
 }
 
-func (g *graph[K, V, W]) GetVertexesByLabel(labels map[string]string) ([]Vertex[K, V], error) {
+func (g *graph[K, V, W]) GetVertexesByLabel(labels map[string]string) []Vertex[K, V] {
 	var ves []Vertex[K, V]
 	if labels != nil {
-		for _, vertex := range g.vertexes {
-			if vertex.Labels != nil {
+		for _, u := range g.vertexes {
+			if u.Labels != nil {
 				match := true
 				for k, v := range labels {
-					l, ok := vertex.Labels[k]
+					l, ok := u.Labels[k]
 					if !ok || l != v {
 						match = false
 						break
 					}
 				}
 				if match {
-					ves = append(ves, Vertex[K, V]{
-						Key:    vertex.Key,
-						Value:  vertex.Value,
-						Labels: vertex.Labels,
-					})
+					ves = append(ves, *u)
 				}
 			}
 		}
 	}
-	return ves, nil
+	return ves
 }
 
-func (g *graph[K, V, W]) GetEdgesByLabel(labels map[string]string) ([]Edge[K, W], error) {
+func (g *graph[K, V, W]) GetEdgesByLabel(labels map[string]string) []Edge[K, W] {
 	var edges []Edge[K, W]
 	if labels != nil {
 		for _, e := range g.edges {
@@ -591,19 +587,12 @@ func (g *graph[K, V, W]) GetEdgesByLabel(labels map[string]string) ([]Edge[K, W]
 					}
 				}
 				if match {
-					edges = append(edges, Edge[K, W]{
-						Key:    e.Key,
-						Head:   e.Head,
-						Tail:   e.Tail,
-						Value:  e.Value,
-						Weight: e.Weight,
-						Labels: e.Labels,
-					})
+					edges = append(edges, *e)
 				}
 			}
 		}
 	}
-	return edges, nil
+	return edges
 }
 
 func (g *graph[K, V, W]) SetVertexValue(key K, value V) error {
@@ -728,13 +717,15 @@ func (g *graph[K, V, W]) Clone() (Graph[K, V, W], error) {
 	ng.adjList = adjList
 
 	for k, v := range g.vertexes {
-		ng.vertexes[k] = v.Clone()
+		nv := v.Clone()
+		ng.vertexes[k] = &nv
 		if err := ng.adjList.addVertexes(k); err != nil {
 			return nil, err
 		}
 	}
 	for k, v := range g.edges {
-		ng.edges[k] = v.Clone()
+		nv := v.Clone()
+		ng.edges[k] = &nv
 		if err := ng.adjList.addEdge(v.Head, v.Tail, v.Key, v.Weight); err != nil {
 			return nil, err
 		}

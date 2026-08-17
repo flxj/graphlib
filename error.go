@@ -39,6 +39,7 @@ var (
 	errNotSameType      = errors.New("g1 and g2 are not the same type of graph")
 	errMatchNotExists   = errors.New("perfect matching not exists")
 	errNoColouring      = errors.New("proper colouring not exists")
+	errEmptyHyperEdge   = errors.New("the hyperedge is empty")
 	errNone             = errors.New("")
 )
 

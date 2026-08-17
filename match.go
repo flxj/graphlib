@@ -335,7 +335,7 @@ func maxMatchingHungarian0[K comparable, V any, W number](V1, V2 []Vertex[K, V],
 		ek++
 		return Edge[int, int]{Key: ek, Head: u, Tail: v}
 	}
-	Gyz, _ := NewBipartite[int, any, int](false, "")
+	Gyz := NewBipartite[int, any, int](false, "")
 	for i := 0; i < n; i++ {
 		_ = Gyz.AddVertexTo(Y[i], true)
 		_ = Gyz.AddVertexTo(Z[i], false)
