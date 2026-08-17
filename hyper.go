@@ -29,11 +29,15 @@ type HyperGraph[K comparable, W number] interface {
 	RemoveVertex(key K) error
 	AddEdge(edge HyperEdge[K, W]) error
 	RemoveEdgeByKey(key K) error
+	// Delete all edges containing vtx as the vertex subset.
+	// If the exact parameter is true, delete edges with a vertex set equal to vtx.
 	RemoveEdge(vtx []K, exact bool) error
 	RemoveAllEdge() error
 	Degree(vertex K) (int, error)
 	Neighbours(vertex K) ([]Vertex[K, W], error)
 	GetVertex(key K) (Vertex[K, W], error)
+	// Query all edges containing vtx as the vertex subset.
+	// If the exact parameter is true, then query the edges of the vertex subset equal to vtx.
 	GetEdge(vtx []K, exact bool) ([]HyperEdge[K, W], error)
 	GetEdgeByKey(key K) (HyperEdge[K, W], error)
 	GetVertexesByLabel(labels map[string]string) []Vertex[K, W]
@@ -41,11 +45,16 @@ type HyperGraph[K comparable, W number] interface {
 	SetVertexValue(key K, value any) error
 	SetVertexLabel(key K, labelKey, labelVal string) error
 	DeleteVertexLabel(key K, labelKey string) error
+	SetVertexWeight(key K, weight W) error
 	SetEdgeWeight(key K, weight W) error
 	SetEdgeValueByKey(key K, value any) error
 	SetEdgeLabelByKey(key K, labelKey, labelVal string) error
 	DeleteEdgeLabelByKey(key K, labelKey string) error
+	// Set the value of all edges that contain vtx as the vertex subset.
+	// If the exact parameter is true, only set the vertex set to be equal to vtx edges.
 	SetEdgeValue(vtx []K, value any, exact bool) error
+	// Set the labels for all edges that contain vtx as the vertex subset.
+	// If the exact parameter is true, only set the edges whose vertex set is equal to vtx.
 	SetEdgeLabel(vtx []K, labelKey, labelVal string, exact bool) error
 	DeleteEdgeLabel(vtx []K, labelKey string, exact bool) error
 	Clone() (HyperGraph[K, W], error)
@@ -57,11 +66,11 @@ type HyperGraph[K comparable, W number] interface {
 }
 
 type HyperEdge[K comparable, W number] struct {
-	Key    K
-	Weight W
-	Value  any
-	Vtx    map[K]struct{}
-	Labels map[string]string
+	Key    K                 `json:"key" yaml:"key"`
+	Weight W                 `json:"weight" yaml:"weight"`
+	Value  any               `json:"value" yaml:"value"`
+	Vtx    map[K]struct{}    `json:"vtx" yaml:"vtx"`
+	Labels map[string]string `json:"labels" yaml:"labels"`
 }
 
 func (e HyperEdge[K, W]) Size() int {
@@ -412,6 +421,17 @@ func (h *hypergraph[K, W]) DeleteVertexLabel(key K, labelKey string) error {
 	}
 	v := h.vtx[i]
 	delete(v.Labels, labelKey)
+	h.vtx[i] = v
+	return nil
+}
+
+func (h *hypergraph[K, W]) SetVertexWeight(key K, weight W) error {
+	i, ok := h.vIdx[key]
+	if !ok {
+		return errVertexNotExists
+	}
+	v := h.vtx[i]
+	v.Weight = weight
 	h.vtx[i] = v
 	return nil
 }
