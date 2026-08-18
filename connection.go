@@ -125,6 +125,7 @@ func DigraphVertexDisjointPath[K comparable, W number](g Graph[K, W], source, ta
 	return VertexDisjointPath(g, source, target)
 }
 
+// Query the incut or outcut of vertex set X on directed graph g (the incut is composed of all directed arcs whose heads belong to X).
 func DigraphCut[K comparable, W number](g Digraph[K, W], X []K, incut bool) ([]Edge[K, W], error) {
 	var res []Edge[K, W]
 	xm := make(map[K]struct{})
@@ -154,6 +155,7 @@ func DigraphCut[K comparable, W number](g Digraph[K, W], X []K, incut bool) ([]E
 	return res, nil
 }
 
+// Query the directed arc between two sets of vertices, from and to, on a directed graph g.
 func DigraphArcs[K comparable, W number](g Digraph[K, W], from, to []K) ([]Edge[K, W], error) {
 	var res []Edge[K, W]
 	xm := make(map[K]struct{})
@@ -178,6 +180,7 @@ func DigraphArcs[K comparable, W number](g Digraph[K, W], from, to []K) ([]Edge[
 	return res, nil
 }
 
+// Query the boundary of vertex set X on the graph, i.e. the edge between X and G-X.
 func GraphCoboundary[K comparable, W number](g Graph[K, W], X []K) ([]Edge[K, W], error) {
 	var res []Edge[K, W]
 	xm := make(map[K]struct{})
@@ -201,6 +204,7 @@ func GraphCoboundary[K comparable, W number](g Graph[K, W], X []K) ([]Edge[K, W]
 	return res, nil
 }
 
+// Query the edges between two sets of vertices X and Y on the graph.
 func GraphEdges[K comparable, W number](g Graph[K, W], X, Y []K) ([]Edge[K, W], error) {
 	xm := make(map[K]struct{})
 	ym := make(map[K]struct{})

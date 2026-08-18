@@ -16,6 +16,16 @@
 
 package graphlib
 
+/*
+Segment Tree is a data structure that allows efficient querying and updating of intervals or segments of an array.
+
+It is particularly useful for problems involving range queries, such as finding the sum, minimum, maximum,
+or any other operation over a specific range of elements in an array.
+
+The tree is built recursively by dividing the array into segments until each segment represents a single element.
+
+This structure enables fast query and update operations with a time complexity of O(log n)
+*/
 type SegmentTree[N number] struct {
 	ready bool
 	size  int
@@ -66,6 +76,8 @@ func (t *SegmentTree[N]) query(i int, tl, tr int, l, r int) (n N) {
 	return t.fn(a, b)
 }
 
+// Use the array arr to reconstruct the current tree, and use the fn function
+// to calculate the data values of tree nodes, such as add(), max(), etc.
 func (t *SegmentTree[N]) Build(arr []N, fn func(N, N) N) {
 	t.size = len(arr)
 	t.fn = fn
@@ -79,6 +91,7 @@ func (t *SegmentTree[N]) Build(arr []N, fn func(N, N) N) {
 	t.ready = true
 }
 
+// Interval query: query the statistical values corresponding to the closed interval [l, r].
 func (t *SegmentTree[N]) Query(l, r int) (n N, ok bool) {
 	if l < 0 || l > r || r >= t.size || !t.ready {
 		return
@@ -100,18 +113,23 @@ func (t *SegmentTree[N]) update(r int, tl, tr int, i int, fn func(N) N) {
 	}
 }
 
+// Update array elements.
 func (t *SegmentTree[N]) Set(i int, n N) {
 	if t.ready {
 		t.update(1, 0, t.size-1, i, func(_ N) N { return n })
 	}
 }
 
+// Update array elements. The difference between update and set methods is that
+// update is more flexible, allowing for the provision of an update function fn
+// that takes old values as parameters and updates the computed results as new values to arr[i].
 func (t *SegmentTree[N]) Update(i int, fn func(N) N) {
 	if t.ready {
 		t.update(1, 0, t.size-1, i, fn)
 	}
 }
 
+// Single point query.
 func (t *SegmentTree[N]) Get(i int) (n N, ok bool) {
 	if t.ready {
 		return t.Query(i, i)

@@ -67,7 +67,6 @@ than v in v’s represented tree and all the elements in its right subtree are l
 Auxiliary trees are joined together using path-parent pointers. T
 here is one path-parent pointer per auxiliary tree and it is stored in the root of the auxiliary tree.
 */
-
 type LinkCutTree[K any, V any, W number] struct {
 	comp   CompareFunc[K]
 	nodes  []*lctNode[K, V, W] // auxiliary trees

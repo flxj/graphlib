@@ -198,6 +198,7 @@ func (r *RTree[T, N]) search(node *rNode[T, N], q Rectangle[N]) (ret []Rectangle
 	return
 }
 
+// Query all data that overlaps with the rect parameter.
 func (r *RTree[T, N]) Search(region Rectangle[N]) ([]Rectangle[N], []T) {
 	if r.lock {
 		r.mu.RLock()
@@ -238,6 +239,7 @@ func (r *RTree[T, N]) searchPath(mbr Rectangle[N]) *stack[*rPath[T, N]] {
 	return stk
 }
 
+// Insert data, the rect parameter represents the bounding rectangle of the data.
 func (r *RTree[T, N]) Insert(data T, rect Rectangle[N]) {
 	p := r.searchPath(rect)
 	e := r.pool.Get().(*rEntry[T, N])
@@ -403,6 +405,7 @@ func (r *RTree[T, N]) find(node *rNode[T, N], rect Rectangle[N]) (*rNode[T, N], 
 	return nil, 0
 }
 
+// Delete the data corresponding to the region parameter.
 func (r *RTree[T, N]) Delete(region Rectangle[N]) {
 	L, i := r.find(r.root, region)
 	if L == nil {
@@ -480,6 +483,7 @@ func (r *RTree[T, N]) leaf(node *rNode[T, N]) []*rNode[T, N] {
 	}
 }
 
+// Scan all data (note that the scanning order is random).
 func (r *RTree[T, N]) Scan(fn func(Rectangle[N], T) error) error {
 	stk := newStack[*rPath[T, N]]()
 	p := r.root
@@ -516,6 +520,7 @@ func (r *RTree[T, N]) Scan(fn func(Rectangle[N], T) error) error {
 	return nil
 }
 
+// Query the k nearest data points to the given obj.
 func (r *RTree[T, N]) NearestNeighbors(obj Rectangle[N], dist DistFunc[N], k int) ([]Rectangle[N], []T) {
 	if k <= 0 {
 		return nil, nil
@@ -548,6 +553,7 @@ func (r *RTree[T, N]) NearestNeighbors(obj Rectangle[N], dist DistFunc[N], k int
 	return rs, ds
 }
 
+// Query all data whose distance from the given obj is less than or equal to the limit.
 func (r *RTree[T, N]) NearestNeighborsByDist(obj Rectangle[N], dist DistFunc[N], limit N) ([]Rectangle[N], []T) {
 	if limit < 0 {
 		return nil, nil

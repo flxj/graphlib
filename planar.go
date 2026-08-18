@@ -21,6 +21,7 @@ import (
 	"sort"
 )
 
+// Check if the given graph g is a planar graph.
 func CheckPlanarity[K comparable, W number](g Graph[K, W]) bool {
 	if g == nil {
 		return false
@@ -28,24 +29,17 @@ func CheckPlanarity[K comparable, W number](g Graph[K, W]) bool {
 	return CheckPlanarityLR(g)
 }
 
-// Boyer-Myrvold
+// Boyer-Myrvold algorithm check if the given graph g is a planar graph.(This algorithm has not yet been implemented)
 func CheckPlanarityBM[K comparable, W number](g Graph[K, W]) bool { // TODO
 	panic("not implement now")
 }
 
-// Hopcroft-Tarjan
+// Hopcroft-Tarjan algorithm check if the given graph g is a planar graph.(This algorithm has not yet been implemented)
 func CheckPlanarityHT[K comparable, W number](g Graph[K, W]) bool { // TODO
-	/*
-		if g == nil {
-			return false
-		}
-		p := &planarTestHT[K,W]{g: g}
-		return p.planarity()
-	*/
 	panic("not implement now")
 }
 
-// Left-Right
+// Left-Right algorithm check if the given graph g is a planar graph.
 func CheckPlanarityLR[K comparable, W number](g Graph[K, W]) bool {
 	if g == nil {
 		return false

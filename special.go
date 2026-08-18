@@ -18,6 +18,9 @@ package graphlib
 
 import "math/rand"
 
+// A bipartite graph, also called a bigraph, is a set of graph vertices decomposed
+// into two disjoint sets such that no two graph vertices within the same set are adjacent.
+// The two vertex classes are said to form a bipartition.
 type Bipartite[K comparable, W number] interface {
 	Graph[K, W]
 	AddVertexTo(v Vertex[K, W], partA bool) error

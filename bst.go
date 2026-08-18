@@ -36,12 +36,18 @@ func (n *stNode[K, V]) isLeftChild() bool {
 	return n.parent != nil && n == n.parent.left
 }
 
+// A splay tree is a self-balancing binary search tree with the additional property that
+// recently accessed elements are quick to access again. It performs basic operations such
+// as insertion, look-up and removal in O(log(n)) amortized time. For many non-uniform sequences
+// of operations, splay trees perform better than other search trees, even when the specific
+// pattern of the sequence is unknown. The splay tree was invented by Daniel Sleator and Robert Tarjan.
 type SplayTree[K any, V any] struct {
 	comp  CompareFunc[K]
 	count int
 	root  *stNode[K, V]
 }
 
+// Create a splay tree. The caller needs to provide a method for comparing element keys.
 func NewSplayTree[K any, V any](comp CompareFunc[K]) *SplayTree[K, V] {
 	return &SplayTree[K, V]{comp: comp}
 }
@@ -137,6 +143,7 @@ func (s *SplayTree[K, V]) searchSubtree(root *stNode[K, V], key K) (x *stNode[K,
 	return
 }
 
+// Use key to query elements. If the element does not exist, return null data value and false flag.
 func (s *SplayTree[K, V]) Search(key K) (v V, ok bool) {
 	root, ok := s.searchSubtree(s.root, key)
 	s.root = root
@@ -146,6 +153,7 @@ func (s *SplayTree[K, V]) Search(key K) (v V, ok bool) {
 	return
 }
 
+// Insert key value data, and if the key already exists, update its value in place.
 func (s *SplayTree[K, V]) Insert(key K, val V) {
 	root, ok := s.searchSubtree(s.root, key)
 	s.root = root
@@ -176,6 +184,7 @@ func (s *SplayTree[K, V]) Insert(key K, val V) {
 	s.count++
 }
 
+// Delete key. If the key exists, delete it and return its value. If the key does not exist, return a false flag.
 func (s *SplayTree[K, V]) Delete(key K) (V, bool) {
 	v, ok := s.Search(key)
 	if !ok {
@@ -226,6 +235,7 @@ func (s *SplayTree[K, V]) Len() int {
 	return s.count
 }
 
+// Query the minimum element of the key.
 func (s *SplayTree[K, V]) Min() (k K, v V, ok bool) {
 	p := s.root
 	for p != nil {
@@ -241,6 +251,7 @@ func (s *SplayTree[K, V]) Min() (k K, v V, ok bool) {
 	return
 }
 
+// Query the maximum element of the key.
 func (s *SplayTree[K, V]) Max() (k K, v V, ok bool) {
 	p := s.root
 	for p != nil {
@@ -276,12 +287,15 @@ func (t *treapNode[K, V]) resize() {
 	t.siz = t.size(t.l) + t.size(t.r) + 1
 }
 
-// Non-rotating Treap
+// Treap is a Balanced Binary Search Tree, but not guaranteed to have height as O(Log n).
+// The idea is to use Randomization and Binary Heap property to maintain balance with high probability.
+// The expected time complexity of search, insert and delete is O(Log n).
 type Treap[K any, V any] struct {
 	comp CompareFunc[K]
 	root *treapNode[K, V]
 }
 
+// Non-rotating Treap
 func NewTreap[K any, V any](comp CompareFunc[K]) *Treap[K, V] {
 	return &Treap[K, V]{comp: comp}
 }
@@ -428,7 +442,7 @@ func (t *Treap[K, V]) erase(cur *treapNode[K, V], k K) (p *treapNode[K, V], v V,
 	return cur, v, ok
 }
 
-// Delete Element.
+// Delete key. If the key exists, delete it and return its value. If the key does not exist, return a false flag.
 func (t *Treap[K, V]) Delete(k K) (v V, ok bool) {
 	t.root, v, ok = t.erase(t.root, k)
 	return
@@ -439,6 +453,7 @@ func (t *Treap[K, V]) Clean() {
 	t.root = nil
 }
 
+// Query the minimum element of the key.
 func (t *Treap[K, V]) Min() (k K, v V, ok bool) {
 	for p := t.root; p != nil; p = p.l {
 		if p.l == nil {
@@ -448,6 +463,7 @@ func (t *Treap[K, V]) Min() (k K, v V, ok bool) {
 	return
 }
 
+// Query the maximum element of the key.
 func (t *Treap[K, V]) Max() (k K, v V, ok bool) {
 	for p := t.root; p != nil; p = p.r {
 		if p.r == nil {
@@ -725,6 +741,13 @@ func (s *sgtNode[K, V]) balance(n, m int) bool {
 	return true
 }
 
+/*
+A ScapeGoat tree is a self-balancing Binary Search Tree like AVL Tree, Red-Black Tree, Splay Tree, ..etc.
+Search time is O(Log n) in worst case. Time taken by deletion and insertion is amortized O(Log n)
+Unlike other self-balancing BSTs, ScapeGoat tree doesn't require extra space per node.
+For example, Red Black Tree nodes are required to have color. In below implementation of ScapeGoat Tree,
+we only have left, right and parent pointers in Node class. Use of parent is done for simplicity of implementation and can be avoided.
+*/
 type ScapegoatTree[K any, V any] struct {
 	comp  CompareFunc[K]
 	num   int
@@ -795,6 +818,7 @@ func (s *ScapegoatTree[K, V]) rebalance(cur, sg *sgtNode[K, V], k K) *sgtNode[K,
 	return cur
 }
 
+// Insert key value data, and if the key already exists, update its value in place.
 func (s *ScapegoatTree[K, V]) Insert(k K, v V) {
 	var sg *sgtNode[K, V]
 	s.root, sg = s.insert(s.root, k, v)
@@ -810,6 +834,7 @@ func (s *ScapegoatTree[K, V]) Insert(k K, v V) {
 	}
 }
 
+// Use key to query elements. If the element does not exist, return null data value and false flag.
 func (s *ScapegoatTree[K, V]) Search(k K) (v V, ok bool) {
 	for p := s.root; p != nil; {
 		if s.comp(p.key, k) == 0 {
@@ -847,6 +872,7 @@ func (s *ScapegoatTree[K, V]) del(node *sgtNode[K, V], k K) (v V, ok bool) {
 	return
 }
 
+// Delete key. If the key exists, delete it and return its value. If the key does not exist, return a false flag.
 func (s *ScapegoatTree[K, V]) Delete(k K) (v V, ok bool) {
 	v, ok = s.del(s.root, k)
 	if s.root != nil && s.root.act < s.root.siz*s.num/1000 {
@@ -869,6 +895,7 @@ func (s *ScapegoatTree[K, V]) min(node *sgtNode[K, V]) (k K, v V, ok bool) {
 	return s.min(node.r)
 }
 
+// Query the minimum element of the key.
 func (s *ScapegoatTree[K, V]) Min() (k K, v V, ok bool) {
 	return s.min(s.root)
 }
@@ -886,6 +913,7 @@ func (s *ScapegoatTree[K, V]) max(node *sgtNode[K, V]) (k K, v V, ok bool) {
 	return s.max(node.l)
 }
 
+// Query the maximum element of the key.
 func (s *ScapegoatTree[K, V]) Max() (k K, v V, ok bool) {
 	return s.max(s.root)
 }
@@ -946,9 +974,9 @@ type rbNode[K any, V any] struct {
 	r   *rbNode[K, V]
 }
 
-// 1. The root of the tree is colored Black.
-// 2. A Red node can have only Black children.
-// 3. Every path from the root to a leaf contains the same number of Black nodes。
+// A Red-Black Tree is a self-balancing binary search tree with a height limit of O(logN),
+// enabling efficient search, insertion, and deletion operations in O(logN) time,
+// unlike standard binary search trees which can take O(N) time.
 type RedBlackTree[K any, V any] struct {
 	comp  CompareFunc[K]
 	count int
@@ -963,6 +991,9 @@ func (t *RedBlackTree[K, V]) Len() int {
 	return t.count
 }
 
+// 1. The root of the tree is colored Black.
+// 2. A Red node can have only Black children.
+// 3. Every path from the root to a leaf contains the same number of Black nodes
 func (t *RedBlackTree[K, V]) rebalance(x *rbNode[K, V]) {
 	if x.p == nil { // x is root
 		x.red = false
@@ -1088,6 +1119,7 @@ func (t *RedBlackTree[K, V]) rebalance(x *rbNode[K, V]) {
 	}
 }
 
+// Insert key value data, and if the key already exists, update its value in place.
 func (t *RedBlackTree[K, V]) Insert(k K, v V) {
 	var p *rbNode[K, V]
 	for q := t.root; q != nil; {
@@ -1121,6 +1153,7 @@ func (t *RedBlackTree[K, V]) Insert(k K, v V) {
 	t.rebalance(p)
 }
 
+// Use key to query elements. If the element does not exist, return null data value and false flag.
 func (t *RedBlackTree[K, V]) Search(k K) (v V, ok bool) {
 	for p := t.root; p != nil; {
 		if t.comp(p.key, k) == 0 {
@@ -1134,6 +1167,7 @@ func (t *RedBlackTree[K, V]) Search(k K) (v V, ok bool) {
 	return
 }
 
+// Query the minimum element of the key.
 func (t *RedBlackTree[K, V]) Min() (k K, v V, ok bool) {
 	for p := t.root; p != nil; p = p.l {
 		if p.l == nil {
@@ -1143,6 +1177,7 @@ func (t *RedBlackTree[K, V]) Min() (k K, v V, ok bool) {
 	return
 }
 
+// Query the maximum element of the key.
 func (t *RedBlackTree[K, V]) Max() (k K, v V, ok bool) {
 	for p := t.root; p != nil; p = p.r {
 		if p.r == nil {
@@ -1152,6 +1187,7 @@ func (t *RedBlackTree[K, V]) Max() (k K, v V, ok bool) {
 	return
 }
 
+// Delete key. If the key exists, delete it and return its value. If the key does not exist, return a false flag.
 func (t *RedBlackTree[K, V]) Delete(k K) (v V, ok bool) {
 	var p *rbNode[K, V]
 	for q := t.root; q != nil; {

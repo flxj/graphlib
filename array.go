@@ -16,10 +16,14 @@
 
 package graphlib
 
+// A differential array is a powerful data structure used to efficiently perform range update operations on an array.
+// It allows multiple updates to be applied in constant time, and the final array can be reconstructed in linear time.
+// This approach is particularly useful in scenarios involving frequent range updates and queries.
 type DifferenceArray[N number] struct {
 	diff []N
 }
 
+// Initialize a differential array
 func NewDifferenceArray[N number](nums []N) *DifferenceArray[N] {
 	d := &DifferenceArray[N]{
 		diff: make([]N, len(nums)),
@@ -33,6 +37,7 @@ func NewDifferenceArray[N number](nums []N) *DifferenceArray[N] {
 	return d
 }
 
+// Append elements to the end of the array, note that this method has a time complexity of O(n)
 func (d *DifferenceArray[N]) Append(n N) {
 	if len(d.diff) == 0 {
 		d.diff = append(d.diff, n)
@@ -49,7 +54,7 @@ func (d *DifferenceArray[N]) Len() int {
 	return len(d.diff)
 }
 
-// closed interval [left,right].
+// Add n to all elements in the closed interval [left,right] (if n is negative, it means subtract |n| from all elements).
 func (d *DifferenceArray[N]) Add(n N, left, right int) bool {
 	if left < 0 || right >= len(d.diff) || left > right {
 		return false
@@ -76,6 +81,7 @@ func (d *DifferenceArray[N]) Sum(left, right int) (N, bool) {
 	return b - a, true
 }
 
+// Return the current array.
 func (d *DifferenceArray[N]) Array() []N {
 	arr := make([]N, len(d.diff))
 	if len(d.diff) > 0 {
@@ -87,6 +93,7 @@ func (d *DifferenceArray[N]) Array() []N {
 	return arr
 }
 
+// use subscripts to query elements
 func (d *DifferenceArray[N]) Get(i int) (N, bool) {
 	var n N
 	if i < 0 || i >= len(d.diff) {

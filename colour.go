@@ -195,7 +195,7 @@ func TryEdgeColouring[K comparable, W number](g Graph[K, W], colours int) (map[K
 	return edgeColouring(g, colours)
 }
 
-// Graph edge coloring, returning a feasible coloring scheme.
+// greedy graph vertex coloring, returning a feasible coloring scheme.
 func GreedyVertexColouring[K comparable, W number](g Graph[K, W]) (map[K]int, int, error) {
 	if g == nil {
 		return nil, 0, errNilGraph
@@ -228,6 +228,7 @@ func GreedyVertexColouring[K comparable, W number](g Graph[K, W]) (map[K]int, in
 	return col, cnt + 1, nil
 }
 
+// Ggreedy graph edge coloring, returning a feasible coloring scheme.
 func GreedyEdgeColouring[K comparable, W number](g Graph[K, W]) (map[K]int, int, error) {
 	if g == nil {
 		return nil, 0, errNilGraph

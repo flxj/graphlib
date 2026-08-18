@@ -18,6 +18,8 @@ package graphlib
 
 import "math/rand"
 
+// This interface represents a hypergraph,
+// which differs from common graphs in that its edges can contain any number of vertices.
 type HyperGraph[K comparable, W number] interface {
 	Name() string
 	SetName(name string)
@@ -65,6 +67,9 @@ type HyperGraph[K comparable, W number] interface {
 	IncidentEdges(vertex K) ([]HyperEdge[K, W], error)
 }
 
+// Hypergraph edge, Key is used to uniquely identify the edge,
+// Weight represents the weight of the edge,
+// and Vtx identifies the vertices contained in the edge.
 type HyperEdge[K comparable, W number] struct {
 	Key    K                 `json:"key" yaml:"key"`
 	Weight W                 `json:"weight" yaml:"weight"`

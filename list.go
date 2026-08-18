@@ -35,6 +35,15 @@ type slNode[K any, V any] struct {
 	prev *slNode[K, V]
 }
 
+/*
+A skip list is a data structure that allows for efficient search, insertion and deletion of elements in a sorted list.
+It is a probabilistic data structure, meaning that its average time complexity is determined through a probabilistic analysis.
+
+In a skip list, elements are organized in layers, with each layer having a smaller number of elements than the one below it.
+The bottom layer is a regular linked list, while the layers above it contain "skipping" links that allow for fast navigation
+to elements that are far apart in the bottom layer. The idea behind this is to allow for quick traversal to the desired element,
+reducing the average number of steps needed to reach it.
+*/
 type SkipList[K any, V any] struct {
 	lock   bool
 	comp   CompareFunc[K]
@@ -46,6 +55,12 @@ type SkipList[K any, V any] struct {
 	last   *slNode[K, V]
 }
 
+// A skip list is a probabilistic data structure, based on multiple parallel, sorted linked lists,
+// with efficiency comparable to a binary search tree (order log n average time for most operations).
+// Underlying the skip list is an augmentation of an ordered linked list with additional forward links,
+// added in a randomized way with a geometric/negative binomial distribution,
+// so that a search in the list may quickly skip parts of the list (hence the name).
+// Insert, search and delete operations are performed in logarithmic randomized time.
 func NewSkipList[K any, V any](cfg *SkipListConfig, comp CompareFunc[K]) *SkipList[K, V] {
 	return &SkipList[K, V]{lock: cfg.Locked, comp: comp, height: -1}
 }

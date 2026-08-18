@@ -212,6 +212,7 @@ func (q *priorityQueue[K, V, P]) Len() int {
 	return len(q.items)
 }
 
+// Heap data element, rank is used to maintain heap structure.
 type HeapElem[K comparable, V any, P any] struct {
 	Key  K
 	Val  V
