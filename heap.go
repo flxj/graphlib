@@ -48,6 +48,13 @@ func (h *binaryHeap[K, V, P]) init() {
 	}
 }
 
+func (h *binaryHeap[K, V, P]) top() *element[K, V, P] {
+	if h.ready && len(h.elems) > 0 {
+		return h.elems[0]
+	}
+	return nil
+}
+
 func (h *binaryHeap[K, V, P]) empty() bool {
 	return len(h.elems) == 0
 }
@@ -246,6 +253,13 @@ func (h *Heap[K, V, P]) Pop() any {
 	v := h.elems[n-1]
 	h.elems = h.elems[:n-1]
 	return v
+}
+
+func (h *Heap[K, V, P]) Top() *HeapElem[K, V, P] {
+	if len(h.elems) > 0 {
+		return h.elems[0]
+	}
+	return nil
 }
 
 type PriorityQueue[T any, P any] struct {

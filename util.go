@@ -139,6 +139,37 @@ func maxValue[N number](n N) N {
 	}
 }
 
+func minValue[N number](n N) N {
+	switch any(n).(type) {
+	case int:
+		return any(math.MinInt).(N)
+	case int8:
+		return any(math.MinInt8).(N)
+	case int16:
+		return any(math.MinInt16).(N)
+	case int32:
+		return any(math.MinInt32).(N)
+	case int64:
+		return any(math.MinInt64).(N)
+	case uint:
+		return any(math.MinInt).(N)
+	case uint8:
+		return any(uint8(0)).(N)
+	case uint16:
+		return any(uint16(0)).(N)
+	case uint32:
+		return any(uint32(0)).(N)
+	case uint64:
+		return any(uint64(0)).(N)
+	case float32:
+		return any(math.SmallestNonzeroFloat32).(N)
+	case float64:
+		return any(math.SmallestNonzeroFloat64).(N)
+	default:
+		return n
+	}
+}
+
 var (
 	errRunTimeout = errors.New("function run timeout")
 )
@@ -313,7 +344,7 @@ func (s *Stack[K]) IsEmpty() bool {
 	return s.idx == 0
 }
 
-func (s *stack[T]) Push(v T) {
+func (s *Stack[T]) Push(v T) {
 	if s.idx < len(s.elems) {
 		s.elems[s.idx] = v
 	} else {

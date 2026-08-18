@@ -24,11 +24,7 @@ import (
 )
 
 func TestExecJob1(t *testing.T) {
-	g, err := NewExecGraph[int, Job]("exec")
-	if err != nil {
-		fmt.Printf("[ERR] create exec graph error: %v\n", err)
-		return
-	}
+	g := NewExecGraph[int, Job]("exec")
 	var (
 		v1 int
 		v2 int
@@ -147,11 +143,7 @@ job3---->job4--->job5
 }
 
 func TestExecJob2(t *testing.T) {
-	g, err := NewExecGraph[int, Job]("exec")
-	if err != nil {
-		fmt.Printf("[ERR] create exec graph error: %v\n", err)
-		return
-	}
+	g := NewExecGraph[int, Job]("exec")
 	var (
 		v1 int
 		v2 int
@@ -267,11 +259,8 @@ job3---->job4--->job5
 
 // stop
 func TestExecJob3(t *testing.T) {
-	g, err := NewExecGraph[int, Job]("exec")
-	if err != nil {
-		fmt.Printf("[ERR] create exec graph error: %v\n", err)
-		return
-	}
+	g := NewExecGraph[int, Job]("exec")
+
 	job1 := func() error {
 		fmt.Println("job1 start...")
 		time.Sleep(5 * time.Second)
@@ -368,11 +357,8 @@ job3---->job4--->job5
 
 // paused
 func TestExecJob4(t *testing.T) {
-	g, err := NewExecGraph[int, Job]("exec")
-	if err != nil {
-		fmt.Printf("[ERR] create exec graph error: %v\n", err)
-		return
-	}
+	g := NewExecGraph[int, Job]("exec")
+
 	job1 := func() error {
 		fmt.Println("job1 start...")
 		time.Sleep(5 * time.Second)

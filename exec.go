@@ -215,7 +215,7 @@ type ExecGraph[K comparable, J job] interface {
 }
 
 // Create an empty ExecGraph.
-func NewExecGraph[K comparable, J job](name string) (ExecGraph[K, J], error) {
+func NewExecGraph[K comparable, J job](name string) ExecGraph[K, J] {
 	dag := NewDigraph[K, int](name)
 	eg := &execGraph[K, J]{
 		dag:        dag,
@@ -227,7 +227,7 @@ func NewExecGraph[K comparable, J job](name string) (ExecGraph[K, J], error) {
 		resCh:      make(chan *execResult[K], 256),
 		finishes:   make(map[K]struct{}),
 	}
-	return eg, nil
+	return eg
 }
 
 // Load a DAG from text data and create an ExecGraph based on it.

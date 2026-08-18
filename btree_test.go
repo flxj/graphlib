@@ -51,6 +51,23 @@ func generateIntStr(start, n int, randKey bool, maxGap int) ([]int, []string) {
 	return k, v
 }
 
+func generateIntArr(start, n int, randKey bool, maxGap int) []int {
+	k := make([]int, n)
+	prev := start
+	for i := 0; i < n; i++ {
+		if randKey {
+			k[i] = prev + rand.Intn(maxGap) + 1
+		} else {
+			k[i] = prev + i
+		}
+		prev = k[i]
+	}
+	rand.Shuffle(n, func(i, j int) {
+		k[i], k[j] = k[j], k[i]
+	})
+	return k
+}
+
 func testBTreeReadWrite(n, degree int, randKey bool) {
 	fmt.Println("===========> testBTreeReadWrite")
 	k, v := generateIntStr(0, n, randKey, 20)
@@ -268,6 +285,7 @@ func TestBTree(t *testing.T) {
 	case "iter":
 		testBTreeCursor(100, 16, true)
 	default:
+		testBTreeReadWrite(100, 8, true)
 	}
 }
 
@@ -479,5 +497,90 @@ func TestSkipList(t *testing.T) {
 	case "iter":
 		testSkipListCursor(100, true)
 	default:
+		testSkipListRW(100, true)
+	}
+}
+
+func testRTreeRW(n int) {
+	fmt.Println("===========> testRTreeReadWrite")
+	t := NewRTree[string](32, false, BoxDist[int])
+	r1 := generateIntArr(0, n, true, 10)
+	r2 := generateIntArr(0, n, true, 5)
+	r3 := generateIntArr(n, n, true, 20)
+	r4, d := generateIntStr(n, n, true, 30)
+	fmt.Println("==========> insert...")
+	for i := 0; i < n; i++ {
+		if r3[i] < r1[i] {
+			r3[i], r1[i] = r1[i], r3[i]
+		}
+		if r4[i] < r2[i] {
+			r4[i], r2[i] = r2[i], r4[i]
+		}
+		rect := Rectangle[int]{r1[i], r2[i], r3[i], r4[i]}
+		t.Insert(d[i], rect)
+	}
+	oldLen := t.Len()
+	fmt.Printf("==========> 0 init date, size=%d\n", oldLen)
+	fmt.Println("=========> 1 test random read...")
+	// random read
+	for i := 0; i < n/2; i++ {
+		// read
+		j := rand.Intn(n)
+		rect := Rectangle[int]{r1[j], r2[j], r3[j], r4[j]}
+		rec, val := t.Search(rect)
+		if len(rec) == 0 {
+			fmt.Println("rect=", rect)
+			fmt.Println("data=", d[j])
+			fmt.Println(rec)
+			fmt.Println(val)
+			panic("read error")
+		}
+	}
+
+	fmt.Println("=========> 2 test scan...")
+	var cnt int
+	fn := func(_ Rectangle[int], _ string) error {
+		cnt++
+		return nil
+	}
+	t.Scan(fn)
+	if cnt != t.Len() {
+		panic(fmt.Sprintf("[ERROR] scan count %d elements, but expected value=%d", cnt, t.Len()))
+	}
+
+	fmt.Println("===========> 3 test delete1...")
+	for i := 0; i < n/4; i++ {
+		rect := Rectangle[int]{r1[i], r2[i], r3[i], r4[i]}
+		t.Delete(rect)
+	}
+	if t.Len() != oldLen-n/4 {
+		panic(fmt.Sprintf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), oldLen-n/4))
+	}
+
+	fmt.Println("===========> 6 test delete2...")
+	for i := n / 4; i < n; i++ {
+		rect := Rectangle[int]{r1[i], r2[i], r3[i], r4[i]}
+		t.Delete(rect)
+	}
+	if t.Len() != 0 {
+		panic(fmt.Sprintf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), 0))
+	}
+	cnt = 0
+	t.Scan(fn)
+	if cnt != t.Len() {
+		panic(fmt.Sprintf("[ERROR] scan count %d elements, but expected value=%d", cnt, t.Len()))
+	}
+	fmt.Println("==========> test complete")
+}
+
+func TestRTree(t *testing.T) {
+	args := flag.Args()
+	switch args[0] {
+	case "r":
+		testRTreeRW(100)
+	case "r+":
+	case "r*":
+	default:
+		testRTreeRW(100)
 	}
 }

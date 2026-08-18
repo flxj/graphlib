@@ -6,7 +6,7 @@
 
 ✔️ **Basic operation of the graph:**
 
-* Create undirected/directed graphs
+* Create undirected/directed graphs,hypergraphs
 * Create Special graphs (bipartite,tree,complete graph...)
 * Serialization and Deserialization of Graph Objects (JSON/YAML Format)
 * Dynamically adjust vertex (increase/decrease/modify attributes)
@@ -54,6 +54,7 @@
 * Scapegoat Tree
 * RedBlack Tree
 * Trie
+* RTree
 
 ### Getting started
 
@@ -80,11 +81,7 @@ import(
 )
 
 func main() {
-    g, err := graphlib.NewGraph[string, int, int](false, "graph")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+    g := graphlib.NewGraph[string, int](false, "graph")
 
 	vs := []graphlib.Vertex[int, int]{
 		{Key: "v1", Value: 1},
@@ -149,11 +146,7 @@ import(
 )
 
 func main(){
-    g, err := graphlib.NewDigraph[int, int, int]("g")
-	if err != nil {
-		fmt.Printf("new graph error:%v\n", err)
-		return
-	}
+    g := graphlib.NewDigraph[int, int]("g")
 
 	vs := []Vertex[int, int]{
 		{Key: 1, Value: 1},
@@ -232,11 +225,7 @@ import(
 )
 
 func main() {
-	g,err:= graphlib.NewExecGraph[int,graphlib.Job]("exec")
-	if err!=nil{
-		fmt.Printf("[ERR] create exec graph error: %v\n",err)
-		return 
-	}
+	g := graphlib.NewExecGraph[int,graphlib.Job]("exec")
     var (
 		v1 int
 		v2 int 
@@ -324,11 +313,7 @@ import(
 )
 
 func main(){
-    g, err := graphlib.NewGraph[int, int, int](false,"test-g")
-	if err != nil {
-		fmt.Printf("new graph error:%v\n", err)
-		return
-	}
+    g := graphlib.NewGraph[int, int](false,"test-g")
 
 	vs := []graphlib.Vertex[int, int]{
 		{Key: 1, Value: 1},
@@ -364,4 +349,3 @@ func main(){
 	fmt.Println(file)
 }
 ```
-

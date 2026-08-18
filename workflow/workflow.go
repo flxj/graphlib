@@ -176,10 +176,7 @@ func (w *Workflow) Start() error {
 		_ = w.eg.Stop()
 		w.eg = nil
 	}
-	w.eg, err = graphlib.NewExecGraph[string, graphlib.Job](w.name)
-	if err != nil {
-		return err
-	}
+	w.eg = graphlib.NewExecGraph[string, graphlib.Job](w.name)
 	for name, tk := range w.steps {
 		if err = w.eg.AddJob(name, tk.job); err != nil {
 			return err
