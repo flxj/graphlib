@@ -61,26 +61,26 @@ v3     v4-----v5----v6
 		}
 	}
 	//
-	fmt.Println("=================>[0] init property")
+	fmt.Println("=================>[0] init Pro")
 	fmt.Println(gs)
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 
-	ps, err := g.Property(PropertySimple)
+	ps, err := g.Property(ProSimple)
 	if err != nil {
-		fmt.Printf("get property simple error:%v\n", err)
+		fmt.Printf("get Pro simple error:%v\n", err)
 		return
 	}
 	fmt.Printf("simple:%v\n", ps.Value)
-	pc, err := g.Property(PropertyConnected)
+	pc, err := g.Property(ProConnected)
 	if err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
+		fmt.Printf("get Pro connected error:%v\n", err)
 		return
 	}
 	fmt.Printf("connected:%v\n", pc.Value)
-	pa, err := g.Property(PropertyAcyclic)
+	pa, err := g.Property(ProAcyclic)
 	if err != nil {
-		fmt.Printf("get property acyclic error:%v\n", err)
+		fmt.Printf("get Pro acyclic error:%v\n", err)
 		return
 	}
 	fmt.Printf("acyclic:%v\n", pa.Value)
@@ -102,21 +102,21 @@ v3     v4-----v5----v6
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 
-	ps, err = g.Property(PropertySimple)
+	ps, err = g.Property(ProSimple)
 	if err != nil {
-		fmt.Printf("get property simple error:%v\n", err)
+		fmt.Printf("get Pro simple error:%v\n", err)
 		return
 	}
 	fmt.Printf("simple:%v\n", ps.Value)
-	pc, err = g.Property(PropertyConnected)
+	pc, err = g.Property(ProConnected)
 	if err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
+		fmt.Printf("get Pro connected error:%v\n", err)
 		return
 	}
 	fmt.Printf("connected:%v\n", pc.Value)
-	pa, err = g.Property(PropertyAcyclic)
+	pa, err = g.Property(ProAcyclic)
 	if err != nil {
-		fmt.Printf("get property acyclic error:%v\n", err)
+		fmt.Printf("get Pro acyclic error:%v\n", err)
 		return
 	}
 	fmt.Printf("acyclic:%v\n", pa.Value)
@@ -139,18 +139,18 @@ v3    v4-----v5----v6  v7
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 
-	if ps, err = g.Property(PropertySimple); err != nil {
-		fmt.Printf("get property simple error:%v\n", err)
+	if ps, err = g.Property(ProSimple); err != nil {
+		fmt.Printf("get Pro simple error:%v\n", err)
 		return
 	}
 	fmt.Printf("simple:%v\n", ps.Value)
-	if pc, err = g.Property(PropertyConnected); err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
+	if pc, err = g.Property(ProConnected); err != nil {
+		fmt.Printf("get Pro connected error:%v\n", err)
 		return
 	}
 	fmt.Printf("connected:%v\n", pc.Value)
-	if pa, err = g.Property(PropertyAcyclic); err != nil {
-		fmt.Printf("get property acyclic error:%v\n", err)
+	if pa, err = g.Property(ProAcyclic); err != nil {
+		fmt.Printf("get Pro acyclic error:%v\n", err)
 		return
 	}
 	fmt.Printf("acyclic:%v\n", pa.Value)
@@ -177,18 +177,18 @@ v3---v4
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 
-	if ps, err = g.Property(PropertySimple); err != nil {
-		fmt.Printf("get property simple error:%v\n", err)
+	if ps, err = g.Property(ProSimple); err != nil {
+		fmt.Printf("get Pro simple error:%v\n", err)
 		return
 	}
 	fmt.Printf("simple:%v\n", ps.Value)
-	if pc, err = g.Property(PropertyConnected); err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
+	if pc, err = g.Property(ProConnected); err != nil {
+		fmt.Printf("get Pro connected error:%v\n", err)
 		return
 	}
 	fmt.Printf("connected:%v\n", pc.Value)
-	if pa, err = g.Property(PropertyAcyclic); err != nil {
-		fmt.Printf("get property acyclic error:%v\n", err)
+	if pa, err = g.Property(ProAcyclic); err != nil {
+		fmt.Printf("get Pro acyclic error:%v\n", err)
 		return
 	}
 	fmt.Printf("acyclic:%v\n", pa.Value)
@@ -208,18 +208,18 @@ v3   v4
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 
-	if ps, err = g.Property(PropertySimple); err != nil {
-		fmt.Printf("get property simple error:%v\n", err)
+	if ps, err = g.Property(ProSimple); err != nil {
+		fmt.Printf("get Pro simple error:%v\n", err)
 		return
 	}
 	fmt.Printf("simple:%v\n", ps.Value)
-	if pc, err = g.Property(PropertyConnected); err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
+	if pc, err = g.Property(ProConnected); err != nil {
+		fmt.Printf("get Pro connected error:%v\n", err)
 		return
 	}
 	fmt.Printf("connected:%v\n", pc.Value)
-	if pa, err = g.Property(PropertyAcyclic); err != nil {
-		fmt.Printf("get property acyclic error:%v\n", err)
+	if pa, err = g.Property(ProAcyclic); err != nil {
+		fmt.Printf("get Pro acyclic error:%v\n", err)
 		return
 	}
 	fmt.Printf("acyclic:%v\n", pa.Value)
@@ -247,18 +247,18 @@ v3   v4------/
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 
-	if ps, err = g.Property(PropertySimple); err != nil {
-		fmt.Printf("get property simple error:%v\n", err)
+	if ps, err = g.Property(ProSimple); err != nil {
+		fmt.Printf("get Pro simple error:%v\n", err)
 		return
 	}
 	fmt.Printf("simple:%v\n", ps.Value)
-	if pc, err = g.Property(PropertyConnected); err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
+	if pc, err = g.Property(ProConnected); err != nil {
+		fmt.Printf("get Pro connected error:%v\n", err)
 		return
 	}
 	fmt.Printf("connected:%v\n", pc.Value)
-	if pa, err = g.Property(PropertyAcyclic); err != nil {
-		fmt.Printf("get property acyclic error:%v\n", err)
+	if pa, err = g.Property(ProAcyclic); err != nil {
+		fmt.Printf("get Pro acyclic error:%v\n", err)
 		return
 	}
 	fmt.Printf("acyclic:%v\n", pa.Value)
@@ -285,13 +285,13 @@ func TestConnected(t *testing.T) {
 	}
 
 	//
-	fmt.Println("=================>[0] init property")
+	fmt.Println("=================>[0] init Pro")
 	fmt.Printf("name:%s\n", g.Name())
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
-	pc, err := g.Property(PropertyConnected)
+	pc, err := g.Property(ProConnected)
 	if err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
+		fmt.Printf("get Pro connected error:%v\n", err)
 		return
 	}
 	fmt.Printf("connected:%v\n", pc.Value)
@@ -317,8 +317,8 @@ func TestConnected(t *testing.T) {
 	fmt.Printf("name:%s\n", g.Name())
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
-	if pc, err = g.Property(PropertyConnected); err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
+	if pc, err = g.Property(ProConnected); err != nil {
+		fmt.Printf("get Pro connected error:%v\n", err)
 		return
 	}
 	fmt.Printf("connected:%v\n", pc.Value)

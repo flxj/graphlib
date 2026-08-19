@@ -23,6 +23,253 @@ import (
 	"strconv"
 )
 
+type Forest[K comparable, W number] struct {
+	Graph[K, W]
+	roots map[K]struct{}
+	vtx   []K
+	idx   map[K]int
+	duf   *dynamicUnionFind
+}
+
+func NewForest[K comparable, W number]() *Forest[K, W] {
+	g := newGraph[K, W](false, "")
+	t := &Forest[K, W]{Graph: g}
+	t.roots = make(map[K]struct{}) // some tree is rooted,some not.
+	t.idx = make(map[K]int)
+	t.duf = newDynamicUnionFind(0)
+	return t
+}
+
+func (f *Forest[K, W]) AllRoots() []K {
+	var rs []K
+	for k := range f.roots {
+		rs = append(rs, k)
+	}
+	return rs
+}
+
+func (f *Forest[K, W]) Connected(k1, k2 K) (bool, error) {
+	var ok bool
+	var u, v int
+	if u, ok = f.idx[k1]; !ok {
+		return false, errVertexNotExists
+	}
+	if v, ok = f.idx[k2]; !ok {
+		return false, errVertexNotExists
+	}
+	return f.duf.Find(u) == f.duf.Find(v), nil
+}
+
+func (f *Forest[K, W]) Root(k K) (K, error) {
+	v, ok := f.idx[k]
+	if !ok {
+		return k, errVertexNotExists
+	}
+	if _, ok := f.roots[k]; ok {
+		return k, nil
+	}
+	for r := range f.roots {
+		u := f.idx[r]
+		if f.duf.Find(u) == f.duf.Find(v) {
+			return r, nil
+		}
+	}
+	return k, errors.New("the vertex in a unrooted tree")
+}
+
+func (f *Forest[K, W]) SetRoot(k K) error {
+	if _, ok := f.idx[k]; !ok {
+		return errVertexNotExists
+	}
+	if _, ok := f.roots[k]; ok {
+		return nil
+	}
+	r, err := f.Root(k)
+	if err == nil {
+		delete(f.roots, r)
+	}
+	f.roots[k] = struct{}{}
+	return nil
+}
+
+func (f *Forest[K, W]) CancelRoot(k K) {
+	delete(f.roots, k)
+}
+
+func (f *Forest[K, W]) IsTree() bool {
+	return f.duf.Component() == 1
+}
+
+func (f *Forest[K, W]) Trees() int {
+	return f.duf.Component()
+}
+
+func (f *Forest[K, W]) AddVertex(v Vertex[K, W]) error {
+	err := f.Graph.AddVertex(v)
+	if err != nil {
+		if err == errVertexExists {
+			return nil
+		}
+		return err
+	}
+	f.vtx = append(f.vtx, v.Key)
+	f.idx[v.Key] = len(f.vtx) - 1
+	f.duf.Add(1)
+	return nil
+}
+
+func (f *Forest[K, W]) AddEdge(e Edge[K, W]) error {
+	var ok bool
+	var u, v int
+	if u, ok = f.idx[e.Head]; !ok {
+		return errVertexNotExists
+	}
+	if v, ok = f.idx[e.Tail]; !ok {
+		return errVertexNotExists
+	}
+	if f.duf.Find(u) == f.duf.Find(v) {
+		return errExistsCycle
+	}
+	if err := f.Graph.AddEdge(e); err != nil {
+		return err
+	}
+	f.duf.Union(u, v)
+	return nil
+}
+
+func (f *Forest[K, W]) RemoveVertex(k K) error {
+	if err := f.Graph.RemoveVertex(k); err != nil {
+		return err
+	}
+	delete(f.roots, k)
+	return f.rebuild()
+}
+
+func (f *Forest[K, W]) RemoveVertexs(keys ...K) error {
+	for _, k := range keys {
+		if err := f.Graph.RemoveVertex(k); err != nil {
+			return err
+		}
+		delete(f.roots, k)
+	}
+	return f.rebuild()
+}
+
+func (f *Forest[K, W]) RemoveEdge(endpoint1, endpoint2 K) error {
+	if err := f.Graph.RemoveEdge(endpoint1, endpoint2); err != nil {
+		return err
+	}
+	return f.rebuild()
+}
+
+func (f *Forest[K, W]) RemoveEdges(endpoint1, endpoint2 []K) error {
+	if len(endpoint1) != len(endpoint2) {
+		return errors.New("")
+	}
+	for i := 0; i < len(endpoint1); i++ {
+		if err := f.Graph.RemoveEdge(endpoint1[i], endpoint2[i]); err != nil {
+			return err
+		}
+	}
+	return f.rebuild()
+}
+
+func (f *Forest[K, W]) RemoveEdgeByKey(k K) error {
+	if err := f.Graph.RemoveEdgeByKey(k); err != nil {
+		return err
+	}
+	return f.rebuild()
+}
+
+func (f *Forest[K, W]) RemoveEdgeByKeys(keys ...K) error {
+	for _, k := range keys {
+		if err := f.Graph.RemoveEdgeByKey(k); err != nil {
+			return err
+		}
+	}
+	return f.rebuild()
+}
+
+func (f *Forest[K, W]) rebuild() error {
+	vs := f.AllVertexes()
+	es := f.AllEdges()
+	f.vtx = make([]K, len(vs))
+	for i, v := range vs {
+		f.vtx[i] = v.Key
+		f.idx[v.Key] = i
+	}
+	f.duf = newDynamicUnionFind(len(f.vtx))
+	for _, e := range es {
+		f.duf.Union(f.idx[e.Head], f.idx[e.Tail])
+	}
+	return nil
+}
+
+// Tarjan
+func (f *Forest[K, W]) LeastCommonAncestor(k1, k2 K) (K, bool) {
+	if k1 == k2 {
+		return k1, true
+	}
+	var ok bool
+	var v1, v2 int
+	if v1, ok = f.idx[k1]; !ok {
+		return k1, ok
+	}
+	if v2, ok = f.idx[k2]; !ok {
+		return k2, ok
+	}
+	r1, err := f.Root(k1)
+	if err != nil {
+		return k1, false
+	}
+	r2, err := f.Root(k2)
+	if err != nil {
+		return k2, false
+	}
+	if r1 != r2 {
+		return k1, false
+	}
+	if r1 == k1 || r1 == k2 {
+		return r1, true
+	}
+	if r2 == k1 || r2 == k2 {
+		return r2, true
+	}
+
+	vst := make([]bool, len(f.vtx))
+	duf := newDynamicUnionFind(len(f.vtx))
+
+	var lca K
+	var dfs func(u int)
+	dfs = func(u int) {
+		if vst[u] {
+			return
+		}
+		vst[u] = true // visited u
+		ns, err := f.Neighbours(f.vtx[u])
+		if err != nil {
+			return
+		}
+		for _, n := range ns {
+			v := f.idx[n.Key]
+			if !vst[v] {
+				dfs(v)
+				duf.SetParent(v, u)
+			}
+		}
+		if u == v1 && vst[v2] {
+			lca, ok = f.vtx[duf.Find(v2)], true
+			return
+		}
+		if u == v2 && vst[v1] {
+			lca, ok = f.vtx[duf.Find(v1)], true
+			return
+		}
+	}
+	dfs(f.idx[r1])
+	return lca, ok
+}
+
 type ThinGraph[K comparable] interface {
 	Graph[K, int]
 }
@@ -49,185 +296,34 @@ func NewThinDigraph[K comparable]() ThinDigraph[K] {
 	return &thinDigraph[K]{g}
 }
 
-type ThinTree[K comparable] struct {
-	Graph[K, int]
-	root K
-	vtx  []K
-	idx  map[K]int
-	duf  *dynamicUnionFind
-}
-
-func NewThinTree[K comparable]() *ThinTree[K] {
-	g := newGraph[K, int](false, "")
-	t := &ThinTree[K]{Graph: g}
-	t.idx = make(map[K]int)
-	t.duf = newDynamicUnionFind(0)
-	return t
-}
-
-func (t *ThinTree[K]) AddVertex(v Vertex[K, int]) error {
-	err := t.Graph.AddVertex(v)
-	if err != nil {
-		if err == errVertexExists {
-			return nil
-		}
-		return err
+func CompleteTree(k int, n int) *Forest[int, int] {
+	if k <= 0 || n < 0 {
+		return nil
 	}
-	t.vtx = append(t.vtx, v.Key)
-	t.idx[v.Key] = len(t.vtx) - 1
-	t.duf.Add(1)
-	return nil
-}
-
-func (t *ThinTree[K]) AddEdge(e Edge[K, int]) error {
-	var ok bool
-	var u, v int
-	if u, ok = t.idx[e.Head]; !ok {
-		return errVertexNotExists
-	}
-	if v, ok = t.idx[e.Tail]; !ok {
-		return errVertexNotExists
-	}
-	if t.duf.Find(u) == t.duf.Find(v) {
-		return errExistsCycle
-	}
-	if err := t.Graph.AddEdge(e); err != nil {
-		return err
-	}
-	t.duf.Union(u, v)
-	return nil
-}
-
-func (t *ThinTree[K]) RemoveVertex(k K) error {
-	if err := t.Graph.RemoveVertex(k); err != nil {
-		return err
-	}
-	return t.rebuild()
-}
-
-func (t *ThinTree[K]) RemoveVertexs(keys ...K) error {
-	for _, k := range keys {
-		if err := t.Graph.RemoveVertex(k); err != nil {
-			return err
+	f := NewForest[int, int]()
+	for v := 0; v < n; v++ {
+		_ = f.AddVertex(Vertex[int, int]{Key: v})
+		if v-1 >= 0 {
+			_ = f.AddEdge(Edge[int, int]{
+				Key:  v - 1,
+				Head: v,
+				Tail: (v - 1) / k,
+			})
 		}
 	}
-	return t.rebuild()
+	_ = f.SetRoot(0)
+	return f
 }
 
-func (t *ThinTree[K]) RemoveEdge(endpoint1, endpoint2 K) error {
-	if err := t.Graph.RemoveEdge(endpoint1, endpoint2); err != nil {
-		return err
+func FullTree(k int, level int) *Forest[int, int] {
+	if k <= 0 || level < 0 {
+		return nil
 	}
-	return t.rebuild()
-}
-
-func (t *ThinTree[K]) RemoveEdges(endpoint1, endpoint2 []K) error {
-	if len(endpoint1) != len(endpoint2) {
-		return errors.New("")
+	if k == 1 {
+		return CompleteTree(k, level)
+	} else {
+		return CompleteTree(k, (pow(k, level)-1)/(k-1))
 	}
-	for i := 0; i < len(endpoint1); i++ {
-		if err := t.Graph.RemoveEdge(endpoint1[i], endpoint2[i]); err != nil {
-			return err
-		}
-	}
-	return t.rebuild()
-}
-
-func (t *ThinTree[K]) RemoveEdgeByKey(k K) error {
-	if err := t.Graph.RemoveEdgeByKey(k); err != nil {
-		return err
-	}
-	return t.rebuild()
-}
-
-func (t *ThinTree[K]) RemoveEdgeByKeys(keys ...K) error {
-	for _, k := range keys {
-		if err := t.Graph.RemoveEdgeByKey(k); err != nil {
-			return err
-		}
-	}
-	return t.rebuild()
-}
-
-func (t *ThinTree[K]) rebuild() error {
-	vs := t.AllVertexes()
-	es := t.AllEdges()
-	t.vtx = make([]K, len(vs))
-	for i, v := range vs {
-		t.vtx[i] = v.Key
-		t.idx[v.Key] = i
-	}
-	t.duf = newDynamicUnionFind(len(t.vtx))
-	for _, e := range es {
-		t.duf.Union(t.idx[e.Head], t.idx[e.Tail])
-	}
-	return nil
-}
-
-func (t *ThinTree[K]) SetRoot(k K) error {
-	if _, ok := t.idx[k]; !ok {
-		return errVertexNotExists
-	}
-	t.root = k
-	return nil
-}
-
-func (t *ThinTree[K]) GetRoot() (K, bool) {
-	_, ok := t.idx[t.root]
-	return t.root, ok
-}
-
-// Tarjan
-func (t *ThinTree[K]) LeastCommonAncestor(k1, k2 K) (k K, b bool) {
-	if k1 == k2 || t.root == k1 {
-		return k1, true
-	} else if t.root == k2 {
-		return k2, true
-	}
-
-	if len(t.vtx) < 2 {
-		return
-	}
-	var ok bool
-	var v1, v2 int
-	if v1, ok = t.idx[k1]; !ok {
-		return
-	}
-	if v2, ok = t.idx[k2]; !ok {
-		return
-	}
-
-	vst := make([]bool, len(t.vtx))
-	duf := newDynamicUnionFind(len(t.vtx))
-
-	var dfs func(u int)
-	dfs = func(u int) {
-		if vst[u] {
-			return
-		}
-		vst[u] = true // visited u
-		ns, err := t.Neighbours(t.vtx[u])
-		if err != nil {
-			return
-		}
-		for _, n := range ns {
-			v := t.idx[n.Key]
-			if !vst[v] {
-				dfs(v)
-				duf.SetParent(v, u)
-			}
-		}
-		if u == v1 && vst[v2] {
-			k, b = t.vtx[duf.Find(v2)], true
-			return
-		}
-		if u == v2 && vst[v1] {
-			k, b = t.vtx[duf.Find(v1)], true
-			return
-		}
-	}
-	dfs(t.idx[t.root])
-	return
 }
 
 func PetersenGraph() Graph[int, int] {

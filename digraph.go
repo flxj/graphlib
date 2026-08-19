@@ -73,31 +73,51 @@ func NewDigraphFromFile[K comparable, W number](path string) (Digraph[K, W], err
 }
 
 func (g *graph[K, W]) InDegree(vertex K) (int, error) {
-	return g.adjList.inDegree(vertex)
+	return g.adj.inDegree(vertex)
 }
 
 func (g *graph[K, W]) OutDegree(vertex K) (int, error) {
-	return g.adjList.outDegree(vertex)
+	return g.adj.outDegree(vertex)
 }
 
 func (g *graph[K, W]) InNeighbours(vertex K) ([]Vertex[K, W], error) {
-	vs, err := g.adjList.inNeighbours(vertex, false)
+	vs, err := g.adj.inNeighbours(vertex, false)
 	if err != nil {
 		return nil, err
 	}
-	return g.getVertexes(vs)
+	res := make([]Vertex[K, W], len(vs))
+	var i int
+	for v := range vs {
+		vv, ok := g.vtx[v]
+		if !ok {
+			return nil, fmt.Errorf("not found neighbour %v info", v)
+		}
+		res[i] = *vv
+		i++
+	}
+	return res, nil
 }
 
 func (g *graph[K, W]) OutNeighbours(vertex K) ([]Vertex[K, W], error) {
-	vs, err := g.adjList.outNeighbours(vertex, false)
+	vs, err := g.adj.outNeighbours(vertex, false)
 	if err != nil {
 		return nil, err
 	}
-	return g.getVertexes(vs)
+	res := make([]Vertex[K, W], len(vs))
+	var i int
+	for v := range vs {
+		vv, ok := g.vtx[v]
+		if !ok {
+			return nil, fmt.Errorf("not found neighbour %v info", v)
+		}
+		res[i] = *vv
+		i++
+	}
+	return res, nil
 }
 
 func (g *graph[K, W]) InEdges(vertex K) ([]Edge[K, W], error) {
-	es, err := g.adjList.inEdges(vertex)
+	es, err := g.adj.inEdges(vertex)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +125,7 @@ func (g *graph[K, W]) InEdges(vertex K) ([]Edge[K, W], error) {
 }
 
 func (g *graph[K, W]) OutEdges(vertex K) ([]Edge[K, W], error) {
-	es, err := g.adjList.outEdges(vertex)
+	es, err := g.adj.outEdges(vertex)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +133,7 @@ func (g *graph[K, W]) OutEdges(vertex K) ([]Edge[K, W], error) {
 }
 
 func (g *graph[K, W]) Sources() ([]Vertex[K, W], error) {
-	vs, err := g.adjList.sources()
+	vs, err := g.adj.sources()
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +141,7 @@ func (g *graph[K, W]) Sources() ([]Vertex[K, W], error) {
 }
 
 func (g *graph[K, W]) Sinks() ([]Vertex[K, W], error) {
-	vs, err := g.adjList.sinks()
+	vs, err := g.adj.sinks()
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +157,7 @@ func (g *graph[K, W]) Reverse() error {
 		return nil
 	}
 	//
-	if err := g.adjList.reverse(); err != nil {
+	if err := g.adj.reverse(); err != nil {
 		return err
 	}
 	for _, e := range g.edges {
@@ -149,15 +169,11 @@ func (g *graph[K, W]) Reverse() error {
 func (g *graph[K, W]) getVertexes(vs []K) ([]Vertex[K, W], error) {
 	res := make([]Vertex[K, W], len(vs))
 	for i, v := range vs {
-		vv, ok := g.vertexes[v]
+		vv, ok := g.vtx[v]
 		if !ok {
 			return nil, fmt.Errorf("not found neighbour %v info", v)
 		}
-		res[i] = Vertex[K, W]{
-			Key:    vv.Key,
-			Value:  vv.Value,
-			Labels: vv.Labels,
-		}
+		res[i] = *vv
 	}
 	return res, nil
 }
@@ -169,13 +185,7 @@ func (g *graph[K, W]) getEdges(es []K) ([]Edge[K, W], error) {
 		if !ok {
 			return nil, fmt.Errorf("not found edge %v info", e)
 		}
-		res[i] = Edge[K, W]{
-			Key:    ee.Key,
-			Head:   ee.Head,
-			Tail:   ee.Tail,
-			Value:  ee.Value,
-			Labels: ee.Labels,
-		}
+		res[i] = *ee
 	}
 	return res, nil
 }

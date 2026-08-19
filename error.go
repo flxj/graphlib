@@ -45,7 +45,7 @@ var (
 
 var (
 	errNotImplement   = errors.New("not implement the method now")
-	errExistsCycle    = errors.New("there are cycles in the current execgraph")
+	errExistsCycle    = errors.New("there are cycles in the current graph")
 	errAlreadyRunning = errors.New("the current ExecGraph is already running")
 	errJobNotExists   = errors.New("the job not exists in current graph")
 	errExecCanceled   = errors.New("the execgraph has been canceled")

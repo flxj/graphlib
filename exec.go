@@ -245,7 +245,7 @@ func NewExecGraphFromFile[K comparable, W number, J job](path string) (ExecGraph
 
 // Create an ExecGraph based on an existing DAG object.
 func NewExecGraphFromDAG[K comparable, W number, J job](g Digraph[K, W]) (ExecGraph[K, J], error) {
-	p, err := g.Property(PropertyAcyclic)
+	p, err := g.Property(ProAcyclic)
 	if err != nil {
 		return nil, err
 	}
@@ -484,7 +484,7 @@ type execGraph[K comparable, J job] struct {
 }
 
 func (g *execGraph[K, J]) Start() error {
-	p, err := g.dag.Property(PropertyAcyclic)
+	p, err := g.dag.Property(ProAcyclic)
 	if err != nil {
 		return err
 	}

@@ -25,7 +25,7 @@ func NewWeightMatrix[K comparable, W number](g Graph[K, W]) (*WeightMatrix[K, W]
 	if g == nil {
 		return nil, errNilGraph
 	}
-	p, err := g.Property(PropertySimple)
+	p, err := g.Property(ProSimple)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func NewWeightMatrix[K comparable, W number](g Graph[K, W]) (*WeightMatrix[K, W]
 }
 
 // Create adjacency matrix for graph.
-func NewAdjacencytMatrix[K comparable, V any, W number](g Graph[K, W]) (*AdjacencyMatrix[K], error) {
+func NewAdjacencytMatrix[K comparable, W number](g Graph[K, W]) (*AdjacencyMatrix[K], error) {
 	if g == nil {
 		return nil, errNilGraph
 	}
@@ -205,14 +205,14 @@ type edge[K comparable, W number] struct {
 	weight W
 }
 
-type adjacencyList[K comparable, W number] struct {
+type adjList[K comparable, W number] struct {
 	digraph bool
 	outAdj  map[K]*endpoint[K, W] // adjacency list
 	inAdj   map[K]*endpoint[K, W] // contrary adjacency list
 }
 
-func newAdjacencyLis[K comparable, W number](digraph bool) *adjacencyList[K, W] {
-	adj := &adjacencyList[K, W]{
+func newAdjacencyLis[K comparable, W number](digraph bool) *adjList[K, W] {
+	adj := &adjList[K, W]{
 		digraph: digraph,
 		outAdj:  make(map[K]*endpoint[K, W]),
 	}
@@ -222,10 +222,10 @@ func newAdjacencyLis[K comparable, W number](digraph bool) *adjacencyList[K, W] 
 	return adj
 }
 
-func newAdjacencyListFromGraph[K comparable, W number](g Graph[K, W]) (*adjacencyList[K, W], error) {
+func newAdjacencyListFromGraph[K comparable, W number](g Graph[K, W]) (*adjList[K, W], error) {
 	var (
 		err error
-		adj *adjacencyList[K, W]
+		adj *adjList[K, W]
 	)
 	vs := g.AllVertexes()
 	es := g.AllEdges()
@@ -244,14 +244,14 @@ func newAdjacencyListFromGraph[K comparable, W number](g Graph[K, W]) (*adjacenc
 	return adj, nil
 }
 
-func (l *adjacencyList[K, W]) reverse() error {
+func (l *adjList[K, W]) reverse() error {
 	var out = l.outAdj
 	l.outAdj = l.inAdj
 	l.inAdj = out
 	return nil
 }
 
-func (l *adjacencyList[K, W]) addVertexes(vs ...K) error {
+func (l *adjList[K, W]) addVertexes(vs ...K) error {
 	for _, v := range vs {
 		if _, ok := l.outAdj[v]; !ok {
 			l.outAdj[v] = nil
@@ -265,7 +265,7 @@ func (l *adjacencyList[K, W]) addVertexes(vs ...K) error {
 	return nil
 }
 
-func (l *adjacencyList[K, W]) delVertex(v K) error {
+func (l *adjList[K, W]) delVertex(v K) error {
 	del := func(v K, adj map[K]*endpoint[K, W]) {
 		delete(adj, v)
 		for k, p := range adj {
@@ -303,7 +303,7 @@ func (l *adjacencyList[K, W]) delVertex(v K) error {
 	return nil
 }
 
-func (l *adjacencyList[K, W]) delVertexes(vs ...K) error {
+func (l *adjList[K, W]) delVertexes(vs ...K) error {
 	for _, v := range vs {
 		if _, ok := l.outAdj[v]; !ok {
 			return fmt.Errorf("vertex %v not exists", v)
@@ -317,7 +317,7 @@ func (l *adjacencyList[K, W]) delVertexes(vs ...K) error {
 	return nil
 }
 
-func (l *adjacencyList[K, W]) addEdge(head, tail, key K, weight W) error {
+func (l *adjList[K, W]) addEdge(head, tail, key K, weight W) error {
 	insert := func(v1, v2, edge K, w W, adj map[K]*endpoint[K, W]) error {
 		p, ok := adj[v1]
 		if !ok {
@@ -361,7 +361,7 @@ func (l *adjacencyList[K, W]) addEdge(head, tail, key K, weight W) error {
 	return nil
 }
 
-func (l *adjacencyList[K, W]) delEdge(head, tail, key K) error {
+func (l *adjList[K, W]) delEdge(head, tail, key K) error {
 	del := func(v1, v2, edge K, adj map[K]*endpoint[K, W]) error {
 		p, ok := adj[v1]
 		if !ok {
@@ -407,7 +407,7 @@ func (l *adjacencyList[K, W]) delEdge(head, tail, key K) error {
 	return nil
 }
 
-func (l *adjacencyList[K, W]) addEdges(es ...*edge[K, W]) error {
+func (l *adjList[K, W]) addEdges(es ...*edge[K, W]) error {
 	for _, e := range es {
 		if _, ok := l.outAdj[e.tail]; !ok {
 			return fmt.Errorf("vertex %v not exists", e.tail)
@@ -424,7 +424,7 @@ func (l *adjacencyList[K, W]) addEdges(es ...*edge[K, W]) error {
 	return nil
 }
 
-func (l *adjacencyList[K, W]) delEdges(es ...*edge[K, W]) error {
+func (l *adjList[K, W]) delEdges(es ...*edge[K, W]) error {
 	for _, e := range es {
 		if err := l.delEdge(e.head, e.tail, e.key); err != nil {
 			return err
@@ -433,7 +433,7 @@ func (l *adjacencyList[K, W]) delEdges(es ...*edge[K, W]) error {
 	return nil
 }
 
-func (l *adjacencyList[K, W]) degree(v K) (int, error) {
+func (l *adjList[K, W]) degree(v K) (int, error) {
 	d, err := l.outDegree(v)
 	if err != nil {
 		return 0, err
@@ -448,7 +448,7 @@ func (l *adjacencyList[K, W]) degree(v K) (int, error) {
 	return d, nil
 }
 
-func (l *adjacencyList[K, W]) outDegree(v K) (int, error) {
+func (l *adjList[K, W]) outDegree(v K) (int, error) {
 	p, ok := l.outAdj[v]
 	if !ok {
 		return 0, fmt.Errorf("vertex %v not exists", v)
@@ -460,7 +460,7 @@ func (l *adjacencyList[K, W]) outDegree(v K) (int, error) {
 	return d, nil
 }
 
-func (l *adjacencyList[K, W]) inDegree(v K) (int, error) {
+func (l *adjList[K, W]) inDegree(v K) (int, error) {
 	var adj map[K]*endpoint[K, W]
 	if l.digraph {
 		adj = l.inAdj
@@ -478,7 +478,7 @@ func (l *adjacencyList[K, W]) inDegree(v K) (int, error) {
 	return d, nil
 }
 
-func (l *adjacencyList[K, W]) neighbours(v K, multiple bool) ([]K, error) {
+func (l *adjList[K, W]) neighbours(v K, multiple bool) (map[K]struct{}, error) {
 	ks := make(map[K]struct{})
 	p, ok := l.outAdj[v]
 	if !ok {
@@ -497,14 +497,10 @@ func (l *adjacencyList[K, W]) neighbours(v K, multiple bool) ([]K, error) {
 			ks[q.key] = struct{}{}
 		}
 	}
-	var ns []K
-	for k := range ks {
-		ns = append(ns, k)
-	}
-	return ns, nil
+	return ks, nil
 }
 
-func (l *adjacencyList[K, W]) inNeighbours(v K, multiple bool) ([]K, error) {
+func (l *adjList[K, W]) inNeighbours(v K, multiple bool) (map[K]int, error) {
 	var adj map[K]*endpoint[K, W]
 	if l.digraph {
 		adj = l.inAdj
@@ -519,20 +515,22 @@ func (l *adjacencyList[K, W]) inNeighbours(v K, multiple bool) ([]K, error) {
 	for q := p; q != nil; q = q.next {
 		ks[q.key] = ks[q.key] + 1
 	}
-	var ns []K
-	for k, n := range ks {
-		if multiple {
-			for i := 0; i < n; i++ {
+	/*
+		var ns []K
+		for k, n := range ks {
+			if multiple {
+				for i := 0; i < n; i++ {
+					ns = append(ns, k)
+				}
+			} else {
 				ns = append(ns, k)
 			}
-		} else {
-			ns = append(ns, k)
 		}
-	}
-	return ns, nil
+	*/
+	return ks, nil
 }
 
-func (l *adjacencyList[K, W]) outNeighbours(v K, multiple bool) ([]K, error) {
+func (l *adjList[K, W]) outNeighbours(v K, multiple bool) (map[K]int, error) {
 	ks := make(map[K]int)
 	p, ok := l.outAdj[v]
 	if !ok {
@@ -541,20 +539,22 @@ func (l *adjacencyList[K, W]) outNeighbours(v K, multiple bool) ([]K, error) {
 	for q := p; q != nil; q = q.next {
 		ks[q.key] = ks[q.key] + 1
 	}
-	var ns []K
-	for k, n := range ks {
-		if multiple {
-			for i := 0; i < n; i++ {
+	/*
+		var ns []K
+		for k, n := range ks {
+			if multiple {
+				for i := 0; i < n; i++ {
+					ns = append(ns, k)
+				}
+			} else {
 				ns = append(ns, k)
 			}
-		} else {
-			ns = append(ns, k)
 		}
-	}
-	return ns, nil
+	*/
+	return ks, nil
 }
 
-func (l *adjacencyList[K, W]) inEdges(v K) ([]K, error) {
+func (l *adjList[K, W]) inEdges(v K) ([]K, error) {
 	var adj map[K]*endpoint[K, W]
 	if l.digraph {
 		adj = l.inAdj
@@ -572,7 +572,7 @@ func (l *adjacencyList[K, W]) inEdges(v K) ([]K, error) {
 	return ks, nil
 }
 
-func (l *adjacencyList[K, W]) outEdges(v K) ([]K, error) {
+func (l *adjList[K, W]) outEdges(v K) ([]K, error) {
 	p, ok := l.outAdj[v]
 	if !ok {
 		return nil, fmt.Errorf("vertex %v not exists", v)
@@ -584,7 +584,7 @@ func (l *adjacencyList[K, W]) outEdges(v K) ([]K, error) {
 	return ks, nil
 }
 
-func (l *adjacencyList[K, W]) sources() ([]K, error) {
+func (l *adjList[K, W]) sources() ([]K, error) {
 	if !l.digraph {
 		return nil, errNotDigraph
 	}
@@ -597,7 +597,7 @@ func (l *adjacencyList[K, W]) sources() ([]K, error) {
 	return vs, nil
 }
 
-func (l *adjacencyList[K, W]) sinks() ([]K, error) {
+func (l *adjList[K, W]) sinks() ([]K, error) {
 	if !l.digraph {
 		return nil, errNotDigraph
 	}
@@ -610,7 +610,7 @@ func (l *adjacencyList[K, W]) sinks() ([]K, error) {
 	return vs, nil
 }
 
-func (l *adjacencyList[K, W]) minDegree() (int, error) {
+func (l *adjList[K, W]) minDegree() (int, error) {
 	minD := len(l.outAdj)
 	for v := range l.outAdj {
 		d, err := l.degree(v)
@@ -624,7 +624,7 @@ func (l *adjacencyList[K, W]) minDegree() (int, error) {
 	return minD, nil
 }
 
-func (l *adjacencyList[K, W]) maxDegree() (int, error) {
+func (l *adjList[K, W]) maxDegree() (int, error) {
 	maxD := len(l.outAdj)
 	for v := range l.outAdj {
 		d, err := l.degree(v)
@@ -638,7 +638,7 @@ func (l *adjacencyList[K, W]) maxDegree() (int, error) {
 	return maxD, nil
 }
 
-func (l *adjacencyList[K, W]) avgDegree() (float64, error) {
+func (l *adjList[K, W]) avgDegree() (float64, error) {
 	if len(l.outAdj) == 0 {
 		return 0.0, nil
 	}
@@ -653,7 +653,7 @@ func (l *adjacencyList[K, W]) avgDegree() (float64, error) {
 	return float64(sumD) / float64(len(l.outAdj)), nil
 }
 
-func (l *adjacencyList[K, W]) isDAG() (bool, error) {
+func (l *adjList[K, W]) isDAG() (bool, error) {
 	if len(l.outAdj) == 0 {
 		return true, nil
 	}
@@ -681,7 +681,7 @@ func (l *adjacencyList[K, W]) isDAG() (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			for _, v := range vs {
+			for v := range vs {
 				// loop
 				if v == k {
 					return false, nil
@@ -695,7 +695,7 @@ func (l *adjacencyList[K, W]) isDAG() (bool, error) {
 	return true, nil
 }
 
-func (l *adjacencyList[K, W]) isAcyclic() (bool, error) {
+func (l *adjList[K, W]) isAcyclic() (bool, error) {
 	if l.digraph {
 		return l.isDAG()
 	}
@@ -724,7 +724,7 @@ func (l *adjacencyList[K, W]) isAcyclic() (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		for _, k := range vs {
+		for k := range vs {
 			// loop
 			if k == v {
 				return false, nil
@@ -756,7 +756,7 @@ func (l *adjacencyList[K, W]) isAcyclic() (bool, error) {
 	return true, nil
 }
 
-func (l *adjacencyList[K, W]) isUC() (bool, error) {
+func (l *adjList[K, W]) isUC() (bool, error) {
 	if len(l.outAdj) == 0 {
 		return false, nil
 	}
@@ -775,7 +775,7 @@ func (l *adjacencyList[K, W]) isUC() (bool, error) {
 	return len(source) <= 1 && len(sink) <= 1, nil
 }
 
-func (l *adjacencyList[K, W]) isConnected(unidirectional bool) (bool, error) {
+func (l *adjList[K, W]) isConnected(unidirectional bool) (bool, error) {
 	if unidirectional && l.digraph {
 		return l.isUC()
 	}
@@ -801,7 +801,7 @@ func (l *adjacencyList[K, W]) isConnected(unidirectional bool) (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		for _, v := range vs {
+		for v := range vs {
 			if _, ok := visited[v]; !ok {
 				que.push(v)
 			}
@@ -813,7 +813,7 @@ func (l *adjacencyList[K, W]) isConnected(unidirectional bool) (bool, error) {
 	return true, nil
 }
 
-func (l *adjacencyList[K, W]) isSimple() (bool, error) {
+func (l *adjList[K, W]) isSimple() (bool, error) {
 	if l.digraph {
 		for k, v := range l.outAdj {
 			heads := make(map[K]int)
@@ -855,7 +855,7 @@ func (l *adjacencyList[K, W]) isSimple() (bool, error) {
 	return true, nil
 }
 
-func (l *adjacencyList[K, W]) isRegular() (bool, error) {
+func (l *adjList[K, W]) isRegular() (bool, error) {
 	d := -1
 	for k := range l.outAdj {
 		n, err := l.degree(k)
@@ -873,11 +873,11 @@ func (l *adjacencyList[K, W]) isRegular() (bool, error) {
 	return true, nil
 }
 
-func (l *adjacencyList[K, W]) isForest() (bool, error) {
+func (l *adjList[K, W]) isForest() (bool, error) {
 	return l.isAcyclic()
 }
 
-func (l *adjacencyList[K, W]) hasLoop() (bool, error) {
+func (l *adjList[K, W]) hasLoop() (bool, error) {
 	for k, v := range l.outAdj {
 		for p := v; p != nil; p = p.next {
 			if p.key == k {
@@ -888,7 +888,7 @@ func (l *adjacencyList[K, W]) hasLoop() (bool, error) {
 	return false, nil
 }
 
-func (l *adjacencyList[K, W]) hasNegativeWeight() (bool, error) {
+func (l *adjList[K, W]) hasNegativeWeight() (bool, error) {
 	for _, v := range l.outAdj {
 		for p := v; p != nil; p = p.next {
 			if p.weight < 0 {
@@ -908,7 +908,7 @@ func (l *adjacencyList[K, W]) hasNegativeWeight() (bool, error) {
 	return false, nil
 }
 
-func (l *adjacencyList[K, W]) property(p int) (property[bool], error) {
+func (l *adjList[K, W]) property(p int) (property[bool], error) {
 	var r bool
 	var err error
 	switch p {
@@ -940,7 +940,7 @@ func (l *adjacencyList[K, W]) property(p int) (property[bool], error) {
 	}, nil
 }
 
-func (l *adjacencyList[K, W]) incidentEdges(v K) ([]K, error) {
+func (l *adjList[K, W]) incidentEdges(v K) ([]K, error) {
 	var ks []K
 	p, ok := l.outAdj[v]
 	if !ok {
@@ -961,7 +961,7 @@ func (l *adjacencyList[K, W]) incidentEdges(v K) ([]K, error) {
 	return ks, nil
 }
 
-func (l *adjacencyList[K, W]) delAllEdge() {
+func (l *adjList[K, W]) delAllEdge() {
 	for k := range l.outAdj {
 		l.outAdj[k] = nil
 	}
@@ -972,7 +972,7 @@ func (l *adjacencyList[K, W]) delAllEdge() {
 	}
 }
 
-func (l *adjacencyList[K, W]) multiplicity() int {
+func (l *adjList[K, W]) multiplicity() int {
 	var m int
 	for k, v := range l.outAdj {
 		cnt := make(map[K]int)

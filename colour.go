@@ -18,7 +18,7 @@ package graphlib
 
 // backtracking
 func vertexColouring[K comparable, W number](g Graph[K, W], n int) (map[K]int, error) {
-	p, err := g.Property(PropertyMaxDegree)
+	p, err := g.Property(ProMaxDegree)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func TryVertexColouring[K comparable, W number](g Graph[K, W], colours int) (map
 }
 
 func edgeColouring[K comparable, W number](g Graph[K, W], n int) (map[K]int, error) {
-	p, err := g.Property(PropertyMaxDegree)
+	p, err := g.Property(ProMaxDegree)
 	if err != nil {
 		return nil, err
 	}

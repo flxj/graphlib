@@ -47,42 +47,50 @@ func (p property[T]) clone() property[T] {
 	}
 }
 
-type basicPropertySet[T any] struct {
-	digraph             bool
-	acyclic             property[T] // no cycle and no loop
-	simple              property[T] // no loop and no multi edge
-	regular             property[T] // every vertex has same order
-	connected           property[T] // for digraph, which means strong connection
-	forest              property[T]
-	loop                property[T]
-	negativeWeight      property[T]
-	unilateralConnected property[T]
+type boolPropertySet[T bool] struct {
+	digraph    bool
+	acyclic    property[T] // no cycle and no loop
+	simple     property[T] // no loop and no multi edge
+	regular    property[T] // every vertex has same order
+	connect    property[T] // for digraph, which means strong connection
+	forest     property[T]
+	loop       property[T]
+	negWeight  property[T]
+	uniConnect property[T]
+	orient     property[T]
 }
+
+/*
+type intPropertySet struct {
+	minDe property[int]
+	maxDe property[int]
+	multi property[int]
+}
+*/
 
 // graph default implement base on adjacency list.
 type graph[K comparable, W number] struct {
-	version    int // start from 1
-	name       string
-	properties basicPropertySet[bool] // version start from 0
-	minDe      property[int]
-	maxDe      property[int]
-	avgDe      property[float64]
-	multi      property[int]
-	vertexes   map[K]*Vertex[K, W]
-	edges      map[K]*Edge[K, W]
-	adjList    *adjacencyList[K, W]
+	ver   int // start from 1
+	name  string
+	prop  boolPropertySet[bool] // version start from 0
+	minDe property[int]
+	maxDe property[int]
+	multi property[int]
+	avgDe property[float64]
+	vtx   map[K]*Vertex[K, W]
+	edges map[K]*Edge[K, W]
+	adj   *adjList[K, W]
 }
 
 func newGraph[K comparable, W number](digraph bool, name string) *graph[K, W] {
 	g := &graph[K, W]{
-		version:  1,
-		name:     name,
-		vertexes: make(map[K]*Vertex[K, W]),
-		edges:    make(map[K]*Edge[K, W]),
+		ver:   1,
+		name:  name,
+		vtx:   make(map[K]*Vertex[K, W]),
+		edges: make(map[K]*Edge[K, W]),
 	}
-	g.properties.digraph = digraph
-	g.adjList = newAdjacencyLis[K, W](digraph)
-
+	g.prop.digraph = digraph
+	g.adj = newAdjacencyLis[K, W](digraph)
 	return g
 }
 
@@ -92,12 +100,12 @@ func NewGraph[K comparable, W number](digraph bool, name string) Graph[K, W] {
 }
 
 // Create a new undirected graph
-func NewUnDigraph[K comparable, V any, W number](name string) Graph[K, W] {
+func NewUnDigraph[K comparable, W number](name string) Graph[K, W] {
 	return newGraph[K, W](false, name)
 }
 
 // Load graph from json or yaml file.
-func NewGraphFromFile[K comparable, V any, W number](path string) (Graph[K, W], error) {
+func NewGraphFromFile[K comparable, W number](path string) (Graph[K, W], error) {
 	s, err := readFile(path)
 	if err != nil {
 		return nil, err
@@ -130,70 +138,70 @@ func (g *graph[K, W]) SetName(name string) {
 }
 
 func (g *graph[K, W]) IsDigraph() bool {
-	return g.adjList.digraph
+	return g.adj.digraph
 }
 
 func (g *graph[K, W]) IsSimple() bool {
-	if g.properties.simple.version == g.version {
-		return g.properties.simple.value
+	if g.prop.simple.version == g.ver {
+		return g.prop.simple.value
 	}
 	//
-	p, _ := g.adjList.property(simple)
-	p.version = g.version
-	g.properties.simple = p
+	p, _ := g.adj.property(simple)
+	p.version = g.ver
+	g.prop.simple = p
 
 	return p.value
 }
 
 func (g *graph[K, W]) HasNegativeWeight() bool {
-	if g.properties.negativeWeight.version == g.version {
-		return g.properties.negativeWeight.value
+	if g.prop.negWeight.version == g.ver {
+		return g.prop.negWeight.value
 	}
-	p, _ := g.adjList.property(negativeWeight)
-	p.version = g.version
-	g.properties.negativeWeight = p
+	p, _ := g.adj.property(negativeWeight)
+	p.version = g.ver
+	g.prop.negWeight = p
 
 	return p.value
 }
 
 func (g *graph[K, W]) IsRegular() bool {
-	if g.properties.regular.version == g.version {
-		return g.properties.regular.value
+	if g.prop.regular.version == g.ver {
+		return g.prop.regular.value
 	}
-	p, _ := g.adjList.property(regular)
-	p.version = g.version
-	g.properties.regular = p
+	p, _ := g.adj.property(regular)
+	p.version = g.ver
+	g.prop.regular = p
 
 	return p.value
 }
 
 func (g *graph[K, W]) IsAcyclic() bool {
-	if g.properties.acyclic.version == g.version {
-		return g.properties.acyclic.value
+	if g.prop.acyclic.version == g.ver {
+		return g.prop.acyclic.value
 	}
-	p, _ := g.adjList.property(acyclic)
-	p.version = g.version
-	g.properties.acyclic = p
+	p, _ := g.adj.property(acyclic)
+	p.version = g.ver
+	g.prop.acyclic = p
 
 	return p.value
 }
 func (g *graph[K, W]) IsConnected(unidirectional bool) bool {
 	if unidirectional && g.IsDigraph() {
-		if g.properties.unilateralConnected.version == g.version {
-			return g.properties.unilateralConnected.value
+		if g.prop.uniConnect.version == g.ver {
+			return g.prop.uniConnect.value
 		}
-		p, _ := g.adjList.property(unilateralConnected)
-		p.version = g.version
-		g.properties.unilateralConnected = p
+		p, _ := g.adj.property(unilateralConnected)
+		p.version = g.ver
+		g.prop.uniConnect = p
 
 		return p.value
 	}
-	if g.properties.connected.version == g.version {
-		return g.properties.connected.value
+	if g.prop.connect.version == g.ver {
+		return g.prop.connect.value
 	}
-	p, _ := g.adjList.property(connected)
-	p.version = g.version
-	g.properties.connected = p
+	p, _ := g.adj.property(connected)
+	p.version = g.ver
+	g.prop.connect = p
 
 	return p.value
 }
@@ -210,29 +218,29 @@ func (g *graph[K, W]) IsTree() bool {
 }
 
 func (g *graph[K, W]) IsForest() bool {
-	if g.properties.forest.version == g.version {
-		return g.properties.forest.value
+	if g.prop.forest.version == g.ver {
+		return g.prop.forest.value
 	}
-	p, _ := g.adjList.property(forest)
-	p.version = g.version
-	g.properties.forest = p
+	p, _ := g.adj.property(forest)
+	p.version = g.ver
+	g.prop.forest = p
 
 	return p.value
 }
 
 func (g *graph[K, W]) HasLoop() bool {
-	if g.properties.loop.version == g.version {
-		return g.properties.loop.value
+	if g.prop.loop.version == g.ver {
+		return g.prop.loop.value
 	}
-	p, _ := g.adjList.property(loop)
-	p.version = g.version
-	g.properties.loop = p
+	p, _ := g.adj.property(loop)
+	p.version = g.ver
+	g.prop.loop = p
 
 	return p.value
 }
 
 func (g *graph[K, W]) Order() int {
-	return len(g.vertexes)
+	return len(g.vtx)
 }
 
 func (g *graph[K, W]) Size() int {
@@ -240,46 +248,46 @@ func (g *graph[K, W]) Size() int {
 }
 
 func (g *graph[K, W]) MinDegree() int {
-	if g.minDe.version == g.version {
+	if g.minDe.version == g.ver {
 		return g.minDe.value
 	}
-	d, err := g.adjList.minDegree()
+	d, err := g.adj.minDegree()
 	if err != nil {
 		return -1
 	}
-	g.minDe.version = g.version
+	g.minDe.version = g.ver
 	g.minDe.value = d
 	return d
 }
 
 func (g *graph[K, W]) MaxDegree() int {
-	if g.maxDe.version == g.version {
+	if g.maxDe.version == g.ver {
 		return g.maxDe.value
 	}
-	d, err := g.adjList.maxDegree()
+	d, err := g.adj.maxDegree()
 	if err != nil {
 		return -1
 	}
-	g.maxDe.version = g.version
+	g.maxDe.version = g.ver
 	g.maxDe.value = d
 	return d
 }
 
 func (g *graph[K, W]) AvgDegree() float64 {
-	if g.avgDe.version == g.version {
+	if g.avgDe.version == g.ver {
 		return g.avgDe.value
 	}
 	var avg float64
 	if g.Order() != 0 {
 		avg = float64(2*g.Size()) / float64(g.Order())
 	}
-	g.avgDe.version = g.version
+	g.avgDe.version = g.ver
 	g.avgDe.value = avg
 	return avg
 }
 
 func (g *graph[K, W]) Multiplicity() int {
-	if g.multi.version == g.version {
+	if g.multi.version == g.ver {
 		return g.multi.value
 	}
 	var d int
@@ -288,52 +296,67 @@ func (g *graph[K, W]) Multiplicity() int {
 			d = 1
 		}
 	} else {
-		d = g.adjList.multiplicity()
+		d = g.adj.multiplicity()
 	}
-	g.multi.version = g.version
+	g.multi.version = g.ver
 	g.multi.value = d
 	return d
+}
+
+func (g *graph[K, W]) Orientation() bool {
+	if g.prop.orient.version == g.ver {
+		return g.prop.orient.value
+	}
+	if !g.IsSimple() || !g.IsDigraph() {
+		g.prop.orient.value = false
+	} else {
+		g.prop.orient.value = true
+	}
+	g.prop.orient.version = g.ver
+	return g.prop.orient.value
 }
 
 func (g *graph[K, W]) Property(p PropertyName) (GraphProperty[any], error) {
 	gp := GraphProperty[any]{Name: p}
 	switch p {
-	case PropertyDigraph:
+	case ProDigraph:
 		gp.Value = g.IsDigraph()
-	case PropertyAcyclic:
+	case ProAcyclic:
 		gp.Value = g.IsAcyclic()
-	case PropertySimple:
+	case ProSimple:
 		gp.Value = g.IsSimple()
-	case PropertyRegular:
+	case ProRegular:
 		gp.Value = g.IsRegular()
-	case PropertyConnected:
+	case ProConnected:
 		gp.Value = g.IsConnected(false)
-	case PropertyUnilateralConnected:
+	case ProUnilateralConnected:
 		gp.Value = g.IsConnected(true)
-	case PropertyForest:
+	case ProForest:
 		gp.Value = g.IsForest()
-	case PropertyLoop:
+	case ProLoop:
 		gp.Value = g.HasLoop()
-	case PropertyCompleted:
+	case ProCompleted:
 		gp.Value = g.IsCompleted()
-	case PropertyTree:
+	case ProTree:
 		gp.Value = g.IsTree()
-	case PropertyNegativeWeight:
+	case ProNegativeWeight:
 		gp.Value = g.HasNegativeWeight()
-	case PropertyGraphName:
+	case ProGraphName:
 		gp.Value = g.Name()
-	case PropertyOrder:
+	case ProOrder:
 		gp.Value = g.Order()
-	case PropertySize:
+	case ProSize:
 		gp.Value = g.Size()
-	case PropertyMaxDegree:
+	case ProMaxDegree:
 		gp.Value = g.MaxDegree()
-	case PropertyMinDegree:
+	case ProMinDegree:
 		gp.Value = g.MinDegree()
-	case PropertyAvgDegree:
+	case ProAvgDegree:
 		gp.Value = g.AvgDegree()
-	case PropertyMultiplicity:
+	case ProMultiplicity:
 		gp.Value = g.Multiplicity()
+	case ProOrientation:
+		gp.Value = g.Orientation()
 	default:
 		return gp, errUnknownProperty
 	}
@@ -341,9 +364,9 @@ func (g *graph[K, W]) Property(p PropertyName) (GraphProperty[any], error) {
 }
 
 func (g *graph[K, W]) AllVertexes() []Vertex[K, W] {
-	vs := make([]Vertex[K, W], len(g.vertexes))
+	vs := make([]Vertex[K, W], len(g.vtx))
 	var i int
-	for _, v := range g.vertexes {
+	for _, v := range g.vtx {
 		/*
 			vs[i] = Vertex[K,W]{
 				Key:    v.Key,
@@ -378,22 +401,22 @@ func (g *graph[K, W]) AllEdges() []Edge[K, W] {
 }
 
 func (g *graph[K, W]) AddVertex(v Vertex[K, W]) error {
-	if _, ok := g.vertexes[v.Key]; ok {
+	if _, ok := g.vtx[v.Key]; ok {
 		return errVertexExists
 	}
-	if err := g.adjList.addVertexes(v.Key); err != nil {
+	if err := g.adj.addVertexes(v.Key); err != nil {
 		return err
 	}
-	g.vertexes[v.Key] = &v
-	g.version++
+	g.vtx[v.Key] = &v
+	g.ver++
 	return nil
 }
 
 func (g *graph[K, W]) RemoveVertex(key K) error {
-	if _, ok := g.vertexes[key]; !ok {
+	if _, ok := g.vtx[key]; !ok {
 		return errVertexNotExists
 	}
-	if err := g.adjList.delVertex(key); err != nil {
+	if err := g.adj.delVertex(key); err != nil {
 		return err
 	}
 
@@ -406,8 +429,8 @@ func (g *graph[K, W]) RemoveVertex(key K) error {
 	for _, k := range edges {
 		delete(g.edges, k)
 	}
-	delete(g.vertexes, key)
-	g.version++
+	delete(g.vtx, key)
+	g.ver++
 	return nil
 }
 
@@ -424,11 +447,11 @@ func (g *graph[K, W]) AddEdge(edge Edge[K, W]) error {
 			}
 		}
 	}
-	if err := g.adjList.addEdge(edge.Head, edge.Tail, edge.Key, edge.Weight); err != nil {
+	if err := g.adj.addEdge(edge.Head, edge.Tail, edge.Key, edge.Weight); err != nil {
 		return err
 	}
 	g.edges[edge.Key] = &edge
-	g.version++
+	g.ver++
 	return nil
 }
 
@@ -437,11 +460,11 @@ func (g *graph[K, W]) RemoveEdgeByKey(key K) error {
 	if !ok {
 		return errEdgeNotExists
 	}
-	if err := g.adjList.delEdge(e.Head, e.Tail, e.Key); err != nil {
+	if err := g.adj.delEdge(e.Head, e.Tail, e.Key); err != nil {
 		return err
 	}
 	delete(g.edges, key)
-	g.version++
+	g.ver++
 	return nil
 }
 
@@ -449,7 +472,7 @@ func (g *graph[K, W]) RemoveEdge(v1, v2 K) error {
 	var edges []*edge[K, W]
 	for _, v := range g.edges {
 		ok := (v.Head == v1 && v.Tail == v2)
-		if g.adjList.digraph {
+		if g.adj.digraph {
 			ok = ok || (v.Head == v2 && v.Tail == v1)
 		}
 		if ok {
@@ -460,52 +483,48 @@ func (g *graph[K, W]) RemoveEdge(v1, v2 K) error {
 			})
 		}
 	}
-	if err := g.adjList.delEdges(edges...); err != nil {
+	if err := g.adj.delEdges(edges...); err != nil {
 		return err
 	}
 	for _, e := range edges {
 		delete(g.edges, e.key)
 	}
-	g.version++
+	g.ver++
 	return nil
 }
 
 func (g *graph[K, W]) RemoveAllEdge() error {
-	g.adjList.delAllEdge()
+	g.adj.delAllEdge()
 	g.edges = make(map[K]*Edge[K, W])
-	g.version++
+	g.ver++
 	return nil
 }
 
 func (g *graph[K, W]) Degree(key K) (int, error) {
-	if _, ok := g.vertexes[key]; !ok {
+	if _, ok := g.vtx[key]; !ok {
 		return 0, errVertexNotExists
 	}
-	return g.adjList.degree(key)
+	return g.adj.degree(key)
 }
 
 func (g *graph[K, W]) Neighbours(v K) ([]Vertex[K, W], error) {
-	vs, err := g.adjList.neighbours(v, false)
+	vs, err := g.adj.neighbours(v, false)
 	if err != nil {
 		return nil, err
 	}
 	var res []Vertex[K, W]
-	for _, key := range vs {
-		ver, ok := g.vertexes[key]
+	for key := range vs {
+		ver, ok := g.vtx[key]
 		if !ok {
 			return nil, fmt.Errorf("neighbour(%v) of %v not exists", key, v)
 		}
-		res = append(res, Vertex[K, W]{
-			Key:    key,
-			Value:  ver.Value,
-			Labels: ver.Labels,
-		})
+		res = append(res, *ver)
 	}
 	return res, nil
 }
 
 func (g *graph[K, W]) GetVertex(key K) (Vertex[K, W], error) {
-	v, ok := g.vertexes[key]
+	v, ok := g.vtx[key]
 	if !ok {
 		return Vertex[K, W]{}, errVertexNotExists
 	}
@@ -516,7 +535,7 @@ func (g *graph[K, W]) GetEdge(v1, v2 K) ([]Edge[K, W], error) {
 	var edges []Edge[K, W]
 	for _, e := range g.edges {
 		ok := e.Head == v1 && e.Tail == v2
-		if !g.adjList.digraph {
+		if !g.adj.digraph {
 			ok = ok || e.Head == v2 && e.Tail == v1
 		}
 		if ok {
@@ -554,7 +573,7 @@ func (g *graph[K, W]) GetEdgeByKey(key K) (Edge[K, W], error) {
 func (g *graph[K, W]) GetVertexesByLabel(labels map[string]string) []Vertex[K, W] {
 	var ves []Vertex[K, W]
 	if labels != nil {
-		for _, u := range g.vertexes {
+		for _, u := range g.vtx {
 			if u.Labels != nil {
 				match := true
 				for k, v := range labels {
@@ -596,7 +615,7 @@ func (g *graph[K, W]) GetEdgesByLabel(labels map[string]string) []Edge[K, W] {
 }
 
 func (g *graph[K, W]) SetVertexValue(key K, value any) error {
-	v, ok := g.vertexes[key]
+	v, ok := g.vtx[key]
 	if !ok {
 		return errVertexNotExists
 	}
@@ -605,7 +624,7 @@ func (g *graph[K, W]) SetVertexValue(key K, value any) error {
 }
 
 func (g *graph[K, W]) SetVertexLabel(key K, labelKey, labelVal string) error {
-	v, ok := g.vertexes[key]
+	v, ok := g.vtx[key]
 	if !ok {
 		return errVertexNotExists
 	}
@@ -617,7 +636,7 @@ func (g *graph[K, W]) SetVertexLabel(key K, labelKey, labelVal string) error {
 }
 
 func (g *graph[K, W]) DeleteVertexLabel(key K, labelKey string) error {
-	v, ok := g.vertexes[key]
+	v, ok := g.vtx[key]
 	if !ok {
 		return errVertexNotExists
 	}
@@ -710,23 +729,23 @@ func (g *graph[K, W]) DeleteEdgeLabel(endpoint1, endpoint2 K, labelKey string) e
 }
 
 func (g *graph[K, W]) Clone() (Graph[K, W], error) {
-	adjList := newAdjacencyLis[K, W](g.properties.digraph)
+	adjList := newAdjacencyLis[K, W](g.prop.digraph)
 	ng := *g
-	ng.vertexes = make(map[K]*Vertex[K, W])
+	ng.vtx = make(map[K]*Vertex[K, W])
 	ng.edges = make(map[K]*Edge[K, W])
-	ng.adjList = adjList
+	ng.adj = adjList
 
-	for k, v := range g.vertexes {
+	for k, v := range g.vtx {
 		nv := v.Clone()
-		ng.vertexes[k] = &nv
-		if err := ng.adjList.addVertexes(k); err != nil {
+		ng.vtx[k] = &nv
+		if err := ng.adj.addVertexes(k); err != nil {
 			return nil, err
 		}
 	}
 	for k, v := range g.edges {
 		nv := v.Clone()
 		ng.edges[k] = &nv
-		if err := ng.adjList.addEdge(v.Head, v.Tail, v.Key, v.Weight); err != nil {
+		if err := ng.adj.addEdge(v.Head, v.Tail, v.Key, v.Weight); err != nil {
 			return nil, err
 		}
 	}
@@ -734,9 +753,9 @@ func (g *graph[K, W]) Clone() (Graph[K, W], error) {
 }
 
 func (g *graph[K, W]) RandomVertex() (Vertex[K, W], error) {
-	n := rand.Intn(len(g.vertexes))
+	n := rand.Intn(len(g.vtx))
 	i := 0
-	for _, v := range g.vertexes {
+	for _, v := range g.vtx {
 		if n == i {
 			return *v, nil
 		}
@@ -785,11 +804,11 @@ func (g *graph[K, W]) NeighbourEdges(endpoint1, endpoint2 K) ([]Edge[K, W], erro
 }
 
 func (g *graph[K, W]) IncidentEdges(vertex K) ([]Edge[K, W], error) {
-	if _, ok := g.vertexes[vertex]; !ok {
+	if _, ok := g.vtx[vertex]; !ok {
 		return nil, errVertexNotExists
 	}
 	var res []Edge[K, W]
-	ks, err := g.adjList.incidentEdges(vertex)
+	ks, err := g.adj.incidentEdges(vertex)
 	if err != nil {
 		return []Edge[K, W]{}, err
 	}
@@ -801,7 +820,7 @@ func (g *graph[K, W]) IncidentEdges(vertex K) ([]Edge[K, W], error) {
 }
 
 func (g *graph[K, W]) SetVertexWeight(key K, weight W) error {
-	v, ok := g.vertexes[key]
+	v, ok := g.vtx[key]
 	if !ok {
 		return errVertexNotExists
 	}

@@ -63,18 +63,18 @@ V4---> V5 ---> V6
 	fmt.Println(gs)
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
-	p, err := g.Property(PropertyConnected)
+	p, err := g.Property(ProConnected)
 	if err != nil {
 		fmt.Printf("get property connected error:%v\n", err)
 		return
 	}
 	fmt.Printf("connected:%v\n", p.Value)
-	if p, err = g.Property(PropertyUnilateralConnected); err != nil {
+	if p, err = g.Property(ProUnilateralConnected); err != nil {
 		fmt.Printf("get property connected error:%v\n", err)
 		return
 	}
 	fmt.Printf("unidirectional connected:%v\n", p.Value)
-	if p, err = g.Property(PropertyAcyclic); err != nil {
+	if p, err = g.Property(ProAcyclic); err != nil {
 		fmt.Printf("get property acyclic error:%v\n", err)
 		return
 	}
@@ -94,17 +94,17 @@ V1---> V2 ---> V3
 	fmt.Println(gs)
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
-	if p, err = g.Property(PropertyConnected); err != nil {
+	if p, err = g.Property(ProConnected); err != nil {
 		fmt.Printf("get property connected error:%v\n", err)
 		return
 	}
 	fmt.Printf("connected:%v\n", p.Value)
-	if p, err = g.Property(PropertyUnilateralConnected); err != nil {
+	if p, err = g.Property(ProUnilateralConnected); err != nil {
 		fmt.Printf("get property connected error:%v\n", err)
 		return
 	}
 	fmt.Printf("unidirectional connected:%v\n", p.Value)
-	if p, err = g.Property(PropertyAcyclic); err != nil {
+	if p, err = g.Property(ProAcyclic); err != nil {
 		fmt.Printf("get property acyclic error:%v\n", err)
 		return
 	}
@@ -125,17 +125,17 @@ V1---> V2 ---> V3
 	fmt.Println(gs)
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
-	if p, err = g.Property(PropertyConnected); err != nil {
+	if p, err = g.Property(ProConnected); err != nil {
 		fmt.Printf("get property connected error:%v\n", err)
 		return
 	}
 	fmt.Printf("connected:%v\n", p.Value)
-	if p, err = g.Property(PropertyUnilateralConnected); err != nil {
+	if p, err = g.Property(ProUnilateralConnected); err != nil {
 		fmt.Printf("get property connected error:%v\n", err)
 		return
 	}
 	fmt.Printf("unidirectional connected:%v\n", p.Value)
-	if p, err = g.Property(PropertyAcyclic); err != nil {
+	if p, err = g.Property(ProAcyclic); err != nil {
 		fmt.Printf("get property acyclic error:%v\n", err)
 		return
 	}
@@ -156,17 +156,17 @@ V1---> V2 ---> V3
 	fmt.Println(gs)
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
-	if p, err = g.Property(PropertyConnected); err != nil {
+	if p, err = g.Property(ProConnected); err != nil {
 		fmt.Printf("get property connected error:%v\n", err)
 		return
 	}
 	fmt.Printf("connected:%v\n", p.Value)
-	if p, err = g.Property(PropertyUnilateralConnected); err != nil {
+	if p, err = g.Property(ProUnilateralConnected); err != nil {
 		fmt.Printf("get property connected error:%v\n", err)
 		return
 	}
 	fmt.Printf("unidirectional connected:%v\n", p.Value)
-	if p, err = g.Property(PropertyAcyclic); err != nil {
+	if p, err = g.Property(ProAcyclic); err != nil {
 		fmt.Printf("get property acyclic error:%v\n", err)
 		return
 	}

@@ -22,7 +22,7 @@ import (
 )
 
 func TestLCA(t *testing.T) {
-	tree := NewThinTree[int]()
+	f := NewForest[int, int]()
 	es := []Edge[int, int]{
 		{Head: 1, Tail: 2},
 		{Head: 1, Tail: 3},
@@ -55,21 +55,19 @@ func TestLCA(t *testing.T) {
 		{Head: 23, Tail: 30},
 	}
 	for i := 1; i <= 30; i++ {
-		if err := tree.AddVertex(Vertex[int, int]{
-			Key: i,
-		}); err != nil {
+		err := f.AddVertex(Vertex[int, int]{Key: i})
+		if err != nil {
 			panic(err.Error())
 		}
 	}
 	for i, e := range es {
 		e.Key = i + 1
-		if err := tree.AddEdge(e); err != nil {
+		if err := f.AddEdge(e); err != nil {
 			panic(fmt.Sprintf("edge:(%d,%d) err:%s", e.Head, e.Tail, err.Error()))
 		}
 	}
-	tree.SetRoot(1)
-
-	fmt.Printf("Tree vettex=%d,edges=%d\n", tree.Order(), tree.Size())
+	f.SetRoot(1)
+	fmt.Printf("Tree vettex=%d,edges=%d\n", f.Order(), f.Size())
 
 	q := [][3]int{
 		{2, 3, 1},
@@ -83,10 +81,10 @@ func TestLCA(t *testing.T) {
 		{25, 26, 9},
 		{30, 28, 1},
 	}
-
 	for _, u := range q {
-		v, _ := tree.LeastCommonAncestor(u[0], u[1])
-		if v != u[2] {
+		v, ok := f.LeastCommonAncestor(u[0], u[1])
+		if !ok || v != u[2] {
+			fmt.Println("ok=", ok)
 			panic(fmt.Sprintf("{%d,%d} lcm should be %d,but get %d", u[0], u[1], u[2], v))
 		}
 	}

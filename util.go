@@ -218,6 +218,24 @@ func runWithRetry(retry int, timeout time.Duration, f func() error) error {
 	}
 }
 
+func pow(a, n int) int {
+	if a == 0 {
+		return 0
+	}
+	if n == 0 {
+		return 1
+	}
+	res, fac := 1, a
+	for n > 0 {
+		if n&1 == 1 {
+			res *= fac
+		}
+		fac *= fac
+		n >>= 1
+	}
+	return res
+}
+
 type stack[K comparable] struct {
 	elems []K
 	idx   int

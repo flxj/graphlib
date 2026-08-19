@@ -17,13 +17,14 @@
 package draw
 
 import (
+	"flag"
 	"fmt"
 	"testing"
 
 	"github.com/flxj/graphlib"
 )
 
-func TestDraw(t *testing.T) {
+func testDraw1() {
 	g := graphlib.NewGraph[int, int](false, "test-g")
 
 	vs := []graphlib.Vertex[int, int]{
@@ -60,7 +61,7 @@ func TestDraw(t *testing.T) {
 	fmt.Println(file)
 }
 
-func TestDraw2(t *testing.T) {
+func testDraw2() {
 	g := graphlib.NewGraph[int, int](true, "test-g")
 
 	vs := []graphlib.Vertex[int, int]{
@@ -96,4 +97,70 @@ func TestDraw2(t *testing.T) {
 		return
 	}
 	fmt.Println(file)
+}
+
+func testTexTree() {
+	f := graphlib.NewForest[int, int]()
+	es := []graphlib.Edge[int, int]{
+		{Head: 1, Tail: 2},
+		{Head: 1, Tail: 3},
+		{Head: 1, Tail: 4},
+		{Head: 1, Tail: 5},
+		{Head: 2, Tail: 6},
+		{Head: 2, Tail: 7},
+		{Head: 2, Tail: 8},
+		{Head: 3, Tail: 9},
+		{Head: 4, Tail: 10},
+		{Head: 5, Tail: 11},
+		{Head: 5, Tail: 12},
+		{Head: 6, Tail: 13},
+		{Head: 7, Tail: 14},
+		{Head: 7, Tail: 15},
+		{Head: 7, Tail: 16},
+		{Head: 9, Tail: 17},
+		{Head: 9, Tail: 18},
+		{Head: 9, Tail: 19},
+		{Head: 12, Tail: 20},
+		{Head: 12, Tail: 21},
+		{Head: 14, Tail: 22},
+		{Head: 14, Tail: 23},
+		{Head: 17, Tail: 24},
+		{Head: 17, Tail: 25},
+		{Head: 18, Tail: 26},
+		{Head: 20, Tail: 27},
+		{Head: 20, Tail: 28},
+		{Head: 23, Tail: 29},
+		{Head: 23, Tail: 30},
+	}
+	for i := 1; i <= 30; i++ {
+		if err := f.AddVertex(graphlib.Vertex[int, int]{Key: i}); err != nil {
+			panic(err.Error())
+		}
+	}
+	for i, e := range es {
+		e.Key = i + 1
+		if err := f.AddEdge(e); err != nil {
+			panic(fmt.Sprintf("edge:(%d,%d) err:%s", e.Head, e.Tail, err.Error()))
+		}
+	}
+	f.SetRoot(1)
+
+	str, err := TikzDrawTree(f, true)
+	if err != nil {
+		fmt.Println(err)
+		panic("draw error")
+	}
+	fmt.Println(str)
+}
+
+func TestDraw(t *testing.T) {
+	args := flag.Args()
+	switch args[0] {
+	case "draw":
+		testDraw1()
+		testDraw2()
+	case "tex-tree":
+		testTexTree()
+	default:
+	}
 }

@@ -37,7 +37,7 @@ func ShortestPath[K comparable, W number](g Graph[K, W], source K, target K) (Pa
 	if g == nil {
 		return Path[K, W]{}, errNilGraph
 	}
-	p, err := g.Property(PropertyNegativeWeight)
+	p, err := g.Property(ProNegativeWeight)
 	if err != nil {
 		return Path[K, W]{}, err
 	}
@@ -63,7 +63,7 @@ func ShortestPaths[K comparable, W number](g Graph[K, W], source K) ([]Path[K, W
 	if g == nil {
 		return []Path[K, W]{}, errNilGraph
 	}
-	p, err := g.Property(PropertyNegativeWeight)
+	p, err := g.Property(ProNegativeWeight)
 	if err != nil {
 		return nil, err
 	}

@@ -30,24 +30,25 @@ type GraphProperty[T any] struct {
 }
 
 const (
-	PropertyDigraph PropertyName = iota
-	PropertyAcyclic
-	PropertySimple
-	PropertyRegular
-	PropertyConnected
-	PropertyForest
-	PropertyLoop
-	PropertyCompleted
-	PropertyTree
-	PropertyNegativeWeight
-	PropertyUnilateralConnected
-	PropertyGraphName
-	PropertyOrder
-	PropertySize
-	PropertyMaxDegree
-	PropertyMinDegree
-	PropertyAvgDegree
-	PropertyMultiplicity
+	ProDigraph PropertyName = iota
+	ProAcyclic
+	ProSimple
+	ProRegular
+	ProConnected
+	ProForest
+	ProLoop
+	ProCompleted
+	ProTree
+	ProNegativeWeight
+	ProUnilateralConnected
+	ProGraphName
+	ProOrder
+	ProSize
+	ProMaxDegree
+	ProMinDegree
+	ProAvgDegree
+	ProMultiplicity
+	ProOrientation
 )
 
 // Graph [K, V, W] represents the graph object,
