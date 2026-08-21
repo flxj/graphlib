@@ -25,7 +25,7 @@ import (
 
 type Forest[K comparable, W number] struct {
 	Graph[K, W]
-	roots map[K]struct{}
+	roots map[K]bool
 	vtx   []K
 	idx   map[K]int
 	duf   *dynamicUnionFind
@@ -34,10 +34,73 @@ type Forest[K comparable, W number] struct {
 func NewForest[K comparable, W number]() *Forest[K, W] {
 	g := newGraph[K, W](false, "")
 	t := &Forest[K, W]{Graph: g}
-	t.roots = make(map[K]struct{}) // some tree is rooted,some not.
+	t.roots = make(map[K]bool) // some tree is rooted,some not.
 	t.idx = make(map[K]int)
 	t.duf = newDynamicUnionFind(0)
 	return t
+}
+
+func (f *Forest[K, W]) IsDigraph() bool {
+	for _, ok := range f.roots {
+		if ok {
+			return true
+		}
+	}
+	return false
+}
+
+func (f *Forest[K, W]) IsDirected(v K) bool {
+	flag, ok := f.roots[v]
+	if ok {
+		return flag
+	}
+	vi, ok := f.idx[v]
+	if !ok {
+		return false
+	}
+	for r, flag := range f.roots {
+		u := f.idx[r]
+		if f.duf.Find(u) == f.duf.Find(vi) {
+			return flag
+		}
+	}
+	return false
+}
+
+func (f *Forest[K, W]) SetDirected(v K) bool {
+	vi, ok := f.idx[v]
+	if !ok {
+		return false
+	}
+	if _, ok := f.roots[v]; ok {
+		f.roots[v] = true
+		return true
+	}
+	for r := range f.roots {
+		u := f.idx[r]
+		if f.duf.Find(u) == f.duf.Find(vi) {
+			f.roots[r] = true
+			return true
+		}
+	}
+	return false
+}
+
+func (f *Forest[K, W]) CancelDirected(v K) {
+	vi, ok := f.idx[v]
+	if !ok {
+		return
+	}
+	if _, ok := f.roots[v]; ok {
+		f.roots[v] = false
+		return
+	}
+	for r := range f.roots {
+		u := f.idx[r]
+		if f.duf.Find(u) == f.duf.Find(vi) {
+			f.roots[r] = false
+		}
+	}
 }
 
 func (f *Forest[K, W]) AllRoots() []K {
@@ -60,36 +123,37 @@ func (f *Forest[K, W]) Connected(k1, k2 K) (bool, error) {
 	return f.duf.Find(u) == f.duf.Find(v), nil
 }
 
-func (f *Forest[K, W]) Root(k K) (K, error) {
+func (f *Forest[K, W]) Root(k K) (K, bool) {
 	v, ok := f.idx[k]
 	if !ok {
-		return k, errVertexNotExists
+		return k, false
 	}
 	if _, ok := f.roots[k]; ok {
-		return k, nil
+		return k, true
 	}
 	for r := range f.roots {
 		u := f.idx[r]
 		if f.duf.Find(u) == f.duf.Find(v) {
-			return r, nil
+			return r, true
 		}
 	}
-	return k, errors.New("the vertex in a unrooted tree")
+	return k, false
 }
 
-func (f *Forest[K, W]) SetRoot(k K) error {
+func (f *Forest[K, W]) SetRoot(k K) bool {
 	if _, ok := f.idx[k]; !ok {
-		return errVertexNotExists
+		return false
 	}
 	if _, ok := f.roots[k]; ok {
-		return nil
+		return true
 	}
-	r, err := f.Root(k)
-	if err == nil {
+	var di bool
+	if r, ok := f.Root(k); ok {
+		di = f.roots[r]
 		delete(f.roots, r)
 	}
-	f.roots[k] = struct{}{}
-	return nil
+	f.roots[k] = di
+	return true
 }
 
 func (f *Forest[K, W]) CancelRoot(k K) {
@@ -102,6 +166,36 @@ func (f *Forest[K, W]) IsTree() bool {
 
 func (f *Forest[K, W]) Trees() int {
 	return f.duf.Component()
+}
+
+func (f *Forest[K, W]) TreeVerties(v K) ([]Vertex[K, W], error) {
+	var res []Vertex[K, W]
+	err := dfs(f, v, func(u Vertex[K, W]) error {
+		res = append(res, u)
+		return nil
+	}, f.Neighbours)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (f *Forest[K, W]) TreeEdges(v K) (map[K]Edge[K, W], error) {
+	res := make(map[K]Edge[K, W])
+	err := dfs(f, v, func(u Vertex[K, W]) error {
+		es, err := f.IncidentEdges(u.Key)
+		if err != nil {
+			return err
+		}
+		for _, e := range es {
+			res[e.Key] = e
+		}
+		return nil
+	}, f.Neighbours)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func (f *Forest[K, W]) AddVertex(v Vertex[K, W]) error {
@@ -133,11 +227,16 @@ func (f *Forest[K, W]) AddEdge(e Edge[K, W]) error {
 	if err := f.Graph.AddEdge(e); err != nil {
 		return err
 	}
+	r1, ok1 := f.Root(e.Tail)
+	r2, ok2 := f.Root(e.Head)
+	if ok1 && ok2 && r1 != r2 {
+		delete(f.roots, r2)
+	}
 	f.duf.Union(u, v)
 	return nil
 }
 
-func (f *Forest[K, W]) RemoveVertex(k K) error {
+func (f *Forest[K, W]) RemoveVertex(k K) error { // delete tree root,will lose the directed info.
 	if err := f.Graph.RemoveVertex(k); err != nil {
 		return err
 	}
@@ -218,12 +317,11 @@ func (f *Forest[K, W]) LeastCommonAncestor(k1, k2 K) (K, bool) {
 	if v2, ok = f.idx[k2]; !ok {
 		return k2, ok
 	}
-	r1, err := f.Root(k1)
-	if err != nil {
+	var r1, r2 K
+	if r1, ok = f.Root(k1); !ok {
 		return k1, false
 	}
-	r2, err := f.Root(k2)
-	if err != nil {
+	if r2, ok = f.Root(k2); !ok {
 		return k2, false
 	}
 	if r1 != r2 {

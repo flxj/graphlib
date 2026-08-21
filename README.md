@@ -7,16 +7,17 @@
 ✔️ **Basic operation of the graph:**
 
 * Create undirected/directed graphs,hypergraphs
-* Create Special graphs (bipartite,tree,complete graph...)
-* Serialization and Deserialization of Graph Objects (JSON/YAML Format)
-* Dynamically adjust vertex (increase/decrease/modify attributes)
-* Dynamically adjust edge (increase/decrease/modify attributes)
-* Basic properties of computational graphs: connectivity, acyclicity, etc
+* Create Special graphs (bipartite,forest/tree,complete graph...)
+* Serialization and Deserialization of Graph Objects (JSON/YAML/tex Format)
+* Dynamically adjust vertex (add/remove/modify attributes)
+* Dynamically adjust edge (add/remove/modify attributes)
+* Basic properties of computational graphs:planarity,connectivity, acyclicity, etc
 
 ✔️ **Graph calculation:**
    
 * Generate induced subgraph
 * Generate spanning subgraph
+* Generate line graph
 * Minimum Spanning Tree
 * Calculate strongly connected components
 * Algebraic operations on graphs (intersection/union/difference/sum/product)
@@ -27,7 +28,7 @@
 * Graph traversal (BFS, DFS,LexBFS/DFS)
 * Shortest path (single source, multiple sources, negative weight)
 * Calculate maximum flow
-* Bipartite matching
+* Maximum matching
 * Topological sorting
 * Vertex colouring/edge colouring
 * Planarity testing
@@ -62,16 +63,16 @@
 go get github.com/flxj/graphlib
 ```
 
-> Currently, Graphlib is in the process of development and testing, and some features are not yet fully developed. Please do not use for production environments now.
-
 Create an undirected graph using the following example 👇
 
-
+```golang
 v1---v2
 |   /
 |  /   
-v3      v4-----v5----v6
+v3      
 
+v4-----v5----v6
+```
 
 ```golang
 import(
@@ -131,10 +132,10 @@ acyclic:false
 
 Create a directed graph using the following example 👇
 
-```shell
+```golang
 1----> 2 ---> 3
-            |
-            v
+             |
+             v
 4----> 5 ---> 6
 ```
 
@@ -171,17 +172,16 @@ func main(){
 		_ = g.AddEdge(e)
 	}
 
-	fmt.Println(gs)
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 
-	p, _ := g.Property(PropertyConnected)
+	p, _ := g.Property(ProConnected)
 	fmt.Printf("connected:%v\n", p.Value)
 
-	p, _ = g.Property(PropertyUnilateralConnected)
+	p, _ = g.Property(ProUnilateralConnected)
 	fmt.Printf("unidirectional connected:%v\n", p.Value)
 
-	p, _ = g.Property(PropertyAcyclic)
+	p, _ = g.Property(ProAcyclic)
 	fmt.Printf("acyclic:%v\n", p.Value)
 }
 ```
@@ -206,6 +206,7 @@ Users can add tasks to the ExecGraph object and set dependencies between tasks. 
 The following example shows how to create, run, and wait for ExecGraph:
 
 
+```shell
 
 +----------------------------+
 |  job1---->job2 --.         |
@@ -216,6 +217,7 @@ The following example shows how to create, run, and wait for ExecGraph:
 |                            |
 +----------------------------+
 
+```
 
 ```golang
 import(
