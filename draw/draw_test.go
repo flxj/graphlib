@@ -99,7 +99,7 @@ func testDraw2() {
 	fmt.Println(file)
 }
 
-func testTexTree() {
+func testTexTree(di bool) {
 	f := graphlib.NewForest[int, int]()
 	es := []graphlib.Edge[int, int]{
 		{Head: 1, Tail: 2},
@@ -117,7 +117,7 @@ func testTexTree() {
 		{Head: 7, Tail: 14},
 		{Head: 7, Tail: 15},
 		{Head: 7, Tail: 16},
-		{Head: 9, Tail: 17},
+		//{Head: 9, Tail: 17},
 		{Head: 9, Tail: 18},
 		{Head: 9, Tail: 19},
 		{Head: 12, Tail: 20},
@@ -139,13 +139,38 @@ func testTexTree() {
 	}
 	for i, e := range es {
 		e.Key = i + 1
+		//e.Tail, e.Head = e.Head, e.Tail
 		if err := f.AddEdge(e); err != nil {
 			panic(fmt.Sprintf("edge:(%d,%d) err:%s", e.Head, e.Tail, err.Error()))
 		}
 	}
 	f.SetRoot(1)
+	if di {
+		f.SetDirected(1)
+	}
+	str, err := TikzDrawForest(f)
+	if err != nil {
+		fmt.Println(err)
+		panic("draw error")
+	}
+	fmt.Println(str)
+}
 
-	str, err := TikzDrawTree(f, true)
+func testTexD() {
+	g := graphlib.RandomTournament(5)
+	fmt.Println("order=", g.Order(), " size=", g.Size())
+	str, err := TikzDrawDigraph(g)
+	if err != nil {
+		fmt.Println(err)
+		panic("draw error")
+	}
+	fmt.Println(str)
+}
+
+func testTexG() {
+	//g := graphlib.CompleteGraph(5)
+	g := graphlib.PetersenGraph()
+	str, err := TikzDrawGraph(g)
 	if err != nil {
 		fmt.Println(err)
 		panic("draw error")
@@ -160,7 +185,11 @@ func TestDraw(t *testing.T) {
 		testDraw1()
 		testDraw2()
 	case "tex-tree":
-		testTexTree()
+		testTexTree(false)
+	case "tex-dig":
+		testTexD()
+	case "tex-g":
+		testTexG()
 	default:
 	}
 }
