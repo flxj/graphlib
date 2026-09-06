@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package graphlib
+package collection
 
 import (
 	"sort"

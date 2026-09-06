@@ -14,9 +14,10 @@
 	limitations under the License.
 */
 
-package graphlib
+package collection
 
 import (
+	"container/heap"
 	"math"
 	"sync"
 )
@@ -525,19 +526,18 @@ func (r *RTree[T, N]) NearestNeighbors(obj Rectangle[N], dist DistFunc[N], k int
 	if k <= 0 {
 		return nil, nil
 	}
-	hp := newBinaryHeap[Rectangle[N], T, N](func(a, b N) bool { return a > b })
-	hp.init()
-
+	hp := NewHeap[Rectangle[N], T, N](func(a, b N) bool { return a > b })
+	heap.Init(hp)
 	_ = r.Scan(func(rect Rectangle[N], data T) error {
 		d := dist(rect, obj)
-		if hp.length() < k || hp.top().rank > d {
-			if hp.length() >= k {
-				_ = hp.pop()
+		if hp.Len() < k || hp.Top().Rank > d {
+			if hp.Len() >= k {
+				_ = heap.Pop(hp)
 			}
-			hp.push(&element[Rectangle[N], T, N]{
-				key:  rect,
-				val:  data,
-				rank: d,
+			heap.Push(hp, &HeapElem[Rectangle[N], T, N]{
+				Key:  rect,
+				Val:  data,
+				Rank: d,
 			})
 		}
 		return nil
@@ -545,10 +545,10 @@ func (r *RTree[T, N]) NearestNeighbors(obj Rectangle[N], dist DistFunc[N], k int
 
 	var rs []Rectangle[N]
 	var ds []T
-	for hp.length() > 0 {
-		p := hp.pop()
-		rs = append(rs, p.key)
-		ds = append(ds, p.val)
+	for hp.Len() > 0 {
+		p := heap.Pop(hp).(*HeapElem[Rectangle[N], T, N])
+		rs = append(rs, p.Key)
+		ds = append(ds, p.Val)
 	}
 	return rs, ds
 }

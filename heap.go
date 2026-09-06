@@ -16,6 +16,8 @@
 
 package graphlib
 
+type CompareFunc[K any] func(K, K) int
+
 type element[K comparable, V any, P any] struct {
 	key  K
 	val  V
@@ -210,57 +212,6 @@ func (q *priorityQueue[K, V, P]) Get(k K) P {
 
 func (q *priorityQueue[K, V, P]) Len() int {
 	return len(q.items)
-}
-
-// Heap data element, rank is used to maintain heap structure.
-type HeapElem[K comparable, V any, P any] struct {
-	Key  K
-	Val  V
-	Rank P
-	Idx  int
-}
-
-type Heap[K comparable, V any, P any] struct {
-	elems []*HeapElem[K, V, P]
-	less  func(P, P) bool
-}
-
-func NewHeap[K comparable, V any, P any](less func(P, P) bool) *Heap[K, V, P] {
-	return &Heap[K, V, P]{less: less}
-}
-
-func (h *Heap[K, V, P]) Len() int {
-	return len(h.elems)
-}
-
-func (h *Heap[K, V, P]) Less(i, j int) bool {
-	return h.less(h.elems[i].Rank, h.elems[j].Rank)
-}
-
-func (h *Heap[K, V, P]) Swap(i, j int) {
-	h.elems[i], h.elems[j] = h.elems[j], h.elems[i]
-	h.elems[i].Idx = i
-	h.elems[j].Idx = j
-}
-
-func (h *Heap[K, V, P]) Push(x any) {
-	v, _ := x.(*HeapElem[K, V, P])
-	v.Idx = len(h.elems)
-	h.elems = append(h.elems, v)
-}
-
-func (h *Heap[K, V, P]) Pop() any {
-	n := len(h.elems)
-	v := h.elems[n-1]
-	h.elems = h.elems[:n-1]
-	return v
-}
-
-func (h *Heap[K, V, P]) Top() *HeapElem[K, V, P] {
-	if len(h.elems) > 0 {
-		return h.elems[0]
-	}
-	return nil
 }
 
 type PriorityQueue[T any, P any] struct {

@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package graphlib
+package collection
 
 /*
 Segment Tree is a data structure that allows efficient querying and updating of intervals or segments of an array.

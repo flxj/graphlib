@@ -14,7 +14,13 @@
 	limitations under the License.
 */
 
-package graphlib
+package collection
+
+type number interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
+		~float32 | ~float64
+}
 
 // A differential array is a powerful data structure used to efficiently perform range update operations on an array.
 // It allows multiple updates to be applied in constant time, and the final array can be reconstructed in linear time.
