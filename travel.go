@@ -16,8 +16,6 @@
 
 package graphlib
 
-import "container/heap"
-
 // In our formal description of DFS, each vertex x of D gets two time-stamps:
 // tvisit(x) once x is visited and texpl(x) once x is declared explored.
 //
@@ -304,8 +302,8 @@ func LexBFS[K comparable, W number](g Graph[K, W], start K, f func(Vertex[K, W])
 	//    L[v] = <i1,i2,...,ik>
 	// where the entries are the numbers of the steps at which neighbours of  were chosen.
 	// The sequence is kept in ascending order so that comparison of labels can be performed lexicographically.
-	elems := make(map[K]*HeapElem[K, any, []int])
-	orders := NewHeap[K, any](func(v1, v2 []int) bool {
+	elems := make(map[K]*element[K, any, []int])
+	orders := newBinaryHeap[K, any, []int](func(v1, v2 []int) bool {
 		n := min(len(v1), len(v2))
 		for i := 0; i < n; i++ {
 			if v1[i] == v2[i] {
@@ -315,22 +313,21 @@ func LexBFS[K comparable, W number](g Graph[K, W], start K, f func(Vertex[K, W])
 		}
 		return len(v1) > len(v2)
 	})
-	heap.Init(orders)
 	for _, v := range g.AllVertexes() {
 		if v.Key == start {
 			continue
 		}
-		he := &HeapElem[K, any, []int]{
-			Key: v.Key,
+		he := &element[K, any, []int]{
+			key: v.Key,
 		}
 		elems[v.Key] = he
-		heap.Push(orders, he)
+		orders.push(he)
 	}
 	for i := g.Order(); len(elems) != 0; i-- {
 		var k K
 		if i != 0 {
-			el := heap.Pop(orders).(*HeapElem[K, any, []int])
-			k = el.Key
+			el := orders.pop()
+			k = el.key
 		} else {
 			k = start
 		}
@@ -354,8 +351,8 @@ func LexBFS[K comparable, W number](g Graph[K, W], start K, f func(Vertex[K, W])
 		for _, v := range ns {
 			ve, ok := elems[v.Key]
 			if ok {
-				ve.Rank = append(ve.Rank, i)
-				heap.Fix(orders, ve.Idx)
+				ve.rank = append(ve.rank, i)
+				orders.fix(ve.idx)
 			}
 		}
 	}
@@ -366,8 +363,8 @@ func LexDFS[K comparable, W number](g Graph[K, W], start K, f func(Vertex[K, W])
 	if g == nil {
 		return errNilGraph
 	}
-	elems := make(map[K]*HeapElem[K, any, []int])
-	orders := NewHeap[K, any](func(v1, v2 []int) bool {
+	elems := make(map[K]*element[K, any, []int])
+	orders := newBinaryHeap[K, any](func(v1, v2 []int) bool {
 		n1, n2, n := len(v1), len(v2), min(len(v1), len(v2))
 		for i := 0; i < n; i++ {
 			if v1[n1-i-1] == v2[n2-i-1] {
@@ -377,22 +374,21 @@ func LexDFS[K comparable, W number](g Graph[K, W], start K, f func(Vertex[K, W])
 		}
 		return n1 > n2
 	})
-	heap.Init(orders)
 	for _, v := range g.AllVertexes() {
 		if v.Key == start {
 			continue
 		}
-		he := &HeapElem[K, any, []int]{
-			Key: v.Key,
+		he := &element[K, any, []int]{
+			key: v.Key,
 		}
 		elems[v.Key] = he
-		heap.Push(orders, he)
+		orders.push(he)
 	}
 	for i := 0; len(elems) != 0; i++ {
 		var k K
 		if i != 0 {
-			el := heap.Pop(orders).(*HeapElem[K, any, []int])
-			k = el.Key
+			el := orders.pop()
+			k = el.key
 		} else {
 			k = start
 		}
@@ -416,8 +412,8 @@ func LexDFS[K comparable, W number](g Graph[K, W], start K, f func(Vertex[K, W])
 		for _, v := range ns {
 			ve, ok := elems[v.Key]
 			if ok {
-				ve.Rank = append(ve.Rank, i)
-				heap.Fix(orders, ve.Idx)
+				ve.rank = append(ve.rank, i)
+				orders.fix(ve.idx)
 			}
 		}
 	}

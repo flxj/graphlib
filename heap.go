@@ -96,6 +96,10 @@ func (h *binaryHeap[K, V, P]) pop() *element[K, V, P] {
 	return e
 }
 
+func (h *binaryHeap[K, V, P]) fix(idx int) {
+	h.shift(idx)
+}
+
 // shift up
 func (h *binaryHeap[K, V, P]) shift(idx int) {
 	h.shiftUp(idx)
