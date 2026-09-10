@@ -33,7 +33,7 @@ func LineGraph[K comparable, W number](g Graph[K, W]) (Graph[int, int], error) {
 		err := lg.AddVertex(Vertex[int, int]{
 			Key:   i,
 			Value: e.Labels,
-			Labels: map[string]string{
+			Labels: map[string]any{
 				"edge":   fmt.Sprintf("%v", e.Key),
 				"head":   fmt.Sprintf("%v", e.Head),
 				"tail":   fmt.Sprintf("%v", e.Tail),
@@ -56,7 +56,7 @@ func LineGraph[K comparable, W number](g Graph[K, W]) (Graph[int, int], error) {
 					Key:  ek,
 					Head: i,
 					Tail: j,
-					Labels: map[string]string{
+					Labels: map[string]any{
 						"edge1": fmt.Sprintf("%v", e),
 						"edge2": fmt.Sprintf("%v", e1.Key),
 					},
@@ -91,7 +91,7 @@ func LineDigraph[K comparable, W number](g Digraph[K, W]) (Digraph[int, int], er
 		err := lg.AddVertex(Vertex[int, int]{
 			Key:   i,
 			Value: e.Labels,
-			Labels: map[string]string{
+			Labels: map[string]any{
 				"edge":   fmt.Sprintf("%v", e.Key),
 				"head":   fmt.Sprintf("%v", e.Head),
 				"tail":   fmt.Sprintf("%v", e.Tail),
@@ -113,7 +113,7 @@ func LineDigraph[K comparable, W number](g Digraph[K, W]) (Digraph[int, int], er
 				Key:  ek,
 				Tail: i,
 				Head: j,
-				Labels: map[string]string{
+				Labels: map[string]any{
 					"edge1": fmt.Sprintf("%v", e),
 					"edge2": fmt.Sprintf("%v", e1.Key),
 				},

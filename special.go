@@ -193,11 +193,11 @@ func (bg *bipartite[K, W]) GetEdgeByKey(key K) (Edge[K, W], error) {
 	return bg.g.GetEdgeByKey(key)
 }
 
-func (bg *bipartite[K, W]) GetVertexesByLabel(labels map[string]string) []Vertex[K, W] {
+func (bg *bipartite[K, W]) GetVertexesByLabel(labels Labels) []Vertex[K, W] {
 	return bg.g.GetVertexesByLabel(labels)
 }
 
-func (bg *bipartite[K, W]) GetEdgesByLabel(labels map[string]string) []Edge[K, W] {
+func (bg *bipartite[K, W]) GetEdgesByLabel(labels Labels) []Edge[K, W] {
 	return bg.g.GetEdgesByLabel(labels)
 }
 
@@ -205,7 +205,7 @@ func (bg *bipartite[K, W]) SetVertexValue(key K, value any) error {
 	return bg.g.SetVertexValue(key, value)
 }
 
-func (bg *bipartite[K, W]) SetVertexLabel(key K, labelKey, labelVal string) error {
+func (bg *bipartite[K, W]) SetVertexLabel(key K, labelKey string, labelVal any) error {
 	return bg.g.SetVertexLabel(key, labelKey, labelVal)
 }
 
@@ -217,7 +217,7 @@ func (bg *bipartite[K, W]) SetEdgeValueByKey(key K, value any) error {
 	return bg.g.SetEdgeValueByKey(key, value)
 }
 
-func (bg *bipartite[K, W]) SetEdgeLabelByKey(key K, labelKey, labelVal string) error {
+func (bg *bipartite[K, W]) SetEdgeLabelByKey(key K, labelKey string, labelVal any) error {
 	return bg.g.SetEdgeLabelByKey(key, labelKey, labelVal)
 }
 
@@ -229,7 +229,7 @@ func (bg *bipartite[K, W]) SetEdgeValue(endpoint1, endpoint2 K, value any) error
 	return bg.g.SetEdgeValue(endpoint1, endpoint2, value)
 }
 
-func (bg *bipartite[K, W]) SetEdgeLabel(endpoint1, endpoint2 K, labelKey, labelVal string) error {
+func (bg *bipartite[K, W]) SetEdgeLabel(endpoint1, endpoint2 K, labelKey string, labelVal any) error {
 	return bg.g.SetEdgeLabel(endpoint1, endpoint2, labelKey, labelVal)
 }
 

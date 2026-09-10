@@ -694,7 +694,7 @@ func QueenGraph(m, n int) Graph[int, int] {
 			vtx[i][j] = n*i + j
 			_ = g.AddVertex(Vertex[int, int]{
 				Key: vtx[i][j],
-				Labels: map[string]string{
+				Labels: map[string]any{
 					"row":    strconv.Itoa(i),
 					"column": strconv.Itoa(j),
 				}})

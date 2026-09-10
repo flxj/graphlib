@@ -22,7 +22,10 @@ type number interface {
 		~float32 | ~float64
 }
 
-type PropertyName int
+type (
+	PropertyName int
+	Labels       map[string]any
+)
 
 type GraphProperty[T any] struct {
 	Name  PropertyName
@@ -177,18 +180,18 @@ type Graph[K comparable, W number] interface {
 	// Filter vertices based on label information,
 	// and eligible vertices need to include all label items in
 	// the label parameter simultaneously.
-	GetVertexesByLabel(labels map[string]string) []Vertex[K, W]
+	GetVertexesByLabel(labels Labels) []Vertex[K, W]
 	//
 	// Filter edges based on label information,
 	// and eligible edges need to include all label items
 	// in the label parameter simultaneously.
-	GetEdgesByLabel(labels map[string]string) []Edge[K, W]
+	GetEdgesByLabel(labels Labels) []Edge[K, W]
 	//
 	// Update vertex data.
 	SetVertexValue(key K, value any) error
 	//
 	// Update vertex label.
-	SetVertexLabel(key K, labelKey, labelVal string) error
+	SetVertexLabel(key K, labelKey string, labelVal any) error
 	//
 	// Remove vertex label.
 	DeleteVertexLabel(key K, labelKey string) error
@@ -201,7 +204,7 @@ type Graph[K comparable, W number] interface {
 	SetEdgeValueByKey(key K, value any) error
 	//
 	// Update dege label.
-	SetEdgeLabelByKey(key K, labelKey, labelVal string) error
+	SetEdgeLabelByKey(key K, labelKey string, labelVal any) error
 	//
 	// Remove edge label.
 	DeleteEdgeLabelByKey(key K, labelKey string) error
@@ -214,7 +217,7 @@ type Graph[K comparable, W number] interface {
 	// Update edge label. If there are multiple edges associated with
 	// endpoints1 and endpoint2 simultaneously,
 	// the label of these edges will be updated simultaneously.
-	SetEdgeLabel(endpoint1, endpoint2 K, labelKey, labelVal string) error
+	SetEdgeLabel(endpoint1, endpoint2 K, labelKey string, labelVal any) error
 	//
 	// Delete edge label. If there are multiple edges associated with
 	// endpoints1 and endpoint2 simultaneously,
@@ -240,6 +243,11 @@ type Graph[K comparable, W number] interface {
 	IncidentEdges(vertex K) ([]Edge[K, W], error)
 }
 
+// Vertex represents the vertices of a graph,
+// each of which requires a Key as a unique identifier
+// and can be assigned a numerical weight as needed.
+// Additionally, value and label information can be
+// set for vertices as needed.
 type Vertex[K comparable, W number] struct {
 	// The unique identifier of this vertex.
 	Key K `json:"key" yaml:"key"`
@@ -248,16 +256,17 @@ type Vertex[K comparable, W number] struct {
 	// vertex weight.
 	Weight W `json:"weight" yaml:"weight"`
 	// The label of this vertex.
-	Labels map[string]string `json:"labels" yaml:"labels"`
+	Labels Labels `json:"labels" yaml:"labels"`
 }
 
+// Copy the current node.
 func (v Vertex[K, V]) Clone() Vertex[K, V] {
 	vv := Vertex[K, V]{
 		Key:   v.Key,
 		Value: v.Value,
 	}
 	if v.Labels != nil {
-		vv.Labels = make(map[string]string)
+		vv.Labels = make(map[string]any)
 		for k, l := range v.Labels {
 			vv.Labels[k] = l
 		}
@@ -265,6 +274,14 @@ func (v Vertex[K, V]) Clone() Vertex[K, V] {
 	return vv
 }
 
+// Edge represents the edges of a simple graph,
+// and each edge requires a Key as a unique identifier.
+// Each edge needs to be associated with two vertices,
+// namely the 'Head' and 'Tail' fields.
+// Note that if it is an undirected graph,
+// the names of the two vertices have no directional meaning.
+// If it is a directed graph, it should be noted that the
+// direction of the edge is' tail-->head '.
 type Edge[K comparable, W number] struct {
 	// The unique identifier of this edge.
 	// use a key to distinguish edge,
@@ -280,9 +297,10 @@ type Edge[K comparable, W number] struct {
 	// Edge data.
 	Value any `json:"value" yaml:"value"`
 	// Edge labels.
-	Labels map[string]string `json:"labels" yaml:"labels"`
+	Labels Labels `json:"labels" yaml:"labels"`
 }
 
+// Copy the current edge.
 func (e Edge[K, W]) Clone() Edge[K, W] {
 	ee := Edge[K, W]{
 		Key:    e.Key,
@@ -292,7 +310,7 @@ func (e Edge[K, W]) Clone() Edge[K, W] {
 		Weight: e.Weight,
 	}
 	if e.Labels != nil {
-		ee.Labels = make(map[string]string)
+		ee.Labels = make(map[string]any)
 		for k, l := range e.Labels {
 			ee.Labels[k] = l
 		}

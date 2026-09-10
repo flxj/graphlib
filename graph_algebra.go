@@ -131,7 +131,7 @@ func CartesianProduct[K comparable, W number](g1, g2 Graph[K, W]) (Graph[string,
 		for _, v2 := range g2vs {
 			v := Vertex[string, W]{
 				Key: fmt.Sprintf("(%v,%v)", v1.Key, v2.Key),
-				Labels: map[string]string{
+				Labels: map[string]any{
 					g1.Name(): fmt.Sprintf("%v", v1.Key),
 					g2.Name(): fmt.Sprintf("%v", v2.Key),
 				},

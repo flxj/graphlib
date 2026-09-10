@@ -570,7 +570,7 @@ func (g *graph[K, W]) GetEdgeByKey(key K) (Edge[K, W], error) {
 	}, nil
 }
 
-func (g *graph[K, W]) GetVertexesByLabel(labels map[string]string) []Vertex[K, W] {
+func (g *graph[K, W]) GetVertexesByLabel(labels Labels) []Vertex[K, W] {
 	var ves []Vertex[K, W]
 	if labels != nil {
 		for _, u := range g.vtx {
@@ -592,7 +592,7 @@ func (g *graph[K, W]) GetVertexesByLabel(labels map[string]string) []Vertex[K, W
 	return ves
 }
 
-func (g *graph[K, W]) GetEdgesByLabel(labels map[string]string) []Edge[K, W] {
+func (g *graph[K, W]) GetEdgesByLabel(labels Labels) []Edge[K, W] {
 	var edges []Edge[K, W]
 	if labels != nil {
 		for _, e := range g.edges {
@@ -623,13 +623,13 @@ func (g *graph[K, W]) SetVertexValue(key K, value any) error {
 	return nil
 }
 
-func (g *graph[K, W]) SetVertexLabel(key K, labelKey, labelVal string) error {
+func (g *graph[K, W]) SetVertexLabel(key K, labelKey string, labelVal any) error {
 	v, ok := g.vtx[key]
 	if !ok {
 		return errVertexNotExists
 	}
 	if v.Labels == nil {
-		v.Labels = make(map[string]string)
+		v.Labels = make(map[string]any)
 	}
 	v.Labels[labelKey] = labelVal
 	return nil
@@ -655,13 +655,13 @@ func (g *graph[K, W]) SetEdgeValueByKey(key K, value any) error {
 	return nil
 }
 
-func (g *graph[K, W]) SetEdgeLabelByKey(key K, labelKey, labelVal string) error {
+func (g *graph[K, W]) SetEdgeLabelByKey(key K, labelKey string, labelVal any) error {
 	e, ok := g.edges[key]
 	if !ok {
 		return errEdgeNotExists
 	}
 	if e.Labels == nil {
-		e.Labels = make(map[string]string)
+		e.Labels = make(map[string]any)
 	}
 	e.Labels[labelKey] = labelVal
 	return nil
@@ -693,7 +693,7 @@ func (g *graph[K, W]) SetEdgeValue(endpoint1, endpoint2 K, value any) error {
 	return nil
 }
 
-func (g *graph[K, W]) SetEdgeLabel(endpoint1, endpoint2 K, labelKey, labelVal string) error {
+func (g *graph[K, W]) SetEdgeLabel(endpoint1, endpoint2 K, labelKey string, labelVal any) error {
 	edges, err := g.GetEdge(endpoint1, endpoint2)
 	if err != nil {
 		return err
@@ -704,7 +704,7 @@ func (g *graph[K, W]) SetEdgeLabel(endpoint1, endpoint2 K, labelKey, labelVal st
 			return errEdgeNotExists
 		}
 		if e.Labels == nil {
-			e.Labels = make(map[string]string)
+			e.Labels = make(map[string]any)
 		}
 		e.Labels[labelKey] = labelVal
 	}

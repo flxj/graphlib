@@ -101,7 +101,7 @@ func RenderHTML[K comparable, W number](g graphlib.Graph[K, W], showWeight bool,
 			Color: "",
 		}
 		if v.Labels != nil {
-			node.Color = v.Labels["color"]
+			node.Color = v.Labels["color"].(string)
 		}
 		data.Nodes = append(data.Nodes, node)
 	}
@@ -114,7 +114,7 @@ func RenderHTML[K comparable, W number](g graphlib.Graph[K, W], showWeight bool,
 			Weight: fmt.Sprintf("%v", e.Weight),
 		}
 		if e.Labels != nil {
-			l.Color = e.Labels["color"]
+			l.Color = e.Labels["color"].(string)
 		}
 		data.Links = append(data.Links, l)
 	}
@@ -182,7 +182,7 @@ func getDOT[K comparable, W number](g graphlib.Graph[K, W], vertexShape string, 
 			attrs[0] = "shape=" + vertexShape
 		}
 		if v.Labels != nil {
-			c := v.Labels["color"]
+			c := v.Labels["color"].(string)
 			if c != "" {
 				attrs = append(attrs, "color="+c)
 			}
@@ -193,7 +193,7 @@ func getDOT[K comparable, W number](g graphlib.Graph[K, W], vertexShape string, 
 	for _, e := range es {
 		attrs := []string{}
 		if e.Labels != nil {
-			c := e.Labels["color"]
+			c := e.Labels["color"].(string)
 			if c != "" {
 				attrs = append(attrs, "color="+c)
 			}
