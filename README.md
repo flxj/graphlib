@@ -56,6 +56,7 @@
 * RedBlack Tree
 * Trie
 * RTree
+* Adaptive Radix Tree
 
 ### Getting started
 

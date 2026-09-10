@@ -28,7 +28,7 @@ import (
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-func randStr(n int, s rand.Source) string {
+func randStr(n int) string {
 	//s := rand.NewSource(time.Now().UnixNano())
 
 	b := make([]byte, n)
@@ -82,7 +82,7 @@ func getMaxValue[W number](n W) W {
 func edgeFormat[K comparable](v1, v2 K) K {
 	switch any(v1).(type) {
 	case string, []byte:
-		return any(fmt.Sprintf("%v-%v-%s", v1, v2, randStr(7, rand.NewSource(rand.Int63())))).(K)
+		return any(fmt.Sprintf("%v-%v-%s", v1, v2, randStr(7))).(K)
 	case int:
 		return any(rand.Int()).(K)
 	case int8:
@@ -139,6 +139,7 @@ func maxValue[N number](n N) N {
 	}
 }
 
+/*
 func minValue[N number](n N) N {
 	switch any(n).(type) {
 	case int:
@@ -169,6 +170,7 @@ func minValue[N number](n N) N {
 		return n
 	}
 }
+*/
 
 var (
 	errRunTimeout = errors.New("function run timeout")
@@ -343,114 +345,4 @@ func (f *fifo[K]) back() (K, bool) {
 		return f.elems[f.tail-1], true
 	}
 	return k, false
-}
-
-type Stack[T any] struct {
-	elems []T
-	idx   int
-}
-
-func NewStack[T any]() *Stack[T] {
-	return &Stack[T]{}
-}
-
-func (s *Stack[T]) Len() int {
-	return s.idx
-}
-
-func (s *Stack[K]) IsEmpty() bool {
-	return s.idx == 0
-}
-
-func (s *Stack[T]) Push(v T) {
-	if s.idx < len(s.elems) {
-		s.elems[s.idx] = v
-	} else {
-		s.elems = append(s.elems, v)
-	}
-	s.idx++
-}
-
-func (s *Stack[T]) Pop() (T, bool) {
-	var k T
-	if s.idx > 0 {
-		k = s.elems[s.idx-1]
-		s.idx--
-		return k, true
-	}
-	return k, false
-}
-
-func (s *Stack[T]) Contains(k T, comp CompareFunc[T]) bool {
-	for i := 0; i < s.idx; i++ {
-		if comp(s.elems[i], k) == 0 {
-			return true
-		}
-	}
-	return false
-}
-
-func (s *Stack[T]) Top() (v T) {
-	if s.idx > 0 {
-		return s.elems[s.idx-1]
-	}
-	return
-}
-
-func (s *Stack[T]) Clean() {
-	s.idx = 0
-}
-
-type FIFO[T any] struct {
-	elems []T
-	head  int
-	tail  int
-}
-
-func NewFIFO[T any]() *FIFO[T] {
-	return &FIFO[T]{}
-}
-
-func (f *FIFO[T]) Len() int {
-	return f.tail - f.head
-}
-
-func (f *FIFO[T]) IsEmpty() bool {
-	return f.head == f.tail
-}
-
-func (f *FIFO[T]) Push(k T) {
-	if f.tail < len(f.elems) {
-		f.elems[f.tail] = k
-	} else {
-		f.elems = append(f.elems, k)
-	}
-	f.tail++
-}
-
-func (f *FIFO[T]) Pop() (k T, ok bool) {
-	if f.head != f.tail {
-		k = f.elems[f.head]
-		f.head++
-		return k, true
-	}
-	return k, false
-}
-
-func (f *FIFO[T]) Front() (k T, ok bool) {
-	if f.head != f.tail {
-		return f.elems[f.head], true
-	}
-	return k, false
-}
-
-func (f *FIFO[T]) Back() (k T, ok bool) {
-	if f.head != f.tail {
-		return f.elems[f.tail-1], true
-	}
-	return k, false
-}
-
-func (f *FIFO[T]) Clean() {
-	f.head, f.tail = 0, 0
 }

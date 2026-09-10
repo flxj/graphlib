@@ -16,12 +16,6 @@
 
 package collection
 
-type trieNode interface {
-	child(byte) trieNode
-	tail() bool
-	set(byte, trieNode)
-}
-
 type tNode256[T any] struct {
 	flag int8
 	val  T

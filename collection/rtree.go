@@ -23,6 +23,8 @@ import (
 )
 
 var (
+	// M represents the maximum number of elements
+	// allowed to be included in each leaf node.
 	DefaultRTreeM = 64
 )
 
