@@ -18,7 +18,6 @@ package collection
 
 import (
 	"flag"
-	"fmt"
 	"math/rand"
 	"slices"
 	"strconv"
@@ -68,8 +67,8 @@ func generateIntArr(start, n int, randKey bool, maxGap int) []int {
 	return k
 }
 
-func testBTreeReadWrite(n, degree int, randKey bool) {
-	fmt.Println("===========> testBTreeReadWrite")
+func testBTreeReadWrite(tt *testing.T, n, degree int, randKey bool) {
+	tt.Log("> testBTreeReadWrite")
 	k, v := generateIntStr(0, n, randKey, 20)
 	t := NewBTree[int, string](&BTreeConfig{MinDegree: degree}, func(a, b int) int {
 		if a > b {
@@ -83,32 +82,32 @@ func testBTreeReadWrite(n, degree int, randKey bool) {
 		t.Insert(k[i], v[i])
 	}
 	oldLen := t.Len()
-	fmt.Printf("==========> 0 init date, size=%d high=%d\n", oldLen, t.High())
-	fmt.Println("=========> 1 test random read...")
+	tt.Logf("> 0 init date, size=%d high=%d\n", oldLen, t.High())
+	tt.Log("> 1 test random read...")
 	// random read
 	for i := 0; i < n/2; i++ {
 		// read
 		j := rand.Intn(n)
 		val, err := t.Search(k[j])
 		if err != nil {
-			panic(fmt.Sprintf("[ERROR] key=%d,err=%s", k[j], err.Error()))
+			tt.Errorf("[ERROR] key=%d,err=%s", k[j], err.Error())
 		}
 		if val != v[j] {
-			panic(fmt.Sprintf("[ERROR] key=%d,expected_value=%s, actual_value=%s", k[j], v[j], val))
+			tt.Errorf("[ERROR] key=%d,expected_value=%s, actual_value=%s", k[j], v[j], val)
 		}
 	}
 
-	fmt.Println("=========> 2 test scan...")
+	tt.Log("> 2 test scan...")
 	var cnt int
 	_ = t.Scan(false, func(a int, b string) error {
 		cnt++
 		return nil
 	})
 	if cnt != t.Len() {
-		panic(fmt.Sprintf("[ERROR] scan count %d elements, but expected value=%d", cnt, t.Len()))
+		tt.Errorf("[ERROR] scan count %d elements, but expected value=%d", cnt, t.Len())
 	}
 
-	fmt.Println("===========> 3 test insert...")
+	tt.Log("> 3 test insert...")
 	minK, _, _ := t.First()
 	maxK, _, _ := t.Last()
 	kk, vv := generateIntStr(maxK+1, n, !randKey, 10)
@@ -119,64 +118,64 @@ func testBTreeReadWrite(n, degree int, randKey bool) {
 		t.Insert(kk[i], vv[i])
 	}
 	if t.Len() != oldLen+n {
-		panic(fmt.Sprintf("[ERROR] insert err size=%d,expected_size=%d", t.Len(), oldLen+n))
+		tt.Errorf("[ERROR] insert err size=%d,expected_size=%d", t.Len(), oldLen+n)
 	}
 	oldLen += n
-	fmt.Printf("===========> insert %d date, now size=%d high=%d\n", n, t.Len(), t.High())
+	tt.Logf("> insert %d date, now size=%d high=%d\n", n, t.Len(), t.High())
 
-	fmt.Println("===========> 4 test update...")
+	tt.Log("> 4 test update...")
 	for i := 1; i <= n/2; i++ {
 		j := rand.Intn(n)
 		//oldV := v[j]
 		v[j] = seqStr("value-update-", i)
-		//fmt.Printf("update key=%d, old_value=%s, new_value=%s\n", k[j], oldV, v[j])
+		//tt.Logf("update key=%d, old_value=%s, new_value=%s\n", k[j], oldV, v[j])
 
 		t.Insert(k[j], v[j])
 
 		val, err := t.Search(k[j])
 		if err != nil {
-			panic(fmt.Sprintf("[ERROR] %s", err.Error()))
+			tt.Errorf("[ERROR] %s", err.Error())
 		}
 		if val != v[j] {
-			panic(fmt.Sprintf("[ERROR] update failure key=%d, expected_value=%s, but actual_value=%s", k[j], v[j], val))
+			tt.Errorf("[ERROR] update failure key=%d, expected_value=%s, but actual_value=%s", k[j], v[j], val)
 		}
 	}
 
-	fmt.Println("===========> 5 test delete1...")
+	tt.Log("> 5 test delete1...")
 	for i := 0; i < n/4; i++ {
 		ok, err := t.Delete(k[i])
 		if err != nil {
-			panic(err.Error())
+			tt.Fatal(err.Error())
 		}
 		if !ok {
-			panic("[ERROR] delete failure")
+			tt.Fatal("[ERROR] delete failure")
 		}
 	}
 	if t.Len() != oldLen-n/4 {
-		panic(fmt.Sprintf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), oldLen-n/4))
+		tt.Errorf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), oldLen-n/4)
 	}
-	fmt.Printf("===========> delete %d date, now size=%d high=%d\n", n/4, t.Len(), t.High())
+	tt.Logf("> delete %d date, now size=%d high=%d\n", n/4, t.Len(), t.High())
 
-	fmt.Println("===========> 6 test delete2...")
+	tt.Log("> 6 test delete2...")
 	for i := n / 4; i < n; i++ {
 		ok, err := t.Delete(k[i])
 		if err != nil {
-			panic(err.Error())
+			tt.Fatal(err.Error())
 		}
 		if !ok {
-			panic("[ERROR] delete failure")
+			tt.Fatal("[ERROR] delete failure")
 		}
 	}
 	if t.Len() != n {
-		panic(fmt.Sprintf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), n))
+		tt.Errorf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), n)
 	}
-	fmt.Printf("===========> delete %d date, now size=%d high=%d\n", n-n/4, t.Len(), t.High())
+	tt.Logf("> delete %d date, now size=%d high=%d\n", n-n/4, t.Len(), t.High())
 
-	fmt.Println("==========> test complete")
+	tt.Log("> test complete")
 }
 
-func testBTreeCursor(n, degree int, randKey bool) {
-	fmt.Printf("========> testBTreeCursor")
+func testBTreeCursor(tt *testing.T, n, degree int, randKey bool) {
+	tt.Logf("=======> testBTreeCursor")
 	ks, vs := generateIntStr(0, n, randKey, 5)
 	t := NewBTree[int, string](&BTreeConfig{MinDegree: degree}, func(a, b int) int {
 		if a > b {
@@ -189,103 +188,103 @@ func testBTreeCursor(n, degree int, randKey bool) {
 	for i := 0; i < n; i++ {
 		t.Insert(ks[i], vs[i])
 	}
-	fmt.Printf("============> insert date, size=%d high=%d\n", t.Len(), t.High())
+	tt.Logf("=> insert date, size=%d high=%d\n", t.Len(), t.High())
 	k := make([]int, n)
 	copy(k, ks)
 	slices.Sort(k)
 	cur := t.Cursor()
-	fmt.Println("============> 1 test asc...")
+	tt.Log("=> 1 test asc...")
 	kk, _, ok := cur.First()
 	if !ok {
-		panic("[ERROR] First() failed")
+		tt.Fatal("[ERROR] First() failed")
 	}
 	if kk != k[0] {
-		panic(fmt.Sprintf("[ERROR] get first_key=%d, but expected_key=%d", kk, k[0]))
+		tt.Errorf("[ERROR] get first_key=%d, but expected_key=%d", kk, k[0])
 	}
 	for i := 1; i < len(k) && cur.HasNext(); i++ {
 		kk, _ = cur.Next()
 		if kk != k[i] {
-			panic(fmt.Sprintf("[ERROR] get the %d'th key, current_key=%d,expected_key=%d", i, kk, k[i]))
+			tt.Errorf("[ERROR] get the %d'th key, current_key=%d,expected_key=%d", i, kk, k[i])
 		}
 	}
 
 	_, _, _ = cur.First()
 	if cur.HasPrev() {
-		panic("cursor at first,cannot has prev")
+		tt.Fatal("cursor at first,cannot has prev")
 	}
 
-	fmt.Println("============> 2 test desc...")
+	tt.Log("=> 2 test desc...")
 	kk, _, ok = cur.Last()
 	if !ok {
-		panic("[ERROR] Last() failed")
+		tt.Fatal("[ERROR] Last() failed")
 	}
 	if kk != k[n-1] {
-		panic(fmt.Sprintf("[ERROR] get last_key=%d, but expected_key=%d", kk, k[n-1]))
+		tt.Errorf("[ERROR] get last_key=%d, but expected_key=%d", kk, k[n-1])
 	}
 	for i := n - 2; i >= 0 && cur.HasPrev(); i-- {
 		kk, _ = cur.Prev()
 		if kk != k[i] {
-			panic(fmt.Sprintf("[ERROR] get %d'th key,current_key=%d, expected-key=%d", i+1, kk, k[i]))
+			tt.Errorf("[ERROR] get %d'th key,current_key=%d, expected-key=%d", i+1, kk, k[i])
 		}
 	}
 
 	_, _, _ = cur.Last()
 	if cur.HasNext() {
-		panic("cursor at last,cannot has next")
+		tt.Fatal("cursor at last,cannot has next")
 	}
 
-	fmt.Println("============> 3 test seek+random...")
+	tt.Log("=> 3 test seek+random...")
 	for i := 0; i < n/4; i++ {
 		j := rand.Intn(n)
 		kk, vv, _ := cur.Seek(ks[j])
 		if kk != ks[j] || vv != vs[j] {
-			panic(fmt.Sprintf("[ERROR] seek current_key=%d, expected_key=%d", kk, ks[j]))
+			tt.Errorf("[ERROR] seek current_key=%d, expected_key=%d", kk, ks[j])
 		}
 	}
 
-	fmt.Println("============> 4 test seek+forward...")
+	tt.Log("=> 4 test seek+forward...")
 	kk, _, ok = cur.Seek(k[n/2])
 	if !ok {
-		panic(fmt.Sprintf("[ERROR] seek key %d failed", k[n/2]))
+		tt.Errorf("[ERROR] seek key %d failed", k[n/2])
 	}
 	if kk != k[n/2] {
-		panic(fmt.Sprintf("[ERROR] seek key %d but get %d", k[n/2], kk))
+		tt.Errorf("[ERROR] seek key %d but get %d", k[n/2], kk)
 	}
 	for i := n/2 + 1; i < n; i++ {
 		kk, _ = cur.Next()
 		if kk != k[i] {
-			panic(fmt.Sprintf("[ERROR] seek current_key=%d, expected_key=%d", kk, k[i]))
+			tt.Errorf("[ERROR] seek current_key=%d, expected_key=%d", kk, k[i])
 		}
 	}
 
-	fmt.Println("============> 5 test seek+backward...")
+	tt.Log("=> 5 test seek+backward...")
 	kk, _, ok = cur.Seek(k[n/2])
 	if !ok {
-		panic(fmt.Sprintf("[ERROR] seek key %d failed", k[n/2]))
+		tt.Errorf("[ERROR] seek key %d failed", k[n/2])
 	}
 	if kk != k[n/2] {
-		panic(fmt.Sprintf("[ERROR] seek key %d but get %d", k[n/2], kk))
+		tt.Errorf("[ERROR] seek key %d but get %d", k[n/2], kk)
 	}
 	for i := n/2 - 1; i >= 0; i-- {
 		kk, _ = cur.Prev()
-		//fmt.Printf("seek %d'th element,key=%d\n", i+1, kk)
+		//tt.Logf("seek %d'th element,key=%d\n", i+1, kk)
 		if kk != k[i] {
-			panic(fmt.Sprintf("[ERROR] seek current_key=%d, expected_key=%d", kk, k[i]))
+			tt.Errorf("[ERROR] seek current_key=%d, expected_key=%d", kk, k[i])
 		}
 	}
 
-	fmt.Println("==========> test complete")
+	tt.Log("> test complete")
 }
 
 func TestBTree(t *testing.T) {
 	args := flag.Args()
 	switch args[0] {
 	case "rw":
-		testBTreeReadWrite(100, 8, true)
+		testBTreeReadWrite(t, 100, 8, true)
 	case "iter":
-		testBTreeCursor(100, 16, true)
+		testBTreeCursor(t, 100, 16, true)
 	default:
-		testBTreeReadWrite(100, 8, true)
+		testBTreeReadWrite(t, 100, 8, true)
 	}
 }
 
@@ -293,8 +292,8 @@ func BenchmarkBTree(b *testing.B) {
 	// TODO
 }
 
-func testSkipListRW(n int, randKey bool) {
-	fmt.Println("===========> testSkipLisReadWrite")
+func testSkipListRW(tt *testing.T, n int, randKey bool) {
+	tt.Log("> testSkipLisReadWrite")
 	k, v := generateIntStr(0, n, randKey, 20)
 	t := NewSkipList[int, string](&SkipListConfig{}, func(a, b int) int {
 		if a > b {
@@ -308,29 +307,29 @@ func testSkipListRW(n int, randKey bool) {
 		t.Insert(k[i], v[i])
 	}
 	oldLen := t.Len()
-	fmt.Printf("==========> 0 init date, size=%d\n", oldLen)
-	fmt.Println("=========> 1 test random read...")
+	tt.Logf("> 0 init date, size=%d\n", oldLen)
+	tt.Log("> 1 test random read...")
 	// random read
 	for i := 0; i < n/2; i++ {
 		// read
 		j := rand.Intn(n)
 		_, val, ok := t.Search(k[j])
 		if !ok || val != v[j] {
-			panic(fmt.Sprintf("[ERROR] key=%d,expected_value=%s, actual_value=%s", k[j], v[j], val))
+			tt.Errorf("[ERROR] key=%d,expected_value=%s, actual_value=%s", k[j], v[j], val)
 		}
 	}
 
-	fmt.Println("=========> 2 test scan...")
+	tt.Log("> 2 test scan...")
 	var cnt int
 	_ = t.Scan(func(a int, b string) error {
 		cnt++
 		return nil
 	})
 	if cnt != t.Len() {
-		panic(fmt.Sprintf("[ERROR] scan count %d elements, but expected value=%d", cnt, t.Len()))
+		tt.Errorf("[ERROR] scan count %d elements, but expected value=%d", cnt, t.Len())
 	}
 
-	fmt.Println("===========> 3 test insert...")
+	tt.Log("> 3 test insert...")
 	minK, _, _ := t.First()
 	maxK, _, _ := t.Last()
 
@@ -342,53 +341,53 @@ func testSkipListRW(n int, randKey bool) {
 		t.Insert(kk[i], vv[i])
 	}
 	if t.Len() != oldLen+n {
-		panic(fmt.Sprintf("[ERROR] insert err size=%d,expected_size=%d", t.Len(), oldLen+n))
+		tt.Errorf("[ERROR] insert err size=%d,expected_size=%d", t.Len(), oldLen+n)
 	}
 	oldLen += n
-	fmt.Printf("===========> insert %d date, now size=%d\n", n, t.Len())
+	tt.Logf("> insert %d date, now size=%d\n", n, t.Len())
 
-	fmt.Println("===========> 4 test update...")
+	tt.Log("> 4 test update...")
 	for i := 1; i <= n/2; i++ {
 		j := rand.Intn(n)
 		v[j] = seqStr("value-update-", i)
 		if ok := t.Update(k[j], v[j]); !ok {
-			panic("update failure")
+			tt.Fatal("update failure")
 		}
 		_, val, ok := t.Search(k[j])
 		if !ok || val != v[j] {
-			panic(fmt.Sprintf("[ERROR] update failure key=%d, expected_value=%s, but actual_value=%s", k[j], v[j], val))
+			tt.Errorf("[ERROR] update failure key=%d, expected_value=%s, but actual_value=%s", k[j], v[j], val)
 		}
 	}
 
-	fmt.Println("===========> 5 test delete1...")
+	tt.Log("> 5 test delete1...")
 	for i := 0; i < n/4; i++ {
 		_, ok := t.Delete(k[i])
 		if !ok {
-			panic("[ERROR] delete failure")
+			tt.Fatal("[ERROR] delete failure")
 		}
 	}
 	if t.Len() != oldLen-n/4 {
-		panic(fmt.Sprintf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), oldLen-n/4))
+		tt.Errorf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), oldLen-n/4)
 	}
-	fmt.Printf("===========> delete %d date, now size=%d\n", n/4, t.Len())
+	tt.Logf("> delete %d date, now size=%d\n", n/4, t.Len())
 
-	fmt.Println("===========> 6 test delete2...")
+	tt.Log("> 6 test delete2...")
 	for i := n / 4; i < n; i++ {
 		_, ok := t.Delete(k[i])
 		if !ok {
-			panic("[ERROR] delete failure")
+			tt.Fatal("[ERROR] delete failure")
 		}
 	}
 	if t.Len() != n {
-		panic(fmt.Sprintf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), n))
+		tt.Errorf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), n)
 	}
-	fmt.Printf("===========> delete %d date, now size=%d\n", n-n/4, t.Len())
+	tt.Logf("> delete %d date, now size=%d\n", n-n/4, t.Len())
 
-	fmt.Println("==========> test complete")
+	tt.Log("> test complete")
 }
 
-func testSkipListCursor(n int, randKey bool) {
-	fmt.Printf("========> testSkiplistCursor")
+func testSkipListCursor(tt *testing.T, n int, randKey bool) {
+	tt.Logf("=======> testSkiplistCursor")
 	ks, vs := generateIntStr(0, n, randKey, 5)
 	t := NewSkipList[int, string](&SkipListConfig{}, func(a, b int) int {
 		if a > b {
@@ -401,114 +400,114 @@ func testSkipListCursor(n int, randKey bool) {
 	for i := 0; i < n; i++ {
 		t.Insert(ks[i], vs[i])
 	}
-	fmt.Printf("============> insert date, size=%d\n", t.Len())
+	tt.Logf("=> insert date, size=%d\n", t.Len())
 	k := make([]int, n)
 	copy(k, ks)
 	slices.Sort(k)
 	cur := t.Cursor()
-	fmt.Println("============> 1 test asc...")
+	tt.Log("=> 1 test asc...")
 	kk, _, ok := cur.First()
 	if !ok {
-		panic("[ERROR] First() failed")
+		tt.Fatal("[ERROR] First() failed")
 	}
 	if kk != k[0] {
-		panic(fmt.Sprintf("[ERROR] get first_key=%d, but expected_key=%d", kk, k[0]))
+		tt.Errorf("[ERROR] get first_key=%d, but expected_key=%d", kk, k[0])
 	}
 	for i := 1; i < len(k) && cur.HasNext(); i++ {
 		kk, _ = cur.Next()
 		if kk != k[i] {
-			panic(fmt.Sprintf("[ERROR] get the %d'th key, current_key=%d,expected_key=%d", i, kk, k[i]))
+			tt.Errorf("[ERROR] get the %d'th key, current_key=%d,expected_key=%d", i, kk, k[i])
 		}
 	}
 
 	_, _, _ = cur.First()
 	if cur.HasPrev() {
-		panic("cursor at first,cannot has prev")
+		tt.Fatal("cursor at first,cannot has prev")
 	}
 
-	fmt.Println("============> 2 test desc...")
+	tt.Log("=> 2 test desc...")
 	kk, _, ok = cur.Last()
 	if !ok {
-		panic("[ERROR] Last() failed")
+		tt.Fatal("[ERROR] Last() failed")
 	}
 	if kk != k[n-1] {
-		panic(fmt.Sprintf("[ERROR] get last_key=%d, but expected_key=%d", kk, k[n-1]))
+		tt.Errorf("[ERROR] get last_key=%d, but expected_key=%d", kk, k[n-1])
 	}
 	for i := n - 2; i >= 0 && cur.HasPrev(); i-- {
 		kk, _ = cur.Prev()
 		if kk != k[i] {
-			panic(fmt.Sprintf("[ERROR] get %d'th key,current_key=%d, expected-key=%d", i+1, kk, k[i]))
+			tt.Errorf("[ERROR] get %d'th key,current_key=%d, expected-key=%d", i+1, kk, k[i])
 		}
 	}
 
 	_, _, _ = cur.Last()
 	if cur.HasNext() {
-		panic("cursor at last,cannot has next")
+		tt.Fatal("cursor at last,cannot has next")
 	}
 
-	fmt.Println("============> 3 test seek+random...")
+	tt.Log("=> 3 test seek+random...")
 	for i := 0; i < n/4; i++ {
 		j := rand.Intn(n)
 		kk, vv, _ := cur.Seek(ks[j])
 		if kk != ks[j] || vv != vs[j] {
-			panic(fmt.Sprintf("[ERROR] seek current_key=%d, expected_key=%d", kk, ks[j]))
+			tt.Errorf("[ERROR] seek current_key=%d, expected_key=%d", kk, ks[j])
 		}
 	}
 
-	fmt.Println("============> 4 test seek+forward...")
+	tt.Log("=> 4 test seek+forward...")
 	kk, _, ok = cur.Seek(k[n/2])
 	if !ok {
-		panic(fmt.Sprintf("[ERROR] seek key %d failed", k[n/2]))
+		tt.Errorf("[ERROR] seek key %d failed", k[n/2])
 	}
 	if kk != k[n/2] {
-		panic(fmt.Sprintf("[ERROR] seek key %d but get %d", k[n/2], kk))
+		tt.Errorf("[ERROR] seek key %d but get %d", k[n/2], kk)
 	}
 	for i := n/2 + 1; i < n; i++ {
 		kk, _ = cur.Next()
 		if kk != k[i] {
-			panic(fmt.Sprintf("[ERROR] seek current_key=%d, expected_key=%d", kk, k[i]))
+			tt.Errorf("[ERROR] seek current_key=%d, expected_key=%d", kk, k[i])
 		}
 	}
 
-	fmt.Println("============> 5 test seek+backward...")
+	tt.Log("=> 5 test seek+backward...")
 	kk, _, ok = cur.Seek(k[n/2])
 	if !ok {
-		panic(fmt.Sprintf("[ERROR] seek key %d failed", k[n/2]))
+		tt.Errorf("[ERROR] seek key %d failed", k[n/2])
 	}
 	if kk != k[n/2] {
-		panic(fmt.Sprintf("[ERROR] seek key %d but get %d", k[n/2], kk))
+		tt.Errorf("[ERROR] seek key %d but get %d", k[n/2], kk)
 	}
 	for i := n/2 - 1; i >= 0; i-- {
 		kk, _ = cur.Prev()
-		//fmt.Printf("seek %d'th element,key=%d\n", i+1, kk)
+		//tt.Logf("seek %d'th element,key=%d\n", i+1, kk)
 		if kk != k[i] {
-			panic(fmt.Sprintf("[ERROR] seek current_key=%d, expected_key=%d", kk, k[i]))
+			tt.Errorf("[ERROR] seek current_key=%d, expected_key=%d", kk, k[i])
 		}
 	}
 
-	fmt.Println("==========> test complete")
+	tt.Log("> test complete")
 }
 
 func TestSkipList(t *testing.T) {
 	args := flag.Args()
 	switch args[0] {
 	case "rw":
-		testSkipListRW(100, true)
+		testSkipListRW(t, 100, true)
 	case "iter":
-		testSkipListCursor(100, true)
+		testSkipListCursor(t, 100, true)
 	default:
-		testSkipListRW(100, true)
+		testSkipListRW(t, 100, true)
 	}
 }
 
-func testRTreeRW(n int) {
-	fmt.Println("===========> testRTreeReadWrite")
+func testRTreeRW(tt *testing.T, n int) {
+	tt.Log("> testRTreeReadWrite")
 	t := NewRTree[string](32, false, BoxDist[int])
 	r1 := generateIntArr(0, n, true, 10)
 	r2 := generateIntArr(0, n, true, 5)
 	r3 := generateIntArr(n, n, true, 20)
 	r4, d := generateIntStr(n, n, true, 30)
-	fmt.Println("==========> insert...")
+	tt.Log("> insert...")
 	for i := 0; i < n; i++ {
 		if r3[i] < r1[i] {
 			r3[i], r1[i] = r1[i], r3[i]
@@ -520,8 +519,8 @@ func testRTreeRW(n int) {
 		t.Insert(d[i], rect)
 	}
 	oldLen := t.Len()
-	fmt.Printf("==========> 0 init date, size=%d\n", oldLen)
-	fmt.Println("=========> 1 test random read...")
+	tt.Logf("> 0 init date, size=%d\n", oldLen)
+	tt.Log("> 1 test random read...")
 	// random read
 	for i := 0; i < n/2; i++ {
 		// read
@@ -529,15 +528,15 @@ func testRTreeRW(n int) {
 		rect := Rectangle[int]{r1[j], r2[j], r3[j], r4[j]}
 		rec, val := t.Search(rect)
 		if len(rec) == 0 {
-			fmt.Println("rect=", rect)
-			fmt.Println("data=", d[j])
-			fmt.Println(rec)
-			fmt.Println(val)
-			panic("read error")
+			tt.Log("rect=", rect)
+			tt.Log("data=", d[j])
+			tt.Log(rec)
+			tt.Log(val)
+			tt.Fatal("read error")
 		}
 	}
 
-	fmt.Println("=========> 2 test scan...")
+	tt.Log("> 2 test scan...")
 	var cnt int
 	fn := func(_ Rectangle[int], _ string) error {
 		cnt++
@@ -545,42 +544,42 @@ func testRTreeRW(n int) {
 	}
 	t.Scan(fn)
 	if cnt != t.Len() {
-		panic(fmt.Sprintf("[ERROR] scan count %d elements, but expected value=%d", cnt, t.Len()))
+		tt.Errorf("[ERROR] scan count %d elements, but expected value=%d", cnt, t.Len())
 	}
 
-	fmt.Println("===========> 3 test delete1...")
+	tt.Log("> 3 test delete1...")
 	for i := 0; i < n/4; i++ {
 		rect := Rectangle[int]{r1[i], r2[i], r3[i], r4[i]}
 		t.Delete(rect)
 	}
 	if t.Len() != oldLen-n/4 {
-		panic(fmt.Sprintf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), oldLen-n/4))
+		tt.Errorf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), oldLen-n/4)
 	}
 
-	fmt.Println("===========> 6 test delete2...")
+	tt.Log("> 6 test delete2...")
 	for i := n / 4; i < n; i++ {
 		rect := Rectangle[int]{r1[i], r2[i], r3[i], r4[i]}
 		t.Delete(rect)
 	}
 	if t.Len() != 0 {
-		panic(fmt.Sprintf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), 0))
+		tt.Errorf("[ERROR] after delete size=%d, expected_size=%d", t.Len(), 0)
 	}
 	cnt = 0
 	t.Scan(fn)
 	if cnt != t.Len() {
-		panic(fmt.Sprintf("[ERROR] scan count %d elements, but expected value=%d", cnt, t.Len()))
+		tt.Errorf("[ERROR] scan count %d elements, but expected value=%d", cnt, t.Len())
 	}
-	fmt.Println("==========> test complete")
+	tt.Log("> test complete")
 }
 
 func TestRTree(t *testing.T) {
 	args := flag.Args()
 	switch args[0] {
 	case "r":
-		testRTreeRW(100)
+		testRTreeRW(t, 100)
 	case "r+":
 	case "r*":
 	default:
-		testRTreeRW(100)
+		testRTreeRW(t, 100)
 	}
 }
