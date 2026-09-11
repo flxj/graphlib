@@ -79,8 +79,7 @@ func TestExecJob1(t *testing.T) {
 
 	for k, j := range jobs {
 		if err := g.AddJob(k, j); err != nil {
-			fmt.Printf("[ERR] add job error: %v\n", err)
-			return
+			t.Errorf("[ERR] add job error: %v\n", err)
 		}
 	}
 
@@ -92,8 +91,7 @@ func TestExecJob1(t *testing.T) {
 	}
 	for _, d := range deps {
 		if err := g.AddDependency(d[0], d[1]); err != nil {
-			fmt.Printf("[ERR] add dep error: %v\n", err)
-			return
+			t.Errorf("[ERR] add dep error: %v\n", err)
 		}
 	}
 
@@ -116,8 +114,7 @@ job3---->job4--->job5
 	fmt.Println("exec graph status=>", g.Status())
 
 	if err := g.Start(); err != nil {
-		fmt.Printf("[ERR] start graph error: %v\n", err)
-		return
+		t.Errorf("[ERR] start graph error: %v\n", err)
 	}
 	fmt.Println("exec graph status=>", g.Status())
 
@@ -131,7 +128,7 @@ job3---->job4--->job5
 	fmt.Println("exec graph status=>", g.Status())
 
 	if v3 != val {
-		fmt.Printf("exec err: expect %d, actual get %d\n", val, v3)
+		t.Errorf("exec err: expect %d, actual get %d\n", val, v3)
 	} else {
 		fmt.Println("success")
 	}
@@ -197,8 +194,7 @@ func TestExecJob2(t *testing.T) {
 
 	for k, j := range jobs {
 		if err := g.AddJob(k, j); err != nil {
-			fmt.Printf("[ERR] add job error: %v\n", err)
-			return
+			t.Errorf("[ERR] add job error: %v\n", err)
 		}
 	}
 
@@ -210,8 +206,7 @@ func TestExecJob2(t *testing.T) {
 	}
 	for _, d := range deps {
 		if err := g.AddDependency(d[0], d[1]); err != nil {
-			fmt.Printf("[ERR] add dep error: %v\n", err)
-			return
+			t.Errorf("[ERR] add dep error: %v\n", err)
 		}
 	}
 
@@ -233,8 +228,7 @@ job3---->job4--->job5
 	fmt.Println("exec graph status=>", g.Status())
 
 	if err := g.Start(); err != nil {
-		fmt.Printf("[ERR] start graph error: %v\n", err)
-		return
+		t.Errorf("[ERR] start graph error: %v\n", err)
 	}
 	fmt.Println("exec graph status=>", g.Status())
 
@@ -246,7 +240,7 @@ job3---->job4--->job5
 	fmt.Println("exec graph status=>", g.Status())
 
 	if v3 != val {
-		fmt.Printf("exec err: expect %d, actual get %d\n", val, v3)
+		t.Errorf("exec err: expect %d, actual get %d\n", val, v3)
 	} else {
 		fmt.Println("success")
 	}
@@ -302,8 +296,7 @@ func TestExecJob3(t *testing.T) {
 
 	for k, j := range jobs {
 		if err := g.AddJob(k, j); err != nil {
-			fmt.Printf("[ERR] add job error: %v\n", err)
-			return
+			t.Errorf("[ERR] add job error: %v\n", err)
 		}
 	}
 
@@ -315,8 +308,7 @@ func TestExecJob3(t *testing.T) {
 	}
 	for _, d := range deps {
 		if err := g.AddDependency(d[0], d[1]); err != nil {
-			fmt.Printf("[ERR] add dep error: %v\n", err)
-			return
+			t.Errorf("[ERR] add dep error: %v\n", err)
 		}
 	}
 
@@ -407,8 +399,7 @@ func TestExecJob4(t *testing.T) {
 
 	for k, j := range jobs {
 		if err := g.AddJob(k, j); err != nil {
-			fmt.Printf("[ERR] add job error: %v\n", err)
-			return
+			t.Errorf("[ERR] add job error: %v\n", err)
 		}
 	}
 
@@ -421,8 +412,7 @@ func TestExecJob4(t *testing.T) {
 	}
 	for _, d := range deps {
 		if err := g.AddDependency(d[0], d[1]); err != nil {
-			fmt.Printf("[ERR] add dep error: %v\n", err)
-			return
+			t.Errorf("[ERR] add dep error: %v\n", err)
 		}
 	}
 
@@ -436,8 +426,7 @@ job3---->job4--->job5---->job6
 	fmt.Println(gs)
 	fmt.Println("==============> start")
 	if err := g.Start(); err != nil {
-		fmt.Printf("[ERR] start graph error: %v\n", err)
-		return
+		t.Errorf("[ERR] start graph error: %v\n", err)
 	}
 	fmt.Println("exec graph status==>", g.Status())
 	go func() {

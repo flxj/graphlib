@@ -407,3 +407,73 @@ func Subdivide[K comparable, W number](g Graph[K, W], edge K, vertex Vertex[K, W
 
 	return g2, nil
 }
+
+func Complement[K comparable, W number](g Graph[K, W]) (Graph[K, W], error) {
+	if g == nil {
+		return nil, nil
+	}
+	ng := newGraph[K, W](g.IsDigraph(), g.Name()+"_complement")
+	vtx := g.AllVertexes()
+	for _, v := range vtx {
+		if err := ng.AddVertex(v); err != nil {
+			return nil, err
+		}
+	}
+	ek := make(map[K]struct{})
+	genKey := func(v1, v2 K) K {
+		for {
+			nk := randEdgeKey(v1, v2)
+			if _, ok := ek[nk]; !ok {
+				ek[nk] = struct{}{}
+				return nk
+			}
+		}
+	}
+
+	for i, v := range vtx {
+		for j := i + 1; j < len(vtx); j++ {
+			// u := vtx[j], try to add edge (v,u) to new graph.
+			es, err := g.GetEdge(v.Key, vtx[j].Key)
+			if err != nil {
+				return nil, err
+			}
+			if g.IsDigraph() {
+				switch len(es) {
+				case 0:
+					err = ng.AddEdge(Edge[K, W]{
+						Key:  genKey(v.Key, vtx[j].Key),
+						Head: v.Key,
+						Tail: vtx[j].Key,
+					})
+					if err != nil {
+						return nil, err
+					}
+					err = ng.AddEdge(Edge[K, W]{
+						Key:  genKey(vtx[j].Key, v.Key),
+						Head: vtx[j].Key,
+						Tail: v.Key,
+					})
+				case 1:
+					err = ng.AddEdge(Edge[K, W]{
+						Key:  genKey(v.Key, vtx[j].Key),
+						Head: es[0].Tail,
+						Tail: es[0].Head,
+					})
+				default:
+				}
+			} else {
+				if len(es) == 0 {
+					err = ng.AddEdge(Edge[K, W]{
+						Key:  genKey(v.Key, vtx[j].Key),
+						Head: v.Key,
+						Tail: vtx[j].Key,
+					})
+				}
+			}
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return ng, nil
+}

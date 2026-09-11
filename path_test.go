@@ -35,8 +35,7 @@ func TestPath1(t *testing.T) {
 
 	for _, v := range vs {
 		if err := g.AddVertex(v); err != nil {
-			fmt.Printf("add vertex error:%v\n", err)
-			return
+			t.Errorf("add vertex error:%v\n", err)
 		}
 	}
 
@@ -55,18 +54,15 @@ func TestPath1(t *testing.T) {
 
 	for _, e := range es {
 		if err := g.AddEdge(e); err != nil {
-			fmt.Printf("add edge error:%v\n", err)
-			return
+			t.Errorf("add edge error:%v\n", err)
 		}
 	}
 
-	paths, err := ShortestPaths[int, int](g, 1)
+	paths, err := ShortestPaths(g, 1)
 	if err != nil {
-		fmt.Println("[Err] ", err)
-		return
+		t.Error("[Err] ", err)
 	}
 	for _, p := range paths {
 		fmt.Printf("source:%d target:%d  weight:%v\n", p.Source, p.Target, p.Weight)
 	}
-
 }

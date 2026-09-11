@@ -894,7 +894,7 @@ func (g *execGraph[K, J]) AddDependency(source, target K) error {
 	var err error
 	for i := 0; i < 50; i++ {
 		edge := Edge[K, int]{
-			Key:  edgeFormat(source, target),
+			Key:  randEdgeKey(source, target),
 			Head: target,
 			Tail: source,
 		}

@@ -57,13 +57,13 @@ func TestLCA(t *testing.T) {
 	for i := 1; i <= 30; i++ {
 		err := f.AddVertex(Vertex[int, int]{Key: i})
 		if err != nil {
-			panic(err.Error())
+			t.Error(err)
 		}
 	}
 	for i, e := range es {
 		e.Key = i + 1
 		if err := f.AddEdge(e); err != nil {
-			panic(fmt.Sprintf("edge:(%d,%d) err:%s", e.Head, e.Tail, err.Error()))
+			t.Errorf("edge:(%d,%d) err:%s", e.Head, e.Tail, err.Error())
 		}
 	}
 	f.SetRoot(1)
@@ -85,7 +85,7 @@ func TestLCA(t *testing.T) {
 		v, ok := f.LeastCommonAncestor(u[0], u[1])
 		if !ok || v != u[2] {
 			fmt.Println("ok=", ok)
-			panic(fmt.Sprintf("{%d,%d} lcm should be %d,but get %d", u[0], u[1], u[2], v))
+			t.Errorf("{%d,%d} lcm should be %d,but get %d", u[0], u[1], u[2], v)
 		}
 	}
 }

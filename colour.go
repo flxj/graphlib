@@ -261,10 +261,24 @@ func GreedyEdgeColouring[K comparable, W number](g Graph[K, W]) (map[K]int, int,
 	return col, cnt + 1, nil
 }
 
+/*
 func MaximalIndependentSet[K comparable, W number](g Graph[K, W]) ([]K, error) {
 	return nil, errNotImplement
 }
+*/
 
+// Calculate the maximum independent set of the graph and return a
+// slice of vertices from the maximum independent set.
 func MaximumIndependentSet[K comparable, W number](g Graph[K, W]) ([]K, error) {
-	return nil, errNotImplement
+	cg, err := Complement(g)
+	if err != nil {
+		return nil, err
+	}
+	return MaximumClique(cg)
+}
+
+// Calculate the maximum clique of the graph and
+// return a slice of the vertices of the maximum clique.
+func MaximumClique[K comparable, W number](g Graph[K, W]) ([]K, error) { //TODO
+	return mcq(g)
 }

@@ -29,8 +29,6 @@ import (
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 func randStr(n int) string {
-	//s := rand.NewSource(time.Now().UnixNano())
-
 	b := make([]byte, n)
 	for i := 0; i < n; i++ {
 		b[i] = charset[rand.Intn(len(charset))]
@@ -79,12 +77,12 @@ func getMaxValue[W number](n W) W {
 	}
 }
 
-func edgeFormat[K comparable](v1, v2 K) K {
+func randEdgeKey[K comparable](v1, v2 K) K {
 	switch any(v1).(type) {
-	case string, []byte:
-		return any(fmt.Sprintf("%v-%v-%s", v1, v2, randStr(7))).(K)
 	case int:
 		return any(rand.Int()).(K)
+	case string:
+		return any(fmt.Sprintf("%v-%v-%s", v1, v2, randStr(10))).(K)
 	case int8:
 		return any(int8(rand.Int())).(K)
 	case int16:
@@ -103,6 +101,8 @@ func edgeFormat[K comparable](v1, v2 K) K {
 		return any(rand.Uint32()).(K)
 	case uint64:
 		return any(rand.Uint64()).(K)
+	case []byte:
+		return any(fmt.Sprintf("%v-%v-%s", v1, v2, randStr(10))).(K)
 	default:
 		return v1
 	}

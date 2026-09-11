@@ -74,16 +74,14 @@ func TestMarshalJSON(t *testing.T) {
 	fmt.Printf("size:%d\n", g.Size())
 
 	fmt.Println("==================> marshal")
-	s, err := MarshalGraphToJSON[int, int](g)
+	s, err := MarshalGraphToJSON(g)
 	if err != nil {
-		fmt.Printf("marshal graph error:%v\n", err)
-		return
+		t.Errorf("marshal graph error:%v", err)
 	}
 	fmt.Println("==================> json")
 	var bf bytes.Buffer
 	if err := json.Indent(&bf, s, "", "  "); err != nil {
-		fmt.Printf("output graph error:%v\n", err)
-		return
+		t.Errorf("output graph error:%v", err)
 	}
 	fmt.Println(bf.String())
 }
@@ -97,16 +95,14 @@ func TestUnmarshalJSON(t *testing.T) {
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 	fmt.Println("==================> marshal")
-	s, err := MarshalGraphToJSON[int, int](g)
+	s, err := MarshalGraphToJSON(g)
 	if err != nil {
-		fmt.Printf("marshal graph error:%v\n", err)
-		return
+		t.Errorf("marshal graph error:%v", err)
 	}
 	fmt.Println("==================> unmarshal")
 	g2, err := UnmarshalGraph[int, int](s)
 	if err != nil {
-		fmt.Printf("unmarshal graph error:%v\n", err)
-		return
+		t.Errorf("unmarshal graph error:%v", err)
 	}
 	fmt.Printf("name:%s\n", g2.Name())
 	fmt.Printf("order:%d\n", g2.Order())

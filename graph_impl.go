@@ -441,7 +441,7 @@ func (g *graph[K, W]) AddEdge(edge Edge[K, W]) error {
 		}
 	} else {
 		for {
-			edge.Key = edgeFormat(edge.Head, edge.Tail)
+			edge.Key = randEdgeKey(edge.Head, edge.Tail)
 			if _, ok := g.edges[edge.Key]; ok {
 				break
 			}

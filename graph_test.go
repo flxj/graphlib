@@ -35,8 +35,7 @@ func TestBasicOp(t *testing.T) {
 
 	for _, v := range vs {
 		if err := g.AddVertex(v); err != nil {
-			fmt.Printf("add vertex error:%v\n", err)
-			return
+			t.Errorf("add vertex error:%v\n", err)
 		}
 	}
 
@@ -56,8 +55,7 @@ v3     v4-----v5----v6
 
 	for _, e := range es {
 		if err := g.AddEdge(e); err != nil {
-			fmt.Printf("add edge error:%v\n", err)
-			return
+			t.Errorf("add edge error:%v\n", err)
 		}
 	}
 	//
@@ -68,20 +66,17 @@ v3     v4-----v5----v6
 
 	ps, err := g.Property(ProSimple)
 	if err != nil {
-		fmt.Printf("get Pro simple error:%v\n", err)
-		return
+		t.Errorf("get Pro simple error:%v\n", err)
 	}
 	fmt.Printf("simple:%v\n", ps.Value)
 	pc, err := g.Property(ProConnected)
 	if err != nil {
-		fmt.Printf("get Pro connected error:%v\n", err)
-		return
+		t.Errorf("get Pro connected error:%v\n", err)
 	}
 	fmt.Printf("connected:%v\n", pc.Value)
 	pa, err := g.Property(ProAcyclic)
 	if err != nil {
-		fmt.Printf("get Pro acyclic error:%v\n", err)
-		return
+		t.Errorf("get Pro acyclic error:%v\n", err)
 	}
 	fmt.Printf("acyclic:%v\n", pa.Value)
 
@@ -104,20 +99,17 @@ v3     v4-----v5----v6
 
 	ps, err = g.Property(ProSimple)
 	if err != nil {
-		fmt.Printf("get Pro simple error:%v\n", err)
-		return
+		t.Errorf("get Pro simple error:%v\n", err)
 	}
 	fmt.Printf("simple:%v\n", ps.Value)
 	pc, err = g.Property(ProConnected)
 	if err != nil {
-		fmt.Printf("get Pro connected error:%v\n", err)
-		return
+		t.Errorf("get Pro connected error:%v\n", err)
 	}
 	fmt.Printf("connected:%v\n", pc.Value)
 	pa, err = g.Property(ProAcyclic)
 	if err != nil {
-		fmt.Printf("get Pro acyclic error:%v\n", err)
-		return
+		t.Errorf("get Pro acyclic error:%v\n", err)
 	}
 	fmt.Printf("acyclic:%v\n", pa.Value)
 
@@ -140,18 +132,15 @@ v3    v4-----v5----v6  v7
 	fmt.Printf("size:%d\n", g.Size())
 
 	if ps, err = g.Property(ProSimple); err != nil {
-		fmt.Printf("get Pro simple error:%v\n", err)
-		return
+		t.Errorf("get Pro simple error:%v\n", err)
 	}
 	fmt.Printf("simple:%v\n", ps.Value)
 	if pc, err = g.Property(ProConnected); err != nil {
-		fmt.Printf("get Pro connected error:%v\n", err)
-		return
+		t.Errorf("get Pro connected error:%v\n", err)
 	}
 	fmt.Printf("connected:%v\n", pc.Value)
 	if pa, err = g.Property(ProAcyclic); err != nil {
-		fmt.Printf("get Pro acyclic error:%v\n", err)
-		return
+		t.Errorf("get Pro acyclic error:%v\n", err)
 	}
 	fmt.Printf("acyclic:%v\n", pa.Value)
 
@@ -169,8 +158,7 @@ v3---v4
 	}
 	for _, e := range es {
 		if err := g.AddEdge(e); err != nil {
-			fmt.Printf("add edge error:%v\n", err)
-			return
+			t.Errorf("add edge error:%v\n", err)
 		}
 	}
 	fmt.Println(gs)
@@ -178,18 +166,15 @@ v3---v4
 	fmt.Printf("size:%d\n", g.Size())
 
 	if ps, err = g.Property(ProSimple); err != nil {
-		fmt.Printf("get Pro simple error:%v\n", err)
-		return
+		t.Errorf("get Pro simple error:%v\n", err)
 	}
 	fmt.Printf("simple:%v\n", ps.Value)
 	if pc, err = g.Property(ProConnected); err != nil {
-		fmt.Printf("get Pro connected error:%v\n", err)
-		return
+		t.Errorf("get Pro connected error:%v\n", err)
 	}
 	fmt.Printf("connected:%v\n", pc.Value)
 	if pa, err = g.Property(ProAcyclic); err != nil {
-		fmt.Printf("get Pro acyclic error:%v\n", err)
-		return
+		t.Errorf("get Pro acyclic error:%v\n", err)
 	}
 	fmt.Printf("acyclic:%v\n", pa.Value)
 
@@ -201,26 +186,22 @@ v2---v5----v6---v7
 v3   v4 
 `
 	if err := g.RemoveEdge(3, 4); err != nil {
-		fmt.Printf("delete edge error:%v\n", err)
-		return
+		t.Errorf("delete edge error:%v\n", err)
 	}
 	fmt.Println(gs)
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 
 	if ps, err = g.Property(ProSimple); err != nil {
-		fmt.Printf("get Pro simple error:%v\n", err)
-		return
+		t.Errorf("get Pro simple error:%v\n", err)
 	}
 	fmt.Printf("simple:%v\n", ps.Value)
 	if pc, err = g.Property(ProConnected); err != nil {
-		fmt.Printf("get Pro connected error:%v\n", err)
-		return
+		t.Errorf("get Pro connected error:%v\n", err)
 	}
 	fmt.Printf("connected:%v\n", pc.Value)
 	if pa, err = g.Property(ProAcyclic); err != nil {
-		fmt.Printf("get Pro acyclic error:%v\n", err)
-		return
+		t.Errorf("get Pro acyclic error:%v\n", err)
 	}
 	fmt.Printf("acyclic:%v\n", pa.Value)
 
@@ -236,30 +217,25 @@ v3   v4------/
 		{Key: 101, Head: 4, Tail: 5},
 	}
 	if err := g.AddEdge(es[0]); err != nil {
-		fmt.Printf("add edge error:%v\n", err)
-		return
+		t.Errorf("add edge error:%v\n", err)
 	}
 	if err := g.AddEdge(es[1]); err != nil {
-		fmt.Printf("add edge error:%v\n", err)
-		return
+		t.Errorf("add edge error:%v\n", err)
 	}
 	fmt.Println(gs)
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 
 	if ps, err = g.Property(ProSimple); err != nil {
-		fmt.Printf("get Pro simple error:%v\n", err)
-		return
+		t.Errorf("get Pro simple error:%v\n", err)
 	}
 	fmt.Printf("simple:%v\n", ps.Value)
 	if pc, err = g.Property(ProConnected); err != nil {
-		fmt.Printf("get Pro connected error:%v\n", err)
-		return
+		t.Errorf("get Pro connected error:%v\n", err)
 	}
 	fmt.Printf("connected:%v\n", pc.Value)
 	if pa, err = g.Property(ProAcyclic); err != nil {
-		fmt.Printf("get Pro acyclic error:%v\n", err)
-		return
+		t.Errorf("get Pro acyclic error:%v\n", err)
 	}
 	fmt.Printf("acyclic:%v\n", pa.Value)
 
@@ -279,8 +255,7 @@ func TestConnected(t *testing.T) {
 
 	for _, v := range vs {
 		if err := g.AddVertex(v); err != nil {
-			fmt.Printf("add vertex error:%v\n", err)
-			return
+			t.Errorf("add vertex error:%v\n", err)
 		}
 	}
 
@@ -291,8 +266,7 @@ func TestConnected(t *testing.T) {
 	fmt.Printf("size:%d\n", g.Size())
 	pc, err := g.Property(ProConnected)
 	if err != nil {
-		fmt.Printf("get Pro connected error:%v\n", err)
-		return
+		t.Errorf("get Pro connected error:%v\n", err)
 	}
 	fmt.Printf("connected:%v\n", pc.Value)
 
@@ -309,8 +283,7 @@ func TestConnected(t *testing.T) {
 
 	for _, e := range es {
 		if err := g.AddEdge(e); err != nil {
-			fmt.Printf("add edge error:%v\n", err)
-			return
+			t.Errorf("add edge error:%v\n", err)
 		}
 	}
 
@@ -318,21 +291,8 @@ func TestConnected(t *testing.T) {
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 	if pc, err = g.Property(ProConnected); err != nil {
-		fmt.Printf("get Pro connected error:%v\n", err)
-		return
+		t.Errorf("get Pro connected error:%v\n", err)
 	}
 	fmt.Printf("connected:%v\n", pc.Value)
 
-}
-
-func TestColour(t *testing.T) {
-	g := PetersenGraph()
-	col, x, err := GreedyVertexColouring(g)
-	if err != nil {
-		panic(err.Error())
-	}
-	fmt.Println("colour=", x)
-	for v, c := range col {
-		fmt.Println("v=", v, " c=", c)
-	}
 }

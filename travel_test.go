@@ -35,8 +35,7 @@ func TestDFS1(t *testing.T) {
 
 	for _, v := range vs {
 		if err := g.AddVertex(v); err != nil {
-			fmt.Printf("add vertex error:%v\n", err)
-			return
+			t.Errorf("add vertex error:%v\n", err)
 		}
 	}
 
@@ -56,8 +55,7 @@ v3     v4-----v5----v6
 
 	for _, e := range es {
 		if err := g.AddEdge(e); err != nil {
-			fmt.Printf("add edge error:%v\n", err)
-			return
+			t.Errorf("add edge error:%v\n", err)
 		}
 	}
 	fmt.Println(gs)
@@ -70,8 +68,7 @@ v3     v4-----v5----v6
 	}
 
 	if err := DFS(g, 5, vis); err != nil {
-		fmt.Println("[ERR] ", err)
-		return
+		t.Error("[ERR] ", err)
 	}
 }
 
@@ -89,7 +86,7 @@ func TestDFS2(t *testing.T) {
 
 	for _, v := range vs {
 		if err := g.AddVertex(v); err != nil {
-			fmt.Printf("add vertex error:%v\n", err)
+			t.Errorf("add vertex error:%v\n", err)
 			return
 		}
 	}
@@ -112,7 +109,7 @@ v3---->v4---->v5--->v6
 
 	for _, e := range es {
 		if err := g.AddEdge(e); err != nil {
-			fmt.Printf("add edge error:%v\n", err)
+			t.Errorf("add edge error:%v\n", err)
 			return
 		}
 	}
@@ -126,18 +123,15 @@ v3---->v4---->v5--->v6
 	}
 
 	if err := DFS(g, 3, vis); err != nil {
-		fmt.Println("[ERR] ", err)
-		return
+		t.Error("[ERR] ", err)
 	}
 	fmt.Println("===============")
 	if err := DFS(g, 2, vis); err != nil {
-		fmt.Println("[ERR] ", err)
-		return
+		t.Error("[ERR] ", err)
 	}
 	fmt.Println("===============")
 	if err := DFS(g, 1, vis); err != nil {
-		fmt.Println("[ERR] ", err)
-		return
+		t.Error("[ERR] ", err)
 	}
 }
 
@@ -155,8 +149,7 @@ func TestBFS1(t *testing.T) {
 
 	for _, v := range vs {
 		if err := g.AddVertex(v); err != nil {
-			fmt.Printf("add vertex error:%v\n", err)
-			return
+			t.Errorf("add vertex error:%v\n", err)
 		}
 	}
 
@@ -180,8 +173,7 @@ v3      v5-----v6
 
 	for _, e := range es {
 		if err := g.AddEdge(e); err != nil {
-			fmt.Printf("add edge error:%v\n", err)
-			return
+			t.Errorf("add edge error:%v\n", err)
 		}
 	}
 	fmt.Println(gs)
@@ -194,8 +186,7 @@ v3      v5-----v6
 	}
 
 	if err := BFS(g, 1, vis); err != nil {
-		fmt.Println("[ERR] ", err)
-		return
+		t.Error("[ERR] ", err)
 	}
 }
 
@@ -213,8 +204,7 @@ func TestBFS2(t *testing.T) {
 
 	for _, v := range vs {
 		if err := g.AddVertex(v); err != nil {
-			fmt.Printf("add vertex error:%v\n", err)
-			return
+			t.Errorf("add vertex error:%v\n", err)
 		}
 	}
 
@@ -239,8 +229,7 @@ v3        v5---->v6
 
 	for _, e := range es {
 		if err := g.AddEdge(e); err != nil {
-			fmt.Printf("add edge error:%v\n", err)
-			return
+			t.Errorf("add edge error:%v\n", err)
 		}
 	}
 	fmt.Println(gs)
@@ -253,7 +242,6 @@ v3        v5---->v6
 	}
 
 	if err := BFS(g, 2, vis); err != nil {
-		fmt.Println("[ERR] ", err)
-		return
+		t.Error("[ERR] ", err)
 	}
 }

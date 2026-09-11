@@ -34,8 +34,7 @@ func TestDigraph1(t *testing.T) {
 
 	for _, v := range vs {
 		if err := g.AddVertex(v); err != nil {
-			fmt.Printf("add vertex error:%v\n", err)
-			return
+			t.Errorf("add vertex error:%v", err)
 		}
 	}
 
@@ -49,8 +48,7 @@ func TestDigraph1(t *testing.T) {
 
 	for _, e := range es {
 		if err := g.AddEdge(e); err != nil {
-			fmt.Printf("add edge error:%v\n", err)
-			return
+			t.Errorf("add edge error:%v", err)
 		}
 	}
 	gs := `
@@ -65,25 +63,21 @@ V4---> V5 ---> V6
 	fmt.Printf("size:%d\n", g.Size())
 	p, err := g.Property(ProConnected)
 	if err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
-		return
+		t.Errorf("get property connected error:%v", err)
 	}
 	fmt.Printf("connected:%v\n", p.Value)
 	if p, err = g.Property(ProUnilateralConnected); err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
-		return
+		t.Errorf("get property connected error:%v", err)
 	}
 	fmt.Printf("unidirectional connected:%v\n", p.Value)
 	if p, err = g.Property(ProAcyclic); err != nil {
-		fmt.Printf("get property acyclic error:%v\n", err)
-		return
+		t.Errorf("get property acyclic error:%v", err)
 	}
 	fmt.Printf("acyclic:%v\n", p.Value)
 
 	fmt.Println("===================>[1] delete vertrx v4")
 	if err := g.RemoveVertex(4); err != nil {
-		fmt.Printf("delete edge error:%v\n", err)
-		return
+		t.Errorf("delete edge error:%v", err)
 	}
 	gs = `
 V1---> V2 ---> V3
@@ -95,26 +89,22 @@ V1---> V2 ---> V3
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 	if p, err = g.Property(ProConnected); err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
-		return
+		t.Errorf("get property connected error:%v", err)
 	}
 	fmt.Printf("connected:%v\n", p.Value)
 	if p, err = g.Property(ProUnilateralConnected); err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
-		return
+		t.Errorf("get property connected error:%v", err)
 	}
 	fmt.Printf("unidirectional connected:%v\n", p.Value)
 	if p, err = g.Property(ProAcyclic); err != nil {
-		fmt.Printf("get property acyclic error:%v\n", err)
-		return
+		t.Errorf("get property acyclic error:%v", err)
 	}
 	fmt.Printf("acyclic:%v\n", p.Value)
 
 	fmt.Println("===================>[2] add edge v5->v1")
 	ed := Edge[int, int]{Key: 10, Head: 5, Tail: 1}
 	if err := g.AddEdge(ed); err != nil {
-		fmt.Printf("add edge error:%v\n", err)
-		return
+		t.Errorf("add edge error:%v", err)
 	}
 	gs = `
 V1---> V2 ---> V3
@@ -126,26 +116,22 @@ V1---> V2 ---> V3
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 	if p, err = g.Property(ProConnected); err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
-		return
+		t.Errorf("get property connected error:%v", err)
 	}
 	fmt.Printf("connected:%v\n", p.Value)
 	if p, err = g.Property(ProUnilateralConnected); err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
-		return
+		t.Errorf("get property connected error:%v", err)
 	}
 	fmt.Printf("unidirectional connected:%v\n", p.Value)
 	if p, err = g.Property(ProAcyclic); err != nil {
-		fmt.Printf("get property acyclic error:%v\n", err)
-		return
+		t.Errorf("get property acyclic error:%v", err)
 	}
 	fmt.Printf("acyclic:%v\n", p.Value)
 
 	fmt.Println("===================>[2] add edge v3->v6")
 	ed = Edge[int, int]{Key: 11, Head: 3, Tail: 6}
 	if err := g.AddEdge(ed); err != nil {
-		fmt.Printf("add edge error:%v\n", err)
-		return
+		t.Errorf("add edge error:%v", err)
 	}
 	gs = `
 V1---> V2 ---> V3
@@ -157,18 +143,15 @@ V1---> V2 ---> V3
 	fmt.Printf("order:%d\n", g.Order())
 	fmt.Printf("size:%d\n", g.Size())
 	if p, err = g.Property(ProConnected); err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
-		return
+		t.Errorf("get property connected error:%v", err)
 	}
 	fmt.Printf("connected:%v\n", p.Value)
 	if p, err = g.Property(ProUnilateralConnected); err != nil {
-		fmt.Printf("get property connected error:%v\n", err)
-		return
+		t.Errorf("get property connected error:%v", err)
 	}
 	fmt.Printf("unidirectional connected:%v\n", p.Value)
 	if p, err = g.Property(ProAcyclic); err != nil {
-		fmt.Printf("get property acyclic error:%v\n", err)
-		return
+		t.Errorf("get property acyclic error:%v", err)
 	}
 	fmt.Printf("acyclic:%v\n", p.Value)
 
