@@ -49,7 +49,7 @@ type Digraph[K comparable, W number] interface {
 	// All vertices with degree 0.
 	Sinks() ([]Vertex[K, W], bool)
 	//
-	DetectCycle() ([][]K, bool)
+	IsLoop(v K) bool
 	//
 	// Reverse all edges in a directed graph.
 	Reverse()
@@ -144,8 +144,9 @@ func (g *graph[K, W]) Sinks() ([]Vertex[K, W], bool) {
 	return g.getVertexes(vs)
 }
 
-func (g *graph[K, W]) DetectCycle() ([][]K, bool) {
-	return nil, false
+func (g *graph[K, W]) IsLoop(v K) bool {
+	es, ok := g.GetEdge(v, v)
+	return ok && len(es) > 0
 }
 
 func (g *graph[K, W]) Reverse() {

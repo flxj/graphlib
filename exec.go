@@ -949,6 +949,6 @@ func (g *execGraph[K, J]) DetectCycle() ([][]K, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	c, _ := g.dag.DetectCycle()
+	c, _ := DetectCycle(g.dag)
 	return c, nil
 }

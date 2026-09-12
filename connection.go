@@ -16,6 +16,8 @@
 
 package graphlib
 
+import "slices"
+
 // Determine whether the start and end vertices in graph g are connected.
 // If it is a directed graph, determine if there is a directed path from start to end.
 func Connected[K comparable, W number](g Graph[K, W], start, end K) (bool, error) {
@@ -459,4 +461,153 @@ func StronglyConnectedComponentTarjan[K comparable, W number](g Digraph[K, W], c
 // return the set of vertices for each strongly connected component.
 func StronglyConnectedComponentKosaraju[K comparable, W number](g Digraph[K, W], condensation bool) ([][]K, Digraph[K, W], error) {
 	return sccKosaraju(g, condensation)
+}
+
+// O((V+E)(C+1))
+func detectCycleJohnson[K comparable, W number](g Digraph[K, W], scc []K) [][]K {
+	n := len(scc)
+	switch n {
+	case 0:
+		return nil
+	case 1:
+		if g.IsLoop(scc[0]) {
+			return [][]K{scc}
+		}
+		return nil
+	}
+	idx := make(map[K]int)
+	// number the vertex of scc 1....n
+	for i := 0; i < n; i++ {
+		idx[scc[i]] = i
+	}
+	var res [][]K
+	blocked := make(map[K]struct{})
+	bm := make(map[K][]K)
+	path := []K{}
+	var start K
+	var unblock func(K)
+	var circuit func(K) bool
+	unblock = func(v K) {
+		delete(blocked, v)
+		for _, u := range bm[v] {
+			unblock(u)
+		}
+		bm[v] = []K{}
+	}
+	// find all cycle from v,and contains only vertex in scc[v:]
+	circuit = func(v K) bool {
+		var found bool
+		path = append(path, v)
+		blocked[v] = struct{}{}
+		vs, _ := g.OutNeighbours(v)
+		for _, u := range vs {
+			if _, ok := idx[u.Key]; !ok {
+				continue
+			}
+			if u.Key == start {
+				// find a cycle.
+				p := make([]K, len(path))
+				copy(p, path)
+				res = append(res, p)
+				found = true
+			} else {
+				if _, ok := blocked[u.Key]; !ok {
+					if circuit(u.Key) {
+						found = true
+					}
+				}
+			}
+		}
+		if found {
+			// unblock
+			unblock(v)
+		} else {
+			// not found any cycle.add v to bm list.
+			for _, u := range vs {
+				if _, ok := idx[u.Key]; !ok {
+					continue
+				}
+				if !slices.Contains(bm[u.Key], v) {
+					bm[u.Key] = append(bm[u.Key], v)
+				}
+			}
+		}
+		path = path[:len(path)-1]
+		return found
+	}
+
+	for _, k := range scc {
+		start = k
+		circuit(k)
+		delete(idx, k)
+	}
+	return res
+}
+
+// find all simple cycles.
+func DetectCycle[K comparable, W number](g Digraph[K, W]) ([][]K, error) {
+	scc, _, err := StronglyConnectedComponent(g, false)
+	if err != nil {
+		return nil, err
+	}
+	var cs [][]K
+	for _, s := range scc {
+		c := detectCycleJohnson(g, s)
+		cs = append(cs, c...)
+	}
+	return cs, nil
+}
+
+// This method returns the vertex set of all 2-edge-connected components of the graph.
+func TwoEdgeConnectedComponent[K comparable, W number](g Graph[K, W]) ([][]K, error) {
+	bridges, err := FindBridges(g)
+	if err != nil {
+		return nil, err
+	}
+	vtx := g.AllVertexes()
+	if len(bridges) == 0 {
+		k := make([]K, len(vtx))
+		for i, v := range vtx {
+			k[i] = v.Key
+		}
+		return [][]K{k}, nil
+	}
+	bm := make(map[K]struct{})
+	for _, b := range bridges {
+		bm[b.Key] = struct{}{}
+	}
+
+	comp := make(map[K]int)
+	var cp int
+	var dfs func(K)
+	dfs = func(v K) {
+		if _, ok := comp[v]; ok {
+			return
+		}
+		comp[v] = cp
+		es, _ := g.IncidentEdges(v)
+		for _, e := range es {
+			if _, ok := bm[e.Key]; ok {
+				continue
+			}
+			if e.Head == v {
+				dfs(e.Tail)
+			} else {
+				dfs(e.Head)
+			}
+		}
+	}
+	for len(comp) != g.Order() {
+		for _, v := range vtx {
+			if _, ok := comp[v.Key]; !ok {
+				cp++
+				dfs(v.Key)
+			}
+		}
+	}
+	res := make([][]K, cp+1)
+	for v, c := range comp {
+		res[c] = append(res[c], v)
+	}
+	return res, nil
 }
