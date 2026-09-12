@@ -18,6 +18,7 @@ package graphlib
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -245,10 +246,7 @@ func NewExecGraphFromFile[K comparable, W number, J job](path string) (ExecGraph
 
 // Create an ExecGraph based on an existing DAG object.
 func NewExecGraphFromDAG[K comparable, W number, J job](g Digraph[K, W]) (ExecGraph[K, J], error) {
-	p, err := g.Property(ProAcyclic)
-	if err != nil {
-		return nil, err
-	}
+	p, _ := g.Property(ProAcyclic)
 	if !p.Value.(bool) {
 		return nil, errExistsCycle
 	}
@@ -258,9 +256,7 @@ func NewExecGraphFromDAG[K comparable, W number, J job](g Digraph[K, W]) (ExecGr
 	es := g.AllEdges()
 	for _, v := range vs {
 		nv := Vertex[K, int]{Key: v.Key}
-		if err = dag.AddVertex(nv); err != nil {
-			return nil, err
-		}
+		_ = dag.AddVertex(nv)
 	}
 	for _, e := range es {
 		ne := Edge[K, int]{
@@ -268,9 +264,7 @@ func NewExecGraphFromDAG[K comparable, W number, J job](g Digraph[K, W]) (ExecGr
 			Head: e.Head,
 			Tail: e.Tail,
 		}
-		if err = dag.AddEdge(ne); err != nil {
-			return nil, err
-		}
+		_ = dag.AddEdge(ne)
 	}
 
 	eg := &execGraph[K, J]{
@@ -484,10 +478,7 @@ type execGraph[K comparable, J job] struct {
 }
 
 func (g *execGraph[K, J]) Start() error {
-	p, err := g.dag.Property(ProAcyclic)
-	if err != nil {
-		return err
-	}
+	p, _ := g.dag.Property(ProAcyclic)
 	if !p.Value.(bool) {
 		return errExistsCycle
 	}
@@ -523,8 +514,8 @@ func (g *execGraph[K, J]) scheduledError(key K, err error) {
 func (g *execGraph[K, J]) start() {
 	g.status = Running
 	// load source vertecis.
-	sources, err := g.dag.Sources()
-	if err != nil {
+	sources, ok := g.dag.Sources()
+	if !ok {
 		g.scheduledError(any("").(K), errNoEntrypoint)
 		return
 	}
@@ -559,9 +550,9 @@ func (g *execGraph[K, J]) start() {
 						}
 					} else {
 						// update candicates refCount
-						outs, err := g.dag.OutNeighbours(res.key) // TODO:we need ignore some err, for example when res.key sink node,it not has successors.
-						if err != nil {
-							g.scheduledError(res.key, err)
+						outs, ok := g.dag.OutNeighbours(res.key) // TODO:we need ignore some err, for example when res.key sink node,it not has successors.
+						if !ok {
+							g.scheduledError(res.key, errVertexNotExists)
 							g.mu.Unlock()
 							return
 						}
@@ -584,9 +575,9 @@ func (g *execGraph[K, J]) start() {
 								}
 								// if successors not in candicates set, then add it
 								if _, ok := g.finishes[v.Key]; !ok {
-									n, err := g.dag.InDegree(v.Key)
-									if err != nil {
-										g.scheduledError(v.Key, err)
+									n, ok := g.dag.InDegree(v.Key)
+									if !ok {
+										g.scheduledError(v.Key, errVertexNotExists)
 										g.mu.Unlock()
 										return
 									}
@@ -835,9 +826,7 @@ func (g *execGraph[K, J]) addJob(key K, job J, d time.Duration, n int) error {
 	v := Vertex[K, int]{
 		Key: key,
 	}
-	if err := g.dag.AddVertex(v); err != nil {
-		return err
-	}
+	_ = g.dag.AddVertex(v)
 	g.nodes[key] = newExecNode(key, job, d, n)
 
 	return nil
@@ -867,9 +856,7 @@ func (g *execGraph[K, J]) RemoveJob(key K) error {
 	if !ok {
 		return errJobNotExists
 	}
-	if err := g.dag.RemoveVertex(key); err != nil {
-		return err
-	}
+	_, _ = g.dag.RemoveVertex(key)
 	delete(g.nodes, key)
 	delete(g.candicates, key)
 
@@ -891,23 +878,21 @@ func (g *execGraph[K, J]) AddDependency(source, target K) error {
 		return errJobNotExists
 	}
 
-	var err error
-	for i := 0; i < 50; i++ {
-		edge := Edge[K, int]{
-			Key:  randEdgeKey(source, target),
-			Head: target,
-			Tail: source,
-		}
-		err = g.dag.AddEdge(edge)
-		if err == nil {
-			return nil
-		}
-		if !IsAlreadyExists(err) {
-			return err
-		}
+	es, ok := g.dag.GetEdge(source, target)
+	if ok && len(es) > 0 {
+		return errEdgeExists
 	}
-
-	return err
+	ek, ok := randEdgeKey(source, target)
+	if !ok {
+		return errors.New("cannot generate dege key")
+	}
+	edge := Edge[K, int]{
+		Key:  ek,
+		Head: target,
+		Tail: source,
+	}
+	_ = g.dag.AddEdge(edge)
+	return nil
 }
 
 func (g *execGraph[K, J]) RemoveDependency(source, target K) error {
@@ -925,7 +910,8 @@ func (g *execGraph[K, J]) RemoveDependency(source, target K) error {
 		return errJobNotExists
 	}
 
-	return g.dag.RemoveEdge(target, source)
+	_, _ = g.dag.RemoveEdge(target, source)
+	return nil
 }
 
 func (g *execGraph[K, J]) SetMaxConcurrencyJob(n int) {}
@@ -963,5 +949,6 @@ func (g *execGraph[K, J]) DetectCycle() ([][]K, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	return g.dag.DetectCycle()
+	c, _ := g.dag.DetectCycle()
+	return c, nil
 }

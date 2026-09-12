@@ -131,7 +131,7 @@ type Graph[K comparable, W number] interface {
 	// PropertyMinDegree: Minimum Read
 	//
 	// PropertyAvgDegree: Average degree (float64)
-	Property(p PropertyName) (GraphProperty[any], error)
+	Property(p PropertyName) (GraphProperty[any], bool)
 	//
 	// The unordered set of all vertices in a graph.
 	AllVertexes() []Vertex[K, W]
@@ -140,42 +140,43 @@ type Graph[K comparable, W number] interface {
 	AllEdges() []Edge[K, W]
 	//
 	// Add vertices to the graph.
-	AddVertex(vertex Vertex[K, W]) error
+	AddVertex(vertex Vertex[K, W]) bool
 	//
 	// Delete a vertex, and all edges corresponding to that vertex
-	// will also be deleted. If the vertex does not exist, return an error.
-	RemoveVertex(key K) error
+	// will also be deleted. If the vertex does not exist, return false.
+	RemoveVertex(key K) (Vertex[K, W], bool)
 	//
 	// Add new edge, if the corresponding vertex of the
-	// edge does not exist, return an error.
-	AddEdge(edge Edge[K, W]) error
+	// edge does not exist, return false.
+	AddEdge(edge Edge[K, W]) bool
 	//
 	// Delete specified edge.
-	RemoveEdgeByKey(key K) error
+	RemoveEdgeByKey(key K) (Edge[K, W], bool)
 	//
 	// Delete edges with endpoints ednpoint1 and endpoint2.
 	// If it is a directed graph, delete all arcs in the 'endpoint1->endpoint2'
 	// and 'endpoint2->endpoint1' directions simultaneously.
-	RemoveEdge(endpoint1, endpoint2 K) error
-	//
+	RemoveEdge(endpoint1, endpoint2 K) ([]Edge[K, W], bool)
+	// clean graph.
+	RemoveAllVertex()
 	// Delete all edges.
-	RemoveAllEdge() error
+	RemoveAllEdge()
 	// Calculate the degree of vertices.
 	// If it is a directed graph, calculate the sum of in degree and out degree.
-	// If the vertex does not exist, an error is returned.
-	Degree(vertex K) (int, error)
+	// If the vertex does not exist, an false flag is returned.
+	Degree(vertex K) (int, bool)
 	//
 	// Query the adjacent vertices of a specified vertex.
-	Neighbours(vertex K) ([]Vertex[K, W], error)
+	Neighbours(vertex K) ([]Vertex[K, W], bool)
 	//
 	// Query specified vertex.
-	GetVertex(key K) (Vertex[K, W], error)
+	GetVertex(key K) (Vertex[K, W], bool)
 	//
 	// Query all edges with endpoints 1 and 2 as their respective endpoints.
-	GetEdge(endpoint1, endpoint2 K) ([]Edge[K, W], error)
+	GetEdge(endpoint1, endpoint2 K) ([]Edge[K, W], bool)
 	//
 	// Query specified edge.
-	GetEdgeByKey(key K) (Edge[K, W], error)
+	GetEdgeByKey(key K) (Edge[K, W], bool)
 	//
 	// Filter vertices based on label information,
 	// and eligible vertices need to include all label items in
@@ -188,59 +189,59 @@ type Graph[K comparable, W number] interface {
 	GetEdgesByLabel(labels Labels) []Edge[K, W]
 	//
 	// Update vertex data.
-	SetVertexValue(key K, value any) error
+	SetVertexValue(key K, value any) bool
 	//
 	// Update vertex label.
-	SetVertexLabel(key K, labelKey string, labelVal any) error
+	SetVertexLabel(key K, labelKey string, labelVal any) bool
 	//
 	// Remove vertex label.
-	DeleteVertexLabel(key K, labelKey string) error
+	DeleteVertexLabel(key K, labelKey string) bool
 	//
 	// Update edge weight.
-	SetVertexWeight(key K, weight W) error
+	SetVertexWeight(key K, weight W) bool
 	// Update edge weight.
-	SetEdgeWeight(key K, weight W) error
+	SetEdgeWeight(key K, weight W) bool
 	// Update edge data.
-	SetEdgeValueByKey(key K, value any) error
+	SetEdgeValueByKey(key K, value any) bool
 	//
 	// Update dege label.
-	SetEdgeLabelByKey(key K, labelKey string, labelVal any) error
+	SetEdgeLabelByKey(key K, labelKey string, labelVal any) bool
 	//
 	// Remove edge label.
-	DeleteEdgeLabelByKey(key K, labelKey string) error
+	DeleteEdgeLabelByKey(key K, labelKey string) bool
 	//
 	// Update edge data. If there are multiple edges associated with
 	// endpoints1 and endpoint2 simultaneously,
 	// the data of these edges will be updated simultaneously.
-	SetEdgeValue(endpoint1, endpoint2 K, value any) error
+	SetEdgeValue(endpoint1, endpoint2 K, value any) bool
 	//
 	// Update edge label. If there are multiple edges associated with
 	// endpoints1 and endpoint2 simultaneously,
 	// the label of these edges will be updated simultaneously.
-	SetEdgeLabel(endpoint1, endpoint2 K, labelKey string, labelVal any) error
+	SetEdgeLabel(endpoint1, endpoint2 K, labelKey string, labelVal any) bool
 	//
 	// Delete edge label. If there are multiple edges associated with
 	// endpoints1 and endpoint2 simultaneously,
 	// the label of these edges will be updated simultaneously.
-	DeleteEdgeLabel(endpoint1, endpoint2 K, labelKey string) error
+	DeleteEdgeLabel(endpoint1, endpoint2 K, labelKey string) bool
 	//
 	// Copy the current graph.
-	Clone() (Graph[K, W], error)
+	Clone() Graph[K, W]
 	//
 	// Randomly select a vertex from the graph.
-	RandomVertex() (Vertex[K, W], error)
+	RandomVertex() (Vertex[K, W], bool)
 	//
 	// Randomly select a edge from the graph
-	RandomEdge() (Edge[K, W], error)
+	RandomEdge() (Edge[K, W], bool)
 	//
 	// Query the adjacent edges of a specified edge.
-	NeighbourEdgesByKey(edge K) ([]Edge[K, W], error)
+	NeighbourEdgesByKey(edge K) ([]Edge[K, W], bool)
 	//
 	// Query the adjacent edges of a specified edge endpoint1-endpoint2 or endpoint2-endpoint11.
-	NeighbourEdges(endpoint1, endpoint2 K) ([]Edge[K, W], error)
+	NeighbourEdges(endpoint1, endpoint2 K) ([]Edge[K, W], bool)
 	//
 	// Query all edges associated with a specified vertex.
-	IncidentEdges(vertex K) ([]Edge[K, W], error)
+	IncidentEdges(vertex K) ([]Edge[K, W], bool)
 }
 
 // Vertex represents the vertices of a graph,

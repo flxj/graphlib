@@ -18,7 +18,6 @@ package graphlib
 
 import (
 	"flag"
-	"fmt"
 	"testing"
 )
 
@@ -56,51 +55,48 @@ func bwmTestGraph(maximum bool) Bipartite[int, int] {
 		if maximum {
 			e.Weight = -1 * e.Weight
 		}
-		err := g.AddEdge(e)
-		if err != nil {
-			panic(err.Error())
-		}
+		_ = g.AddEdge(e)
 	}
 	return g
 }
 
-func bwmG1() {
+func bwmG1(t *testing.T) {
 	g := bwmTestGraph(false)
-	fmt.Println("g1 order=", g.Order(), " size=", g.Size())
+	t.Log("g1 order=", g.Order(), " size=", g.Size())
 	res, err := BipartiteWeightedMatching(g, false)
 	if err != nil {
-		panic(err.Error())
+		t.Fatal(err.Error())
 	}
 	var s int
 	for _, e := range res {
-		fmt.Printf("select edge:%d weight:%d\n", e.Key, e.Weight)
+		t.Logf("select edge:%d weight:%d", e.Key, e.Weight)
 		s += e.Weight
 	}
 	if s != 140 {
-		panic("g1 bwm wrong")
+		t.Fatal("g1 bwm wrong")
 	}
-	fmt.Println("=======> g1 pass")
+	t.Log("> g1 pass")
 }
 
-func bwmG2() {
+func bwmG2(t *testing.T) {
 	g := bwmTestGraph(true)
-	fmt.Println("g2 order=", g.Order(), " size=", g.Size())
+	t.Log("g2 order=", g.Order(), " size=", g.Size())
 	res, err := BipartiteWeightedMatching(g, true)
 	if err != nil {
-		panic(err.Error())
+		t.Fatal(err.Error())
 	}
 	var s int
 	for _, e := range res {
-		fmt.Printf("select edge:%d weight:%d\n", e.Key, e.Weight)
+		t.Logf("select edge:%d weight:%d", e.Key, e.Weight)
 		s += e.Weight
 	}
 	if s != -140 {
-		panic("g2 bwm wrong")
+		t.Fatal("g2 bwm wrong")
 	}
-	fmt.Println("=======> g2 pass")
+	t.Log("> g2 pass")
 }
 
-func mvcG1() {
+func mvcG1(t *testing.T) {
 	g := NewBipartite[int, int](false, "g1")
 	A := []Vertex[int, int]{
 		{Key: 1},
@@ -140,18 +136,18 @@ func mvcG1() {
 	}
 	C, err := bipartiteMVC(A, B, M, g)
 	if err != nil {
-		panic(err.Error())
+		t.Fatal(err.Error())
 	}
 	for v := range C {
-		fmt.Println("g1 mvc: ", v)
+		t.Log("g1 mvc: ", v)
 	}
 	if len(C) != len(M) {
-		panic("g1 mvc wrong")
+		t.Fatal("g1 mvc wrong")
 	}
-	fmt.Println("=======> g1 pass")
+	t.Log("> g1 pass")
 }
 
-func mvcG2() {
+func mvcG2(t *testing.T) {
 	g := NewBipartite[string, int](false, "g2")
 	A := []Vertex[string, int]{
 		{Key: "r1"},
@@ -219,42 +215,41 @@ func mvcG2() {
 	}
 	C, err := bipartiteMVC(A, B, M, g)
 	if err != nil {
-		panic(err.Error())
+		t.Fatal(err.Error())
 	}
 	if len(C) != len(M) {
-		panic("g2 mvc wrong")
+		t.Fatal("g2 mvc wrong")
 	}
 	for v := range C {
-		fmt.Println("g2 mvc: ", v)
+		t.Log("g2 mvc: ", v)
 	}
-	fmt.Println("=======> g2 pass")
+	t.Log("> g2 pass")
 }
 
-func testMaxMatching() {
+func testMaxMatching(t *testing.T) {
 	g := PetersenGraph()
 	m, err := MaxMatchingBlossom(g)
 	if err != nil {
-		fmt.Println(g.Name())
-		panic(err.Error())
+		t.Log(g.Name())
+		t.Fatal(err.Error())
 	}
 	if len(m) != 5 {
-		panic(fmt.Sprintf("%s get mm=%d, but expected=%d", g.Name(), len(m), 5))
+		t.Fatalf("%s get mm=%d, but expected=%d", g.Name(), len(m), 5)
 	}
-
 }
 
 func TestMatching(t *testing.T) {
 	args := flag.Args()
 	switch args[0] {
 	case "mvc":
-		mvcG1()
-		mvcG2()
+		mvcG1(t)
+		mvcG2(t)
 	case "bwm_min":
-		bwmG1()
+		bwmG1(t)
 	case "bwm_max":
-		bwmG2()
+		bwmG2(t)
 	case "max":
-		testMaxMatching()
+		testMaxMatching(t)
 	default:
 	}
 }

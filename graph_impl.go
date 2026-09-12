@@ -17,7 +17,6 @@
 package graphlib
 
 import (
-	"fmt"
 	"math/rand"
 )
 
@@ -114,19 +113,19 @@ func NewGraphFromFile[K comparable, W number](path string) (Graph[K, W], error) 
 }
 
 // Create a graph using vertex and edge sets.
-func ConstructGraph[K comparable, W number](digraph bool, name string, vertexes []Vertex[K, W], edges []Edge[K, W]) (Graph[K, W], error) {
+func ConstructGraph[K comparable, W number](digraph bool, name string, vertexes []Vertex[K, W], edges []Edge[K, W]) (Graph[K, W], bool) {
 	g := newGraph[K, W](digraph, name)
 	for _, v := range vertexes {
-		if err := g.AddVertex(v); err != nil {
-			return nil, err
+		if ok := g.AddVertex(v); !ok {
+			return nil, false
 		}
 	}
 	for _, e := range edges {
-		if err := g.AddEdge(e); err != nil {
-			return nil, err
+		if ok := g.AddEdge(e); !ok {
+			return nil, false
 		}
 	}
-	return g, nil
+	return g, true
 }
 
 func (g *graph[K, W]) Name() string {
@@ -251,8 +250,8 @@ func (g *graph[K, W]) MinDegree() int {
 	if g.minDe.version == g.ver {
 		return g.minDe.value
 	}
-	d, err := g.adj.minDegree()
-	if err != nil {
+	d, ok := g.adj.minDegree()
+	if !ok {
 		return -1
 	}
 	g.minDe.version = g.ver
@@ -264,8 +263,8 @@ func (g *graph[K, W]) MaxDegree() int {
 	if g.maxDe.version == g.ver {
 		return g.maxDe.value
 	}
-	d, err := g.adj.maxDegree()
-	if err != nil {
+	d, ok := g.adj.maxDegree()
+	if !ok {
 		return -1
 	}
 	g.maxDe.version = g.ver
@@ -316,7 +315,7 @@ func (g *graph[K, W]) Orientation() bool {
 	return g.prop.orient.value
 }
 
-func (g *graph[K, W]) Property(p PropertyName) (GraphProperty[any], error) {
+func (g *graph[K, W]) Property(p PropertyName) (GraphProperty[any], bool) {
 	gp := GraphProperty[any]{Name: p}
 	switch p {
 	case ProDigraph:
@@ -358,22 +357,15 @@ func (g *graph[K, W]) Property(p PropertyName) (GraphProperty[any], error) {
 	case ProOrientation:
 		gp.Value = g.Orientation()
 	default:
-		return gp, errUnknownProperty
+		return gp, false
 	}
-	return gp, nil
+	return gp, true
 }
 
 func (g *graph[K, W]) AllVertexes() []Vertex[K, W] {
 	vs := make([]Vertex[K, W], len(g.vtx))
 	var i int
 	for _, v := range g.vtx {
-		/*
-			vs[i] = Vertex[K,W]{
-				Key:    v.Key,
-				Value:  v.Value,
-				Labels: v.Labels,
-			}
-		*/
 		vs[i] = *v
 		i++
 	}
@@ -384,40 +376,29 @@ func (g *graph[K, W]) AllEdges() []Edge[K, W] {
 	es := make([]Edge[K, W], len(g.edges))
 	var i int
 	for _, e := range g.edges {
-		/*
-			es[i] = Edge[K, W]{
-				Key:    e.Key,
-				Head:   e.Head,
-				Tail:   e.Tail,
-				Value:  e.Value,
-				Weight: e.Weight,
-				Labels: e.Labels,
-			}
-		*/
 		es[i] = *e
 		i++
 	}
 	return es
 }
 
-func (g *graph[K, W]) AddVertex(v Vertex[K, W]) error {
+func (g *graph[K, W]) AddVertex(v Vertex[K, W]) bool {
 	if _, ok := g.vtx[v.Key]; ok {
-		return errVertexExists
+		return false
 	}
-	if err := g.adj.addVertexes(v.Key); err != nil {
-		return err
-	}
+	g.adj.addVertexes(v.Key)
 	g.vtx[v.Key] = &v
 	g.ver++
-	return nil
+	return true
 }
 
-func (g *graph[K, W]) RemoveVertex(key K) error {
-	if _, ok := g.vtx[key]; !ok {
-		return errVertexNotExists
+func (g *graph[K, W]) RemoveVertex(key K) (Vertex[K, W], bool) {
+	v, ok := g.vtx[key]
+	if !ok {
+		return Vertex[K, W]{}, false
 	}
-	if err := g.adj.delVertex(key); err != nil {
-		return err
+	if ok := g.adj.delVertex(key); !ok {
+		return Vertex[K, W]{}, false
 	}
 
 	var edges []K
@@ -431,107 +412,117 @@ func (g *graph[K, W]) RemoveVertex(key K) error {
 	}
 	delete(g.vtx, key)
 	g.ver++
-	return nil
+	return *v, true
 }
 
-func (g *graph[K, W]) AddEdge(edge Edge[K, W]) error {
+func (g *graph[K, W]) AddEdge(edge Edge[K, W]) bool {
 	if any(edge.Key) != nil {
 		if _, ok := g.edges[edge.Key]; ok {
-			return errEdgeExists
+			return false
 		}
 	} else {
 		for {
-			edge.Key = randEdgeKey(edge.Head, edge.Tail)
+			k, flag := randEdgeKey(edge.Head, edge.Tail)
+			if !flag {
+				return false
+			}
+			edge.Key = k
 			if _, ok := g.edges[edge.Key]; ok {
 				break
 			}
 		}
 	}
-	if err := g.adj.addEdge(edge.Head, edge.Tail, edge.Key, edge.Weight); err != nil {
-		return err
+	ok := g.adj.addEdge(edge.Head, edge.Tail, edge.Key, edge.Weight)
+	if !ok {
+		return false
 	}
 	g.edges[edge.Key] = &edge
 	g.ver++
-	return nil
+	return true
 }
 
-func (g *graph[K, W]) RemoveEdgeByKey(key K) error {
+func (g *graph[K, W]) RemoveEdgeByKey(key K) (Edge[K, W], bool) {
 	e, ok := g.edges[key]
 	if !ok {
-		return errEdgeNotExists
+		return Edge[K, W]{}, false
 	}
-	if err := g.adj.delEdge(e.Head, e.Tail, e.Key); err != nil {
-		return err
+	if ok := g.adj.delEdge(e.Head, e.Tail, e.Key); !ok {
+		return Edge[K, W]{}, false
 	}
 	delete(g.edges, key)
 	g.ver++
-	return nil
+	return *e, true
 }
 
-func (g *graph[K, W]) RemoveEdge(v1, v2 K) error {
-	var edges []*edge[K, W]
+func (g *graph[K, W]) RemoveEdge(v1, v2 K) ([]Edge[K, W], bool) {
+	var edges []Edge[K, W]
 	for _, v := range g.edges {
 		ok := (v.Head == v1 && v.Tail == v2)
 		if g.adj.digraph {
 			ok = ok || (v.Head == v2 && v.Tail == v1)
 		}
 		if ok {
-			edges = append(edges, &edge[K, W]{
-				key:  v.Key,
-				head: v.Head,
-				tail: v.Tail,
-			})
+			edges = append(edges, *v)
 		}
 	}
-	if err := g.adj.delEdges(edges...); err != nil {
-		return err
+	if len(edges) == 0 {
+		return nil, false
+	}
+	if ok := g.adj.delEdges(edges...); !ok {
+		return nil, false
 	}
 	for _, e := range edges {
-		delete(g.edges, e.key)
+		delete(g.edges, e.Key)
 	}
 	g.ver++
-	return nil
+	return edges, true
 }
 
-func (g *graph[K, W]) RemoveAllEdge() error {
+func (g *graph[K, W]) RemoveAllVertex() {
+	g.ver = 1
+	g.vtx = make(map[K]*Vertex[K, W])
+	g.edges = make(map[K]*Edge[K, W])
+	g.adj = newAdjacencyLis[K, W](g.prop.digraph)
+}
+
+func (g *graph[K, W]) RemoveAllEdge() {
 	g.adj.delAllEdge()
 	g.edges = make(map[K]*Edge[K, W])
 	g.ver++
-	return nil
 }
 
-func (g *graph[K, W]) Degree(key K) (int, error) {
+func (g *graph[K, W]) Degree(key K) (int, bool) {
 	if _, ok := g.vtx[key]; !ok {
-		return 0, errVertexNotExists
+		return 0, false
 	}
 	return g.adj.degree(key)
 }
 
-func (g *graph[K, W]) Neighbours(v K) ([]Vertex[K, W], error) {
-	vs, err := g.adj.neighbours(v, false)
-	if err != nil {
-		return nil, err
+func (g *graph[K, W]) Neighbours(v K) ([]Vertex[K, W], bool) {
+	vs, ok := g.adj.neighbours(v, false)
+	if !ok {
+		return nil, false
 	}
 	var res []Vertex[K, W]
 	for key := range vs {
 		ver, ok := g.vtx[key]
 		if !ok {
-			return nil, fmt.Errorf("neighbour(%v) of %v not exists", key, v)
+			return nil, false
 		}
 		res = append(res, *ver)
 	}
-	return res, nil
+	return res, true
 }
 
-func (g *graph[K, W]) GetVertex(key K) (Vertex[K, W], error) {
+func (g *graph[K, W]) GetVertex(key K) (Vertex[K, W], bool) {
 	v, ok := g.vtx[key]
 	if !ok {
-		return Vertex[K, W]{}, errVertexNotExists
+		return Vertex[K, W]{}, false
 	}
-	return Vertex[K, W]{Key: v.Key, Value: v.Value, Labels: v.Labels}, nil
+	return *v, true
 }
 
-func (g *graph[K, W]) GetEdge(v1, v2 K) ([]Edge[K, W], error) {
+func (g *graph[K, W]) GetEdge(v1, v2 K) ([]Edge[K, W], bool) {
 	var edges []Edge[K, W]
 	for _, e := range g.edges {
 		ok := e.Head == v1 && e.Tail == v2
@@ -539,35 +530,18 @@ func (g *graph[K, W]) GetEdge(v1, v2 K) ([]Edge[K, W], error) {
 			ok = ok || e.Head == v2 && e.Tail == v1
 		}
 		if ok {
-			edges = append(edges, Edge[K, W]{
-				Key:    e.Key,
-				Head:   e.Head,
-				Tail:   e.Tail,
-				Value:  e.Value,
-				Weight: e.Weight,
-				Labels: e.Labels,
-			})
+			edges = append(edges, *e)
 		}
 	}
-	if len(edges) == 0 {
-		return nil, errEdgeNotExists
-	}
-	return edges, nil
+	return edges, len(edges) != 0
 }
 
-func (g *graph[K, W]) GetEdgeByKey(key K) (Edge[K, W], error) {
+func (g *graph[K, W]) GetEdgeByKey(key K) (Edge[K, W], bool) {
 	e, ok := g.edges[key]
 	if !ok {
-		return Edge[K, W]{}, errEdgeNotExists
+		return Edge[K, W]{}, false
 	}
-	return Edge[K, W]{
-		Key:    e.Key,
-		Head:   e.Head,
-		Tail:   e.Tail,
-		Value:  e.Value,
-		Weight: e.Weight,
-		Labels: e.Labels,
-	}, nil
+	return *e, true
 }
 
 func (g *graph[K, W]) GetVertexesByLabel(labels Labels) []Vertex[K, W] {
@@ -614,121 +588,121 @@ func (g *graph[K, W]) GetEdgesByLabel(labels Labels) []Edge[K, W] {
 	return edges
 }
 
-func (g *graph[K, W]) SetVertexValue(key K, value any) error {
+func (g *graph[K, W]) SetVertexValue(key K, value any) bool {
 	v, ok := g.vtx[key]
 	if !ok {
-		return errVertexNotExists
+		return false
 	}
 	v.Value = value
-	return nil
+	return true
 }
 
-func (g *graph[K, W]) SetVertexLabel(key K, labelKey string, labelVal any) error {
+func (g *graph[K, W]) SetVertexLabel(key K, labelKey string, labelVal any) bool {
 	v, ok := g.vtx[key]
 	if !ok {
-		return errVertexNotExists
+		return false
 	}
 	if v.Labels == nil {
 		v.Labels = make(map[string]any)
 	}
 	v.Labels[labelKey] = labelVal
-	return nil
+	return true
 }
 
-func (g *graph[K, W]) DeleteVertexLabel(key K, labelKey string) error {
+func (g *graph[K, W]) DeleteVertexLabel(key K, labelKey string) bool {
 	v, ok := g.vtx[key]
 	if !ok {
-		return errVertexNotExists
+		return false
 	}
 	if v.Labels != nil {
 		delete(v.Labels, labelKey)
 	}
-	return nil
+	return true
 }
 
-func (g *graph[K, W]) SetEdgeValueByKey(key K, value any) error {
+func (g *graph[K, W]) SetEdgeValueByKey(key K, value any) bool {
 	e, ok := g.edges[key]
 	if !ok {
-		return errEdgeNotExists
+		return false
 	}
 	e.Value = value
-	return nil
+	return true
 }
 
-func (g *graph[K, W]) SetEdgeLabelByKey(key K, labelKey string, labelVal any) error {
+func (g *graph[K, W]) SetEdgeLabelByKey(key K, labelKey string, labelVal any) bool {
 	e, ok := g.edges[key]
 	if !ok {
-		return errEdgeNotExists
+		return false
 	}
 	if e.Labels == nil {
 		e.Labels = make(map[string]any)
 	}
 	e.Labels[labelKey] = labelVal
-	return nil
+	return true
 }
 
-func (g *graph[K, W]) DeleteEdgeLabelByKey(key K, labelKey string) error {
+func (g *graph[K, W]) DeleteEdgeLabelByKey(key K, labelKey string) bool {
 	e, ok := g.edges[key]
 	if !ok {
-		return errEdgeNotExists
+		return false
 	}
 	if e.Labels != nil {
 		delete(e.Labels, labelKey)
 	}
-	return nil
+	return true
 }
 
-func (g *graph[K, W]) SetEdgeValue(endpoint1, endpoint2 K, value any) error {
-	edges, err := g.GetEdge(endpoint1, endpoint2)
-	if err != nil {
-		return err
+func (g *graph[K, W]) SetEdgeValue(endpoint1, endpoint2 K, value any) bool {
+	edges, ok := g.GetEdge(endpoint1, endpoint2)
+	if !ok {
+		return false
 	}
 	for _, ed := range edges {
 		e, ok := g.edges[ed.Key]
 		if !ok {
-			return errEdgeNotExists
+			return false
 		}
 		e.Value = value
 	}
-	return nil
+	return true
 }
 
-func (g *graph[K, W]) SetEdgeLabel(endpoint1, endpoint2 K, labelKey string, labelVal any) error {
-	edges, err := g.GetEdge(endpoint1, endpoint2)
-	if err != nil {
-		return err
+func (g *graph[K, W]) SetEdgeLabel(endpoint1, endpoint2 K, labelKey string, labelVal any) bool {
+	edges, ok := g.GetEdge(endpoint1, endpoint2)
+	if !ok {
+		return false
 	}
 	for _, ed := range edges {
 		e, ok := g.edges[ed.Key]
 		if !ok {
-			return errEdgeNotExists
+			return false
 		}
 		if e.Labels == nil {
 			e.Labels = make(map[string]any)
 		}
 		e.Labels[labelKey] = labelVal
 	}
-	return nil
+	return true
 }
 
-func (g *graph[K, W]) DeleteEdgeLabel(endpoint1, endpoint2 K, labelKey string) error {
-	edges, err := g.GetEdge(endpoint1, endpoint2)
-	if err != nil {
-		return err
+func (g *graph[K, W]) DeleteEdgeLabel(endpoint1, endpoint2 K, labelKey string) bool {
+	edges, ok := g.GetEdge(endpoint1, endpoint2)
+	if !ok {
+		return false
 	}
 	for _, ed := range edges {
 		e, ok := g.edges[ed.Key]
 		if !ok {
-			return errEdgeNotExists
+			return false
 		}
 		if e.Labels != nil {
 			delete(e.Labels, labelKey)
 		}
 	}
-	return nil
+	return true
 }
 
-func (g *graph[K, W]) Clone() (Graph[K, W], error) {
+func (g *graph[K, W]) Clone() Graph[K, W] {
 	adjList := newAdjacencyLis[K, W](g.prop.digraph)
 	ng := *g
 	ng.vtx = make(map[K]*Vertex[K, W])
@@ -738,48 +712,47 @@ func (g *graph[K, W]) Clone() (Graph[K, W], error) {
 	for k, v := range g.vtx {
 		nv := v.Clone()
 		ng.vtx[k] = &nv
-		if err := ng.adj.addVertexes(k); err != nil {
-			return nil, err
-		}
+		ng.adj.addVertexes(k)
 	}
 	for k, v := range g.edges {
 		nv := v.Clone()
 		ng.edges[k] = &nv
-		if err := ng.adj.addEdge(v.Head, v.Tail, v.Key, v.Weight); err != nil {
-			return nil, err
+		ok := ng.adj.addEdge(v.Head, v.Tail, v.Key, v.Weight)
+		if !ok {
+			return nil
 		}
 	}
-	return &ng, nil
+	return &ng
 }
 
-func (g *graph[K, W]) RandomVertex() (Vertex[K, W], error) {
+func (g *graph[K, W]) RandomVertex() (Vertex[K, W], bool) {
 	n := rand.Intn(len(g.vtx))
 	i := 0
 	for _, v := range g.vtx {
 		if n == i {
-			return *v, nil
+			return *v, true
 		}
 		i++
 	}
-	return Vertex[K, W]{}, errVertexNotExists
+	return Vertex[K, W]{}, false
 }
 
-func (g *graph[K, W]) RandomEdge() (Edge[K, W], error) {
+func (g *graph[K, W]) RandomEdge() (Edge[K, W], bool) {
 	n := rand.Intn(len(g.edges))
 	i := 0
 	for _, e := range g.edges {
 		if n == i {
-			return *e, nil
+			return *e, true
 		}
 		i++
 	}
-	return Edge[K, W]{}, errEdgeNotExists
+	return Edge[K, W]{}, false
 }
 
-func (g *graph[K, W]) NeighbourEdgesByKey(edge K) ([]Edge[K, W], error) {
+func (g *graph[K, W]) NeighbourEdgesByKey(edge K) ([]Edge[K, W], bool) {
 	e, ok := g.edges[edge]
 	if !ok {
-		return nil, errEdgeNotExists
+		return nil, false
 	}
 	var res []Edge[K, W]
 	for _, ee := range g.edges {
@@ -789,51 +762,51 @@ func (g *graph[K, W]) NeighbourEdgesByKey(edge K) ([]Edge[K, W], error) {
 			}
 		}
 	}
-	return res, nil
+	return res, true
 }
 
-func (g *graph[K, W]) NeighbourEdges(endpoint1, endpoint2 K) ([]Edge[K, W], error) {
-	es, err := g.GetEdge(endpoint1, endpoint2)
-	if err != nil {
-		return es, nil
+func (g *graph[K, W]) NeighbourEdges(endpoint1, endpoint2 K) ([]Edge[K, W], bool) {
+	es, ok := g.GetEdge(endpoint1, endpoint2)
+	if !ok {
+		return nil, false
 	}
 	if len(es) == 0 {
-		return []Edge[K, W]{}, nil
+		return []Edge[K, W]{}, false
 	}
 	return g.NeighbourEdgesByKey(es[0].Key)
 }
 
-func (g *graph[K, W]) IncidentEdges(vertex K) ([]Edge[K, W], error) {
+func (g *graph[K, W]) IncidentEdges(vertex K) ([]Edge[K, W], bool) {
 	if _, ok := g.vtx[vertex]; !ok {
-		return nil, errVertexNotExists
+		return nil, false
 	}
 	var res []Edge[K, W]
-	ks, err := g.adj.incidentEdges(vertex)
-	if err != nil {
-		return []Edge[K, W]{}, err
+	ks, ok := g.adj.incidentEdges(vertex)
+	if !ok {
+		return []Edge[K, W]{}, false
 	}
 	res = make([]Edge[K, W], len(ks))
 	for i, e := range ks {
 		res[i] = *g.edges[e]
 	}
-	return res, nil
+	return res, true
 }
 
-func (g *graph[K, W]) SetVertexWeight(key K, weight W) error {
+func (g *graph[K, W]) SetVertexWeight(key K, weight W) bool {
 	v, ok := g.vtx[key]
 	if !ok {
-		return errVertexNotExists
+		return false
 	}
 	v.Weight = weight
-	return nil
+	return true
 }
 
-func (g *graph[K, W]) SetEdgeWeight(key K, weight W) error {
+func (g *graph[K, W]) SetEdgeWeight(key K, weight W) bool {
 	e, ok := g.edges[key]
 	if !ok {
-		return errEdgeNotExists
+		return false
 	}
 	e.Weight = weight
-	return nil
+	return true
 	// TODO: update weight on adjlist
 }

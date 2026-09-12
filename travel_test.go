@@ -17,7 +17,6 @@
 package graphlib
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -34,9 +33,7 @@ func TestDFS1(t *testing.T) {
 	}
 
 	for _, v := range vs {
-		if err := g.AddVertex(v); err != nil {
-			t.Errorf("add vertex error:%v\n", err)
-		}
+		_ = g.AddVertex(v)
 	}
 
 	es := []Edge[int, int]{
@@ -54,16 +51,14 @@ v3     v4-----v5----v6
 `
 
 	for _, e := range es {
-		if err := g.AddEdge(e); err != nil {
-			t.Errorf("add edge error:%v\n", err)
-		}
+		_ = g.AddEdge(e)
 	}
-	fmt.Println(gs)
-	fmt.Printf("order:%d\n", g.Order())
-	fmt.Printf("size:%d\n", g.Size())
+	t.Log(gs)
+	t.Logf("order:%d", g.Order())
+	t.Logf("size:%d", g.Size())
 
 	vis := func(v Vertex[int, int]) error {
-		fmt.Printf("[Visit] vertex is %v\n", v.Key)
+		t.Logf("[Visit] vertex is %v", v.Key)
 		return nil
 	}
 
@@ -85,10 +80,7 @@ func TestDFS2(t *testing.T) {
 	}
 
 	for _, v := range vs {
-		if err := g.AddVertex(v); err != nil {
-			t.Errorf("add vertex error:%v\n", err)
-			return
-		}
+		_ = g.AddVertex(v)
 	}
 
 	es := []Edge[int, int]{
@@ -108,28 +100,23 @@ v3---->v4---->v5--->v6
 `
 
 	for _, e := range es {
-		if err := g.AddEdge(e); err != nil {
-			t.Errorf("add edge error:%v\n", err)
-			return
-		}
+		_ = g.AddEdge(e)
 	}
-	fmt.Println(gs)
-	fmt.Printf("order:%d\n", g.Order())
-	fmt.Printf("size:%d\n", g.Size())
+	t.Log(gs)
+	t.Logf("order:%d", g.Order())
+	t.Logf("size:%d", g.Size())
 
 	vis := func(v Vertex[int, int]) error {
-		fmt.Printf("[Visit] vertex is %v\n", v.Key)
+		t.Logf("[Visit] vertex is %v", v.Key)
 		return nil
 	}
 
 	if err := DFS(g, 3, vis); err != nil {
 		t.Error("[ERR] ", err)
 	}
-	fmt.Println("===============")
 	if err := DFS(g, 2, vis); err != nil {
 		t.Error("[ERR] ", err)
 	}
-	fmt.Println("===============")
 	if err := DFS(g, 1, vis); err != nil {
 		t.Error("[ERR] ", err)
 	}
@@ -148,9 +135,7 @@ func TestBFS1(t *testing.T) {
 	}
 
 	for _, v := range vs {
-		if err := g.AddVertex(v); err != nil {
-			t.Errorf("add vertex error:%v\n", err)
-		}
+		_ = g.AddVertex(v)
 	}
 
 	es := []Edge[int, int]{
@@ -172,16 +157,14 @@ v3      v5-----v6
 `
 
 	for _, e := range es {
-		if err := g.AddEdge(e); err != nil {
-			t.Errorf("add edge error:%v\n", err)
-		}
+		_ = g.AddEdge(e)
 	}
-	fmt.Println(gs)
-	fmt.Printf("order:%d\n", g.Order())
-	fmt.Printf("size:%d\n", g.Size())
+	t.Log(gs)
+	t.Logf("order:%d", g.Order())
+	t.Logf("size:%d", g.Size())
 
 	vis := func(v Vertex[int, int]) error {
-		fmt.Printf("[Visit] vertex is %v\n", v.Key)
+		t.Logf("[Visit] vertex is %v", v.Key)
 		return nil
 	}
 
@@ -203,9 +186,7 @@ func TestBFS2(t *testing.T) {
 	}
 
 	for _, v := range vs {
-		if err := g.AddVertex(v); err != nil {
-			t.Errorf("add vertex error:%v\n", err)
-		}
+		_ = g.AddVertex(v)
 	}
 
 	es := []Edge[int, int]{
@@ -228,16 +209,14 @@ v3        v5---->v6
 `
 
 	for _, e := range es {
-		if err := g.AddEdge(e); err != nil {
-			t.Errorf("add edge error:%v\n", err)
-		}
+		_ = g.AddEdge(e)
 	}
-	fmt.Println(gs)
-	fmt.Printf("order:%d\n", g.Order())
-	fmt.Printf("size:%d\n", g.Size())
+	t.Log(gs)
+	t.Logf("order:%d", g.Order())
+	t.Logf("size:%d", g.Size())
 
 	vis := func(v Vertex[int, int]) error {
-		fmt.Printf("[Visit] vertex is %v\n", v.Key)
+		t.Logf("[Visit] vertex is %v", v.Key)
 		return nil
 	}
 

@@ -20,9 +20,9 @@ func IsCutvertex[K comparable, W number](g Graph[K, W], v K) (bool, error) {
 	if g == nil {
 		return false, errNilGraph
 	}
-	vs, err := g.Neighbours(v)
-	if err != nil {
-		return false, err
+	vs, ok := g.Neighbours(v)
+	if !ok {
+		return false, errVertexNotExists
 	}
 	if len(vs) == 0 || len(vs) == 1 {
 		return false, nil
@@ -35,26 +35,22 @@ func IsCutvertex[K comparable, W number](g Graph[K, W], v K) (bool, error) {
 	}
 	visited := make(map[K]struct{})
 	// check if vtx can connected to each other when we delete vertex v
-	var dfs func(K) error
-	dfs = func(u K) error {
+	var dfs func(K)
+	dfs = func(u K) {
 		if _, ok := visited[u]; ok {
-			return nil
+			return
 		}
 		visited[u] = struct{}{}
 		delete(vtx, u)
-		ns, err := g.Neighbours(u)
-		if err != nil {
-			return err
-		}
+		ns, _ := g.Neighbours(u)
 		for _, w := range ns {
 			if w.Key != v {
 				dfs(w.Key)
 			}
 		}
-		return nil
 	}
-	err = dfs(s)
-	return len(vtx) != 0, err
+	dfs(s)
+	return len(vtx) != 0, nil
 }
 
 /*
@@ -86,10 +82,7 @@ func FindCutVerties[K comparable, W number](g Graph[K, W]) ([]K, error) {
 		disc[u], low[u] = time, time
 		time++
 		var child int
-		vs, err := g.Neighbours(u)
-		if err != nil {
-			return err
-		}
+		vs, _ := g.Neighbours(u)
 		for _, v := range vs {
 			// If v is not visited, then recursively visit it
 			if _, ok := visited[v.Key]; !ok {
@@ -156,10 +149,7 @@ func isBridge[K comparable, W number](g Graph[K, W], edge Edge[K, W]) (bool, err
 		t++
 		inTime[v] = t
 		lowTime[v] = t
-		ns, err := g.Neighbours(v)
-		if err != nil {
-			return err
-		}
+		ns, _ := g.Neighbours(v)
 		var skip bool
 		for _, w := range ns {
 			if w.Key == p && !skip { // exist paralell edge (w,v)
@@ -190,9 +180,9 @@ func IsBridge[K comparable, W number](g Graph[K, W], edge K) (bool, error) {
 	if g == nil {
 		return false, errNilGraph
 	}
-	e, err := g.GetEdgeByKey(edge)
-	if err != nil {
-		return false, err
+	e, ok := g.GetEdgeByKey(edge)
+	if !ok {
+		return false, errEdgeNotExists
 	}
 	return isBridge(g, e)
 }
@@ -216,10 +206,7 @@ func FindBridges[K comparable, W number](g Graph[K, W]) ([]Edge[K, W], error) {
 		t++
 		inTime[v] = t
 		lowTime[v] = t
-		es, err := g.IncidentEdges(v)
-		if err != nil {
-			return err
-		}
+		es, _ := g.IncidentEdges(v)
 		var skip bool
 		for _, e := range es {
 			var w K
@@ -306,8 +293,8 @@ func NewFindBridgesOnline[K comparable, W number](g Graph[K, W]) (*FindBridgesOn
 }
 
 func (f *FindBridgesOnline[K, W]) AddVertex(v Vertex[K, W]) error {
-	if err := f.g.AddVertex(v); err != nil {
-		return err
+	if ok := f.g.AddVertex(v); !ok {
+		return errVertexExists
 	}
 	f.vtx = append(f.vtx, v.Key)
 	f.idx[v.Key] = len(f.vtx) - 1
@@ -319,9 +306,7 @@ func (f *FindBridgesOnline[K, W]) AddVertex(v Vertex[K, W]) error {
 }
 
 func (f *FindBridgesOnline[K, W]) AddEdge(e Edge[K, W]) error {
-	if err := f.g.AddEdge(e); err != nil {
-		return err
-	}
+	_ = f.g.AddEdge(e)
 	a, b := f.idx[e.Head], f.idx[e.Tail]
 	// Both vertices a and b are in the same 2-edge-connected component
 	// - then this edge is not a bridge, and does not change anything in the forest structure, so we can just skip this edge.
@@ -451,12 +436,11 @@ func (f *FindBridgesOnline[K, W]) Bridges() ([]Edge[K, W], error) {
 	res := make([]Edge[K, W], len(f.bri))
 	var i int
 	for a, b := range f.bri {
-		e, err := f.g.GetEdge(f.vtx[a], f.vtx[b])
-		if err != nil {
-			return nil, err
+		e, _ := f.g.GetEdge(f.vtx[a], f.vtx[b])
+		if len(e) > 0 {
+			res[i] = e[0]
+			i++
 		}
-		res[i] = e[0]
-		i++
 	}
 	return res, nil
 }

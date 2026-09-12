@@ -24,25 +24,17 @@ func Contains[K comparable, W number](g1 Graph[K, W], g2 Graph[K, W]) (bool, err
 	if g1.IsDigraph() != g2.IsDigraph() {
 		return false, errNotSameType
 	}
-	var err error
 	vs1 := g2.AllVertexes()
 	es1 := g2.AllEdges()
 	for _, v := range vs1 {
-		_, err = g1.GetVertex(v.Key)
-		if err != nil {
-			if !IsNotExists(err) {
-				return false, err
-			}
+		if _, ok := g1.GetVertex(v.Key); !ok {
 			return false, nil
 		}
 	}
 
 	for _, e := range es1 {
-		es, err := g1.GetEdge(e.Head, e.Tail)
-		if err != nil {
-			if !IsNotExists(err) {
-				return false, err
-			}
+		es, ok := g1.GetEdge(e.Head, e.Tail)
+		if !ok {
 			return false, nil
 		}
 		//
@@ -60,15 +52,10 @@ func SpanningSubgraph[K comparable, W number](g Graph[K, W], edges [][]K) (Graph
 	if g == nil {
 		return nil, errNilGraph
 	}
-	ng, err := g.Clone()
-	if err != nil {
-		return nil, err
-	}
+	ng := g.Clone()
 	for _, es := range edges {
 		if len(es) >= 2 {
-			if err := ng.RemoveEdge(es[0], es[1]); err != nil {
-				return nil, err
-			}
+			_, _ = ng.RemoveEdge(es[0], es[1])
 		}
 	}
 	return ng, nil
@@ -79,15 +66,10 @@ func SpanningSupergraph[K comparable, W number](g Graph[K, W], edges []*Edge[K, 
 	if g == nil {
 		return nil, errNilGraph
 	}
-	ng, err := g.Clone()
-	if err != nil {
-		return nil, err
-	}
+	ng := g.Clone()
 	for _, e := range edges {
 		ee := *e
-		if err := ng.AddEdge(ee); err != nil {
-			return nil, err
-		}
+		_ = ng.AddEdge(ee)
 	}
 	return ng, nil
 }
@@ -97,14 +79,9 @@ func InducedSubgraph[K comparable, W number](g Graph[K, W], vertexes []K) (Graph
 	if g == nil {
 		return nil, errNilGraph
 	}
-	ng, err := g.Clone()
-	if err != nil {
-		return nil, err
-	}
+	ng := g.Clone()
 	for _, v := range vertexes {
-		if err := ng.RemoveVertex(v); err != nil {
-			return nil, err
-		}
+		_, _ = ng.RemoveVertex(v)
 	}
 	return ng, nil
 }

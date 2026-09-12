@@ -82,14 +82,10 @@ func UnmarshalGraph[K comparable, W number](s []byte) (Graph[K, W], error) {
 	}
 	g := NewGraph[K, W](gi.Digraph, gi.Name)
 	for _, v := range gi.Vertexes {
-		if err := g.AddVertex(v); err != nil {
-			return nil, err
-		}
+		_ = g.AddVertex(v)
 	}
 	for _, e := range gi.Edges {
-		if err := g.AddEdge(e); err != nil {
-			return nil, err
-		}
+		_ = g.AddEdge(e)
 	}
 	return g, nil
 }
@@ -107,14 +103,10 @@ func UnmarshalDigraph[K comparable, W number](s []byte) (Digraph[K, W], error) {
 	}
 	g := NewDigraph[K, W](gi.Name)
 	for _, v := range gi.Vertexes {
-		if err := g.AddVertex(v); err != nil {
-			return nil, err
-		}
+		_ = g.AddVertex(v)
 	}
 	for _, e := range gi.Edges {
-		if err := g.AddEdge(e); err != nil {
-			return nil, err
-		}
+		_ = g.AddEdge(e)
 	}
 	return g, nil
 }

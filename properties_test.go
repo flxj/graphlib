@@ -18,17 +18,13 @@ package graphlib
 
 import (
 	"flag"
-	"fmt"
 	"testing"
 )
 
-func testBridgeG() Graph[int, int] {
+func testBridgeG(t *testing.T) Graph[int, int] {
 	g := NewGraph[int, int](false, "")
 	for i := 0; i < 8; i++ {
-		err := g.AddVertex(Vertex[int, int]{Key: i})
-		if err != nil {
-			panic(err.Error())
-		}
+		_ = g.AddVertex(Vertex[int, int]{Key: i})
 	}
 	E := []Edge[int, int]{
 		{Head: 0, Tail: 1},
@@ -44,64 +40,61 @@ func testBridgeG() Graph[int, int] {
 	}
 	for i, e := range E {
 		e.Key = i
-		err := g.AddEdge(e)
-		if err != nil {
-			panic(err.Error())
-		}
+		_ = g.AddEdge(e)
 	}
-	fmt.Println("size=", g.Size(), " order=", g.Order())
+	t.Log("size=", g.Size(), " order=", g.Order())
 	return g
 }
 
-func testIsBridge() {
-	g := testBridgeG()
+func testIsBridge(t *testing.T) {
+	g := testBridgeG(t)
 	ok, err := IsBridge(g, 3)
 	if err != nil {
-		panic(err.Error())
+		t.Fatal(err.Error())
 	}
 	if !ok {
-		panic("edge 3 is bridge")
+		t.Fatal("edge 3 is bridge")
 	}
 
 	if ok, err = IsBridge(g, 9); err != nil {
-		panic(err.Error())
+		t.Fatal(err.Error())
 	}
 	if !ok {
-		panic("edge 9 is bridge")
+		t.Fatal("edge 9 is bridge")
 	}
 	//
 	if ok, err = IsBridge(g, 0); err != nil {
-		panic(err.Error())
+		t.Fatal(err.Error())
 	}
 	if ok {
-		panic("edge 0 is not bridge")
+		t.Fatal("edge 0 is not bridge")
 	}
 
 	if ok, err = IsBridge(g, 5); err != nil {
-		panic(err.Error())
+		t.Fatal(err.Error())
 	}
 	if ok {
-		panic("edge 5 is not bridge")
+		t.Fatal("edge 5 is not bridge")
 	}
-	fmt.Println("========> test bridge pass")
+	t.Log("> test bridge pass")
 }
 
-func testFindBridge() {
-	g := testBridgeG()
+func testFindBridge(t *testing.T) {
+	g := testBridgeG(t)
 
 	b, err := FindBridges(g)
 	if err != nil {
-		panic(err.Error())
+		t.Fatal(err.Error())
 	}
 	if len(b) != 2 {
-		panic("find bridge wrong1")
+		t.Fatal("find bridge wrong1")
 	}
 	if (b[0].Key == 3 && b[1].Key == 9) || (b[0].Key == 9 && b[1].Key == 3) {
-		fmt.Println("=======> test find bridges pass")
+		t.Log("=======> test find bridges pass")
 	} else {
-		fmt.Printf("key:%d (%d,%d)\n", b[0].Key, b[0].Head, b[0].Tail)
-		fmt.Printf("key:%d (%d,%d)\n", b[1].Key, b[1].Head, b[1].Tail)
-		panic("find bridge wrong2")
+		t.Logf("key:%d (%d,%d)", b[0].Key, b[0].Head, b[0].Tail)
+		t.Logf("key:%d (%d,%d)", b[1].Key, b[1].Head, b[1].Tail)
+		t.Fatal("find bridge wrong2")
 	}
 }
 
@@ -109,9 +102,9 @@ func TestBridge(t *testing.T) {
 	args := flag.Args()
 	switch args[0] {
 	case "is":
-		testIsBridge()
+		testIsBridge(t)
 	case "find":
-		testFindBridge()
+		testFindBridge(t)
 	default:
 	}
 }

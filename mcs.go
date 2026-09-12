@@ -17,7 +17,6 @@
 package graphlib
 
 import (
-	"fmt"
 	"slices"
 	"sort"
 )
@@ -46,15 +45,10 @@ Proceedings of WALCOM 2010, LNCS 5942, pp. 191–203, 2010.
 "Our algorithm begins with a small clique, and continues finding larger and larger
 cliques until one is found that can be verified to have the maximum size."
 */
-func mcq[K comparable, W number](g Graph[K, W]) (res []K, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("panic:%v", r)
-		}
-	}()
+func mcq[K comparable, W number](g Graph[K, W]) []K {
 	vtx := g.AllVertexes()
 	if len(vtx) == 0 {
-		return []K{}, nil
+		return []K{}
 	}
 	sort.Slice(vtx, func(i, j int) bool {
 		di, _ := g.Degree(vtx[i].Key)
@@ -89,10 +83,7 @@ func mcq[K comparable, W number](g Graph[K, W]) (res []K, err error) {
 				Q[p] = struct{}{}
 				// compute rp := R ∩ Γ(p) as the new set of candidate vertices.
 				rp := make(map[K]struct{})
-				ns, err := g.Neighbours(p)
-				if err != nil {
-					panic(err.Error())
-				}
+				ns, _ := g.Neighbours(p)
 				for _, u := range ns {
 					if slices.Contains(R, u.Key) {
 						rp[u.Key] = struct{}{}
@@ -128,7 +119,7 @@ func mcq[K comparable, W number](g Graph[K, W]) (res []K, err error) {
 	}
 	expand(R, Num)
 
-	return Qmax, nil
+	return Qmax
 }
 
 func numberSort[K comparable, W number](g Graph[K, W], R map[K]struct{}) ([]K, map[K]int) {
@@ -149,10 +140,7 @@ func numberSort[K comparable, W number](g Graph[K, W], R map[K]struct{}) ([]K, m
 			if len(ck) == 0 {
 				break
 			}
-			ns, err := g.Neighbours(p)
-			if err != nil {
-				panic(err.Error())
-			}
+			ns, _ := g.Neighbours(p)
 			var ok bool
 			for _, u := range ns {
 				if ok = slices.Contains(ck, u.Key); ok {

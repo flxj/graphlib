@@ -222,13 +222,12 @@ func MaxFlow[K comparable, W number](g Graph[K, W], source, sink K) (W, error) {
 	}
 	var (
 		flow W
-		err  error
 	)
-	if _, err = g.GetVertex(source); err != nil {
-		return flow, err
+	if _, ok := g.GetVertex(source); !ok {
+		return flow, errVertexNotExists
 	}
-	if _, err = g.GetVertex(sink); err != nil {
-		return flow, err
+	if _, ok := g.GetVertex(sink); !ok {
+		return flow, errVertexNotExists
 	}
 	return mfDinic(g, source, sink)
 }

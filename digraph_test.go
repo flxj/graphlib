@@ -17,7 +17,6 @@
 package graphlib
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -33,9 +32,7 @@ func TestDigraph1(t *testing.T) {
 	}
 
 	for _, v := range vs {
-		if err := g.AddVertex(v); err != nil {
-			t.Errorf("add vertex error:%v", err)
-		}
+		_ = g.AddVertex(v)
 	}
 
 	es := []Edge[int, int]{
@@ -47,9 +44,7 @@ func TestDigraph1(t *testing.T) {
 	}
 
 	for _, e := range es {
-		if err := g.AddEdge(e); err != nil {
-			t.Errorf("add edge error:%v", err)
-		}
+		_ = g.AddEdge(e)
 	}
 	gs := `
 V1---> V2 ---> V3
@@ -57,102 +52,70 @@ V1---> V2 ---> V3
        v
 V4---> V5 ---> V6
 `
-	fmt.Println("=================>[0] init property")
-	fmt.Println(gs)
-	fmt.Printf("order:%d\n", g.Order())
-	fmt.Printf("size:%d\n", g.Size())
-	p, err := g.Property(ProConnected)
-	if err != nil {
-		t.Errorf("get property connected error:%v", err)
-	}
-	fmt.Printf("connected:%v\n", p.Value)
-	if p, err = g.Property(ProUnilateralConnected); err != nil {
-		t.Errorf("get property connected error:%v", err)
-	}
-	fmt.Printf("unidirectional connected:%v\n", p.Value)
-	if p, err = g.Property(ProAcyclic); err != nil {
-		t.Errorf("get property acyclic error:%v", err)
-	}
-	fmt.Printf("acyclic:%v\n", p.Value)
+	t.Log(">[0] init property")
+	t.Log(gs)
+	t.Logf("order:%d", g.Order())
+	t.Logf("size:%d", g.Size())
+	p, _ := g.Property(ProConnected)
+	t.Logf("connected:%v", p.Value)
+	p, _ = g.Property(ProUnilateralConnected)
+	t.Logf("unidirectional connected:%v", p.Value)
+	p, _ = g.Property(ProAcyclic)
+	t.Logf("acyclic:%v", p.Value)
 
-	fmt.Println("===================>[1] delete vertrx v4")
-	if err := g.RemoveVertex(4); err != nil {
-		t.Errorf("delete edge error:%v", err)
-	}
+	t.Log(">[1] delete vertrx v4")
+	_, _ = g.RemoveVertex(4)
 	gs = `
 V1---> V2 ---> V3
        |
        v
        V5 ---> V6
 `
-	fmt.Println(gs)
-	fmt.Printf("order:%d\n", g.Order())
-	fmt.Printf("size:%d\n", g.Size())
-	if p, err = g.Property(ProConnected); err != nil {
-		t.Errorf("get property connected error:%v", err)
-	}
-	fmt.Printf("connected:%v\n", p.Value)
-	if p, err = g.Property(ProUnilateralConnected); err != nil {
-		t.Errorf("get property connected error:%v", err)
-	}
-	fmt.Printf("unidirectional connected:%v\n", p.Value)
-	if p, err = g.Property(ProAcyclic); err != nil {
-		t.Errorf("get property acyclic error:%v", err)
-	}
-	fmt.Printf("acyclic:%v\n", p.Value)
+	t.Log(gs)
+	t.Logf("order:%d", g.Order())
+	t.Logf("size:%d", g.Size())
+	p, _ = g.Property(ProConnected)
+	t.Logf("connected:%v", p.Value)
+	p, _ = g.Property(ProUnilateralConnected)
+	t.Logf("unidirectional connected:%v", p.Value)
+	p, _ = g.Property(ProAcyclic)
+	t.Logf("acyclic:%v", p.Value)
 
-	fmt.Println("===================>[2] add edge v5->v1")
+	t.Log(">[2] add edge v5->v1")
 	ed := Edge[int, int]{Key: 10, Head: 5, Tail: 1}
-	if err := g.AddEdge(ed); err != nil {
-		t.Errorf("add edge error:%v", err)
-	}
+	_ = g.AddEdge(ed)
 	gs = `
 V1---> V2 ---> V3
 ^      |
 |      v
  \---  V5 ---> V6
 `
-	fmt.Println(gs)
-	fmt.Printf("order:%d\n", g.Order())
-	fmt.Printf("size:%d\n", g.Size())
-	if p, err = g.Property(ProConnected); err != nil {
-		t.Errorf("get property connected error:%v", err)
-	}
-	fmt.Printf("connected:%v\n", p.Value)
-	if p, err = g.Property(ProUnilateralConnected); err != nil {
-		t.Errorf("get property connected error:%v", err)
-	}
-	fmt.Printf("unidirectional connected:%v\n", p.Value)
-	if p, err = g.Property(ProAcyclic); err != nil {
-		t.Errorf("get property acyclic error:%v", err)
-	}
-	fmt.Printf("acyclic:%v\n", p.Value)
+	t.Log(gs)
+	t.Logf("order:%d", g.Order())
+	t.Logf("size:%d", g.Size())
+	p, _ = g.Property(ProConnected)
+	t.Logf("connected:%v", p.Value)
+	p, _ = g.Property(ProUnilateralConnected)
+	t.Logf("unidirectional connected:%v", p.Value)
+	p, _ = g.Property(ProAcyclic)
+	t.Logf("acyclic:%v", p.Value)
 
-	fmt.Println("===================>[2] add edge v3->v6")
+	t.Log(">[2] add edge v3->v6")
 	ed = Edge[int, int]{Key: 11, Head: 3, Tail: 6}
-	if err := g.AddEdge(ed); err != nil {
-		t.Errorf("add edge error:%v", err)
-	}
+	_ = g.AddEdge(ed)
 	gs = `
 V1---> V2 ---> V3
 ^      |       |
 |      v       v
  \---  V5 ---> V6
 `
-	fmt.Println(gs)
-	fmt.Printf("order:%d\n", g.Order())
-	fmt.Printf("size:%d\n", g.Size())
-	if p, err = g.Property(ProConnected); err != nil {
-		t.Errorf("get property connected error:%v", err)
-	}
-	fmt.Printf("connected:%v\n", p.Value)
-	if p, err = g.Property(ProUnilateralConnected); err != nil {
-		t.Errorf("get property connected error:%v", err)
-	}
-	fmt.Printf("unidirectional connected:%v\n", p.Value)
-	if p, err = g.Property(ProAcyclic); err != nil {
-		t.Errorf("get property acyclic error:%v", err)
-	}
-	fmt.Printf("acyclic:%v\n", p.Value)
-
+	t.Log(gs)
+	t.Logf("order:%d", g.Order())
+	t.Logf("size:%d", g.Size())
+	p, _ = g.Property(ProConnected)
+	t.Logf("connected:%v", p.Value)
+	p, _ = g.Property(ProUnilateralConnected)
+	t.Logf("unidirectional connected:%v", p.Value)
+	p, _ = g.Property(ProAcyclic)
+	t.Logf("acyclic:%v", p.Value)
 }

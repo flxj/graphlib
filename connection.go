@@ -45,14 +45,10 @@ func auxiliaryGraphEDP[K comparable, W number](g Graph[K, W]) (Graph[K, int], er
 	vs := g.AllVertexes()
 	es := g.AllEdges()
 	for _, v := range vs {
-		if err := aux.AddVertex(Vertex[K, int]{Key: v.Key}); err != nil {
-			return nil, err
-		}
+		_ = aux.AddVertex(Vertex[K, int]{Key: v.Key})
 	}
 	for _, e := range es {
-		if err := aux.AddEdge(Edge[K, int]{Key: e.Key, Head: e.Head, Tail: e.Tail, Weight: 1}); err != nil {
-			return nil, err
-		}
+		_ = aux.AddEdge(Edge[K, int]{Key: e.Key, Head: e.Head, Tail: e.Tail, Weight: 1})
 	}
 	return aux, nil
 }
@@ -68,12 +64,8 @@ func auxiliaryGraphVDP[K comparable, W number](g Graph[K, W], source, target K) 
 	idx := make(map[K]int)
 	var ek, s, t int
 	for i, v := range vs {
-		if err := aux.AddVertex(Vertex[int, int]{Key: -(i + 1)}); err != nil {
-			return nil, 0, 0, err
-		}
-		if err := aux.AddVertex(Vertex[int, int]{Key: i + 1}); err != nil {
-			return nil, 0, 0, err
-		}
+		_ = aux.AddVertex(Vertex[int, int]{Key: -(i + 1)})
+		_ = aux.AddVertex(Vertex[int, int]{Key: i + 1})
 		if v.Key == source {
 			s = -(i + 1)
 		}
@@ -81,17 +73,13 @@ func auxiliaryGraphVDP[K comparable, W number](g Graph[K, W], source, target K) 
 			t = i + 1
 		}
 		idx[v.Key] = i + 1
-		if err := aux.AddEdge(Edge[int, int]{Key: ek, Head: i + 1, Tail: -(i + 1), Weight: 1}); err != nil {
-			return nil, 0, 0, err
-		}
+		_ = aux.AddEdge(Edge[int, int]{Key: ek, Head: i + 1, Tail: -(i + 1), Weight: 1})
 		ek++
 	}
 	// add edge
 	for _, e := range es {
 		i, j := idx[e.Head], idx[e.Tail]
-		if err := aux.AddEdge(Edge[int, int]{Key: ek, Head: -i, Tail: j, Weight: 1}); err != nil {
-			return nil, 0, 0, err
-		}
+		_ = aux.AddEdge(Edge[int, int]{Key: ek, Head: -i, Tail: j, Weight: 1})
 		ek++
 	}
 	return aux, s, t, nil
@@ -133,15 +121,15 @@ func DigraphCut[K comparable, W number](g Digraph[K, W], X []K, incut bool) ([]E
 		xm[v] = struct{}{}
 	}
 	var es []Edge[K, W]
-	var err error
+	var ok bool
 	for v := range xm {
 		if incut {
-			es, err = g.InEdges(v)
+			es, ok = g.InEdges(v)
 		} else {
-			es, err = g.OutEdges(v)
+			es, ok = g.OutEdges(v)
 		}
-		if err != nil {
-			return nil, err
+		if !ok {
+			return nil, errVertexNotExists
 		}
 		for _, e := range es {
 			_, ok := xm[e.Head]
@@ -167,9 +155,9 @@ func DigraphArcs[K comparable, W number](g Digraph[K, W], from, to []K) ([]Edge[
 		ym[v] = struct{}{}
 	}
 	for v := range xm {
-		es, err := g.OutEdges(v)
-		if err != nil {
-			return nil, err
+		es, ok := g.OutEdges(v)
+		if !ok {
+			return nil, errVertexNotExists
 		}
 		for _, e := range es {
 			if _, ok := ym[e.Head]; ok {
@@ -188,9 +176,9 @@ func GraphCoboundary[K comparable, W number](g Graph[K, W], X []K) ([]Edge[K, W]
 		xm[v] = struct{}{}
 	}
 	for v := range xm {
-		es, err := g.IncidentEdges(v)
-		if err != nil {
-			return nil, err
+		es, ok := g.IncidentEdges(v)
+		if !ok {
+			return nil, errVertexNotExists
 		}
 		for _, e := range es {
 			_, ok := xm[e.Head]
@@ -216,9 +204,9 @@ func GraphEdges[K comparable, W number](g Graph[K, W], X, Y []K) ([]Edge[K, W], 
 	}
 	em := make(map[K]Edge[K, W])
 	for v := range xm {
-		es, err := g.IncidentEdges(v)
-		if err != nil {
-			return nil, err
+		es, ok := g.IncidentEdges(v)
+		if !ok {
+			return nil, errVertexNotExists
 		}
 		for _, e := range es {
 			_, ok := ym[e.Head]
@@ -265,9 +253,9 @@ func sccKosaraju[K comparable, W number](g Digraph[K, W], condensation bool) ([]
 	visited := make(map[K]struct{})
 	dfs = func(v K, arr *[]K) error {
 		visited[v] = struct{}{}
-		out, err := g.OutNeighbours(v)
-		if err != nil {
-			return err
+		out, ok := g.OutNeighbours(v)
+		if !ok {
+			return errVertexNotExists
 		}
 		// update reverse adjlist
 		for _, w := range out {
@@ -326,9 +314,9 @@ func sccKosaraju[K comparable, W number](g Digraph[K, W], condensation bool) ([]
 		_ = cond.AddVertex(Vertex[K, W]{Key: c[0], Value: c})
 	}
 	for _, v := range vtx {
-		out, err := g.OutNeighbours(v.Key)
-		if err != nil {
-			return nil, nil, err
+		out, ok := g.OutNeighbours(v.Key)
+		if !ok {
+			return nil, nil, errVertexNotExists
 		}
 		for _, w := range out {
 			if root[w.Key] != root[v.Key] {
@@ -394,9 +382,9 @@ func sccTarjan[K comparable, W number](g Digraph[K, W], condensation bool) ([][]
 		inTime[i] = t
 		t++
 		stk.push(i)
-		out, err := g.OutNeighbours(v)
-		if err != nil {
-			return err
+		out, ok := g.OutNeighbours(v)
+		if !ok {
+			return errVertexNotExists
 		}
 		for _, w := range out {
 			j := idx[w.Key]
@@ -447,9 +435,9 @@ func sccTarjan[K comparable, W number](g Digraph[K, W], condensation bool) ([][]
 		_ = cond.AddVertex(Vertex[K, W]{Key: c[0], Value: c})
 	}
 	for i, v := range vtx {
-		out, err := g.OutNeighbours(v.Key)
-		if err != nil {
-			return nil, nil, err
+		out, ok := g.OutNeighbours(v.Key)
+		if !ok {
+			return nil, nil, errVertexNotExists
 		}
 		for _, w := range out {
 			j := idx[w.Key]

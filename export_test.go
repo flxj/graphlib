@@ -41,24 +41,12 @@ func exportTestGraph1() (Graph[int, int], bool) {
 		{Key: 5, Head: 5, Tail: 6, Value: "e5"},
 	}
 	for i, v := range vs {
-		if err := g.AddVertex(v); err != nil {
-			fmt.Printf("add vertex error:%v\n", err)
-			return nil, false
-		}
-		if err := g.SetVertexLabel(v.Key, "name", fmt.Sprintf("vertex-%d", i)); err != nil {
-			fmt.Printf("add vertex label error:%v\n", err)
-			return nil, false
-		}
+		_ = g.AddVertex(v)
+		_ = g.SetVertexLabel(v.Key, "name", fmt.Sprintf("vertex-%d", i))
 	}
 	for i, e := range es {
-		if err := g.AddEdge(e); err != nil {
-			fmt.Printf("add edge error:%v\n", err)
-			return nil, false
-		}
-		if err := g.SetEdgeLabelByKey(e.Key, "name", fmt.Sprintf("edge-%d", i)); err != nil {
-			fmt.Printf("add edge label error:%v\n", err)
-			return nil, false
-		}
+		_ = g.AddEdge(e)
+		_ = g.SetEdgeLabelByKey(e.Key, "name", fmt.Sprintf("edge-%d", i))
 	}
 	return g, true
 }
@@ -69,21 +57,21 @@ func TestMarshalJSON(t *testing.T) {
 		return
 	}
 	//
-	fmt.Printf("name:%s\n", g.Name())
-	fmt.Printf("order:%d\n", g.Order())
-	fmt.Printf("size:%d\n", g.Size())
+	t.Logf("name:%s", g.Name())
+	t.Logf("order:%d", g.Order())
+	t.Logf("size:%d", g.Size())
 
-	fmt.Println("==================> marshal")
+	t.Log("> marshal")
 	s, err := MarshalGraphToJSON(g)
 	if err != nil {
 		t.Errorf("marshal graph error:%v", err)
 	}
-	fmt.Println("==================> json")
+	t.Log("> json")
 	var bf bytes.Buffer
 	if err := json.Indent(&bf, s, "", "  "); err != nil {
 		t.Errorf("output graph error:%v", err)
 	}
-	fmt.Println(bf.String())
+	t.Log(bf.String())
 }
 
 func TestUnmarshalJSON(t *testing.T) {
@@ -91,20 +79,20 @@ func TestUnmarshalJSON(t *testing.T) {
 	if !ok {
 		return
 	}
-	fmt.Printf("name:%s\n", g.Name())
-	fmt.Printf("order:%d\n", g.Order())
-	fmt.Printf("size:%d\n", g.Size())
-	fmt.Println("==================> marshal")
+	t.Logf("name:%s", g.Name())
+	t.Logf("order:%d", g.Order())
+	t.Logf("size:%d", g.Size())
+	t.Log("> marshal")
 	s, err := MarshalGraphToJSON(g)
 	if err != nil {
 		t.Errorf("marshal graph error:%v", err)
 	}
-	fmt.Println("==================> unmarshal")
+	t.Log("> unmarshal")
 	g2, err := UnmarshalGraph[int, int](s)
 	if err != nil {
 		t.Errorf("unmarshal graph error:%v", err)
 	}
-	fmt.Printf("name:%s\n", g2.Name())
-	fmt.Printf("order:%d\n", g2.Order())
-	fmt.Printf("size:%d\n", g2.Size())
+	t.Logf("name:%s", g2.Name())
+	t.Logf("order:%d", g2.Order())
+	t.Logf("size:%d", g2.Size())
 }

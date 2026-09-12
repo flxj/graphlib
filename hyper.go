@@ -27,44 +27,44 @@ type HyperGraph[K comparable, W number] interface {
 	Size() int
 	AllVertexes() []Vertex[K, W]
 	AllEdges() []HyperEdge[K, W]
-	AddVertex(vertex Vertex[K, W]) error
-	RemoveVertex(key K) error
-	AddEdge(edge HyperEdge[K, W]) error
-	RemoveEdgeByKey(key K) error
+	AddVertex(vertex Vertex[K, W]) bool
+	RemoveVertex(key K) (Vertex[K, W], bool)
+	AddEdge(edge HyperEdge[K, W]) bool
+	RemoveEdgeByKey(key K) (HyperEdge[K, W], bool)
 	// Delete all edges containing vtx as the vertex subset.
 	// If the exact parameter is true, delete edges with a vertex set equal to vtx.
-	RemoveEdge(vtx []K, exact bool) error
-	RemoveAllEdge() error
-	Degree(vertex K) (int, error)
-	Neighbours(vertex K) ([]Vertex[K, W], error)
-	GetVertex(key K) (Vertex[K, W], error)
+	RemoveEdge(vtx []K, exact bool) ([]HyperEdge[K, W], bool)
+	RemoveAllEdge()
+	Degree(vertex K) (int, bool)
+	Neighbours(vertex K) ([]Vertex[K, W], bool)
+	GetVertex(key K) (Vertex[K, W], bool)
 	// Query all edges containing vtx as the vertex subset.
 	// If the exact parameter is true, then query the edges of the vertex subset equal to vtx.
-	GetEdge(vtx []K, exact bool) ([]HyperEdge[K, W], error)
-	GetEdgeByKey(key K) (HyperEdge[K, W], error)
+	GetEdge(vtx []K, exact bool) ([]HyperEdge[K, W], bool)
+	GetEdgeByKey(key K) (HyperEdge[K, W], bool)
 	GetVertexesByLabel(labels Labels) []Vertex[K, W]
 	GetEdgesByLabel(labels Labels) []HyperEdge[K, W]
-	SetVertexValue(key K, value any) error
-	SetVertexLabel(key K, labelKey string, labelVal any) error
-	DeleteVertexLabel(key K, labelKey string) error
-	SetVertexWeight(key K, weight W) error
-	SetEdgeWeight(key K, weight W) error
-	SetEdgeValueByKey(key K, value any) error
-	SetEdgeLabelByKey(key K, labelKey string, labelVal any) error
-	DeleteEdgeLabelByKey(key K, labelKey string) error
+	SetVertexValue(key K, value any) bool
+	SetVertexLabel(key K, labelKey string, labelVal any) bool
+	DeleteVertexLabel(key K, labelKey string) bool
+	SetVertexWeight(key K, weight W) bool
+	SetEdgeWeight(key K, weight W) bool
+	SetEdgeValueByKey(key K, value any) bool
+	SetEdgeLabelByKey(key K, labelKey string, labelVal any) bool
+	DeleteEdgeLabelByKey(key K, labelKey string) bool
 	// Set the value of all edges that contain vtx as the vertex subset.
 	// If the exact parameter is true, only set the vertex set to be equal to vtx edges.
-	SetEdgeValue(vtx []K, value any, exact bool) error
+	SetEdgeValue(vtx []K, value any, exact bool) bool
 	// Set the labels for all edges that contain vtx as the vertex subset.
 	// If the exact parameter is true, only set the edges whose vertex set is equal to vtx.
-	SetEdgeLabel(vtx []K, labelKey string, labelVal any, exact bool) error
-	DeleteEdgeLabel(vtx []K, labelKey string, exact bool) error
-	Clone() (HyperGraph[K, W], error)
-	RandomVertex() (Vertex[K, W], error)
-	RandomEdge() (HyperEdge[K, W], error)
-	NeighbourEdgesByKey(edge K) ([]HyperEdge[K, W], error)
-	NeighbourEdges(vtx []K) ([]HyperEdge[K, W], error)
-	IncidentEdges(vertex K) ([]HyperEdge[K, W], error)
+	SetEdgeLabel(vtx []K, labelKey string, labelVal any, exact bool) bool
+	DeleteEdgeLabel(vtx []K, labelKey string, exact bool) bool
+	Clone() HyperGraph[K, W]
+	RandomVertex() (Vertex[K, W], bool)
+	RandomEdge() (HyperEdge[K, W], bool)
+	NeighbourEdgesByKey(edge K) ([]HyperEdge[K, W], bool)
+	NeighbourEdges(vtx []K) ([]HyperEdge[K, W], bool)
+	IncidentEdges(vertex K) ([]HyperEdge[K, W], bool)
 }
 
 // Hypergraph edge, Key is used to uniquely identify the edge,
@@ -158,15 +158,15 @@ func (h *hypergraph[K, W]) AllEdges() []HyperEdge[K, W] {
 	return es
 }
 
-func (h *hypergraph[K, W]) AddVertex(vertex Vertex[K, W]) error {
+func (h *hypergraph[K, W]) AddVertex(vertex Vertex[K, W]) bool {
 	if _, ok := h.vIdx[vertex.Key]; ok {
-		return errVertexExists
+		return false
 	}
 	_ = h.bi.AddVertexTo(Vertex[int, int]{Key: h.key}, true)
 	h.vtx[h.key] = vertex
 	h.vIdx[vertex.Key] = h.key
 	h.key++
-	return nil
+	return true
 }
 
 func (h *hypergraph[K, W]) incidentEdges(v int) []Vertex[int, int] {
@@ -174,37 +174,34 @@ func (h *hypergraph[K, W]) incidentEdges(v int) []Vertex[int, int] {
 	return ns
 }
 
-func (h *hypergraph[K, W]) RemoveVertex(key K) error {
+func (h *hypergraph[K, W]) RemoveVertex(key K) (Vertex[K, W], bool) {
 	v, ok := h.vIdx[key]
 	if !ok {
-		return errVertexNotExists
+		return Vertex[K, W]{}, false
 	}
 	for _, e := range h.incidentEdges(v) {
-		if err := h.bi.RemoveVertex(e.Key); err != nil {
-			return err
-		}
+		_, _ = h.bi.RemoveVertex(e.Key)
 		ek := h.edge[e.Key]
 		delete(h.edge, e.Key)
 		delete(h.eIdx, ek.Key)
 	}
-	if err := h.bi.RemoveVertex(v); err != nil {
-		return err
-	}
+	_, _ = h.bi.RemoveVertex(v)
+	vt := h.vtx[v]
 	delete(h.vIdx, key)
 	delete(h.vtx, v)
-	return nil
+	return vt, true
 }
 
-func (h *hypergraph[K, W]) AddEdge(e HyperEdge[K, W]) error {
+func (h *hypergraph[K, W]) AddEdge(e HyperEdge[K, W]) bool {
 	if _, ok := h.eIdx[e.Key]; ok {
-		return errEdgeExists
+		return false
 	}
 	if len(e.Vtx) == 0 {
-		return errEmptyHyperEdge
+		return false
 	}
 	for v := range e.Vtx {
 		if _, ok := h.vIdx[v]; !ok {
-			return errVertexNotExists
+			return false
 		}
 	}
 	// add edge
@@ -218,32 +215,32 @@ func (h *hypergraph[K, W]) AddEdge(e HyperEdge[K, W]) error {
 		h.seq++
 	}
 	h.key++
-	return nil
+	return true
 }
 
-func (h *hypergraph[K, W]) RemoveEdgeByKey(key K) error {
+func (h *hypergraph[K, W]) RemoveEdgeByKey(key K) (HyperEdge[K, W], bool) {
 	e, ok := h.eIdx[key]
 	if !ok {
-		return errEdgeNotExists
+		return HyperEdge[K, W]{}, false
 	}
-	if err := h.bi.RemoveVertex(e); err != nil {
-		return err
-	}
+	_, _ = h.bi.RemoveVertex(e)
+	he := h.edge[e]
 	delete(h.eIdx, key)
 	delete(h.edge, e)
-	return nil
+	return he, true
 }
 
 // if exact=true, then try to delete edges that
 // else delete all edges that contains vtx as vertex subset.
-func (h *hypergraph[K, W]) RemoveEdge(vtx []K, exact bool) error {
+func (h *hypergraph[K, W]) RemoveEdge(vtx []K, exact bool) ([]HyperEdge[K, W], bool) {
 	if len(vtx) == 0 {
-		return nil
+		return nil, false
 	}
 	v0, ok := h.vIdx[vtx[0]]
 	if !ok {
-		return errEdgeNotExists
+		return nil, false
 	}
+	var res []HyperEdge[K, W]
 	for _, ev := range h.incidentEdges(v0) {
 		e := h.edge[ev.Key]
 		flag := true
@@ -259,35 +256,33 @@ func (h *hypergraph[K, W]) RemoveEdge(vtx []K, exact bool) error {
 			if exact && len(e.Vtx) != len(vtx) {
 				continue
 			}
-			_ = h.bi.RemoveVertex(ev.Key)
+			_, _ = h.bi.RemoveVertex(ev.Key)
+			res = append(res, e)
 			delete(h.eIdx, e.Key)
 			delete(h.edge, ev.Key)
 		}
 	}
-	return nil
+	return res, true
 }
 
-func (h *hypergraph[K, W]) RemoveAllEdge() error {
-	if err := h.bi.RemovePart(false); err != nil {
-		return err
-	}
+func (h *hypergraph[K, W]) RemoveAllEdge() {
+	h.bi.RemovePart(false)
 	h.edge = make(map[int]HyperEdge[K, W])
 	h.eIdx = make(map[K]int)
-	return nil
 }
 
-func (h *hypergraph[K, W]) Degree(vertex K) (int, error) {
+func (h *hypergraph[K, W]) Degree(vertex K) (int, bool) {
 	v, ok := h.vIdx[vertex]
 	if !ok {
-		return 0, errVertexNotExists
+		return 0, false
 	}
 	return h.bi.Degree(v)
 }
 
-func (h *hypergraph[K, W]) Neighbours(vertex K) ([]Vertex[K, W], error) {
+func (h *hypergraph[K, W]) Neighbours(vertex K) ([]Vertex[K, W], bool) {
 	v, ok := h.vIdx[vertex]
 	if !ok {
-		return nil, errVertexNotExists
+		return nil, false
 	}
 	idx := make(map[K]struct{})
 	for _, ev := range h.incidentEdges(v) {
@@ -301,24 +296,24 @@ func (h *hypergraph[K, W]) Neighbours(vertex K) ([]Vertex[K, W], error) {
 		i := h.vIdx[k]
 		vs = append(vs, h.vtx[i])
 	}
-	return vs, nil
+	return vs, true
 }
 
-func (h *hypergraph[K, W]) GetVertex(key K) (Vertex[K, W], error) {
+func (h *hypergraph[K, W]) GetVertex(key K) (Vertex[K, W], bool) {
 	i, ok := h.vIdx[key]
 	if !ok {
-		return Vertex[K, W]{}, errVertexNotExists
+		return Vertex[K, W]{}, false
 	}
-	return h.vtx[i], nil
+	return h.vtx[i], true
 }
 
-func (h *hypergraph[K, W]) GetEdge(vtx []K, exact bool) ([]HyperEdge[K, W], error) {
+func (h *hypergraph[K, W]) GetEdge(vtx []K, exact bool) ([]HyperEdge[K, W], bool) {
 	if len(vtx) == 0 {
-		return nil, errEmptyHyperEdge
+		return nil, false
 	}
 	v0, ok := h.vIdx[vtx[0]]
 	if !ok {
-		return nil, errEdgeNotExists
+		return nil, false
 	}
 	var res []HyperEdge[K, W]
 	for _, ev := range h.incidentEdges(v0) {
@@ -339,15 +334,15 @@ func (h *hypergraph[K, W]) GetEdge(vtx []K, exact bool) ([]HyperEdge[K, W], erro
 			res = append(res, e)
 		}
 	}
-	return res, nil
+	return res, true
 }
 
-func (h *hypergraph[K, W]) GetEdgeByKey(key K) (HyperEdge[K, W], error) {
+func (h *hypergraph[K, W]) GetEdgeByKey(key K) (HyperEdge[K, W], bool) {
 	i, ok := h.eIdx[key]
 	if !ok {
-		return HyperEdge[K, W]{}, errEdgeNotExists
+		return HyperEdge[K, W]{}, false
 	}
-	return h.edge[i], nil
+	return h.edge[i], true
 }
 
 func (h *hypergraph[K, W]) GetVertexesByLabel(labels Labels) []Vertex[K, W] {
@@ -394,21 +389,21 @@ func (h *hypergraph[K, W]) GetEdgesByLabel(labels Labels) []HyperEdge[K, W] {
 	return edges
 }
 
-func (h *hypergraph[K, W]) SetVertexValue(key K, value any) error {
+func (h *hypergraph[K, W]) SetVertexValue(key K, value any) bool {
 	i, ok := h.vIdx[key]
 	if !ok {
-		return errVertexNotExists
+		return false
 	}
 	v := h.vtx[i]
 	v.Value = value
 	h.vtx[i] = v
-	return nil
+	return true
 }
 
-func (h *hypergraph[K, W]) SetVertexLabel(key K, labelKey string, labelVal any) error {
+func (h *hypergraph[K, W]) SetVertexLabel(key K, labelKey string, labelVal any) bool {
 	i, ok := h.vIdx[key]
 	if !ok {
-		return errVertexNotExists
+		return false
 	}
 	v := h.vtx[i]
 	if v.Labels == nil {
@@ -416,57 +411,57 @@ func (h *hypergraph[K, W]) SetVertexLabel(key K, labelKey string, labelVal any) 
 	}
 	v.Labels[labelKey] = labelVal
 	h.vtx[i] = v
-	return nil
+	return true
 }
 
-func (h *hypergraph[K, W]) DeleteVertexLabel(key K, labelKey string) error {
+func (h *hypergraph[K, W]) DeleteVertexLabel(key K, labelKey string) bool {
 	i, ok := h.vIdx[key]
 	if !ok {
-		return errVertexNotExists
+		return false
 	}
 	v := h.vtx[i]
 	delete(v.Labels, labelKey)
 	h.vtx[i] = v
-	return nil
+	return true
 }
 
-func (h *hypergraph[K, W]) SetVertexWeight(key K, weight W) error {
+func (h *hypergraph[K, W]) SetVertexWeight(key K, weight W) bool {
 	i, ok := h.vIdx[key]
 	if !ok {
-		return errVertexNotExists
+		return false
 	}
 	v := h.vtx[i]
 	v.Weight = weight
 	h.vtx[i] = v
-	return nil
+	return true
 }
 
-func (h *hypergraph[K, W]) SetEdgeWeight(key K, weight W) error {
+func (h *hypergraph[K, W]) SetEdgeWeight(key K, weight W) bool {
 	i, ok := h.eIdx[key]
 	if !ok {
-		return errEdgeNotExists
+		return false
 	}
 	e := h.edge[i]
 	e.Weight = weight
 	h.edge[i] = e
-	return nil
+	return true
 }
 
-func (h *hypergraph[K, W]) SetEdgeValueByKey(key K, value any) error {
+func (h *hypergraph[K, W]) SetEdgeValueByKey(key K, value any) bool {
 	i, ok := h.eIdx[key]
 	if !ok {
-		return errEdgeNotExists
+		return false
 	}
 	e := h.edge[i]
 	e.Value = value
 	h.edge[i] = e
-	return nil
+	return true
 }
 
-func (h *hypergraph[K, W]) SetEdgeLabelByKey(key K, labelKey string, labelVal any) error {
+func (h *hypergraph[K, W]) SetEdgeLabelByKey(key K, labelKey string, labelVal any) bool {
 	i, ok := h.eIdx[key]
 	if !ok {
-		return errEdgeNotExists
+		return false
 	}
 	e := h.edge[i]
 	if e.Labels == nil {
@@ -474,37 +469,37 @@ func (h *hypergraph[K, W]) SetEdgeLabelByKey(key K, labelKey string, labelVal an
 	}
 	e.Labels[labelKey] = labelVal
 	h.edge[i] = e
-	return nil
+	return true
 }
 
-func (h *hypergraph[K, W]) DeleteEdgeLabelByKey(key K, labelKey string) error {
+func (h *hypergraph[K, W]) DeleteEdgeLabelByKey(key K, labelKey string) bool {
 	i, ok := h.eIdx[key]
 	if !ok {
-		return errEdgeNotExists
+		return false
 	}
 	e := h.edge[i]
 	delete(e.Labels, labelKey)
 	h.edge[i] = e
-	return nil
+	return true
 }
 
-func (h *hypergraph[K, W]) SetEdgeValue(vtx []K, value any, exact bool) error {
-	es, err := h.GetEdge(vtx, exact)
-	if err != nil {
-		return err
+func (h *hypergraph[K, W]) SetEdgeValue(vtx []K, value any, exact bool) bool {
+	es, ok := h.GetEdge(vtx, exact)
+	if !ok {
+		return false
 	}
 	for _, e := range es {
 		i := h.eIdx[e.Key]
 		e.Value = value
 		h.edge[i] = e
 	}
-	return nil
+	return true
 }
 
-func (h *hypergraph[K, W]) SetEdgeLabel(vtx []K, labelKey string, labelVal any, exact bool) error {
-	es, err := h.GetEdge(vtx, exact)
-	if err != nil {
-		return err
+func (h *hypergraph[K, W]) SetEdgeLabel(vtx []K, labelKey string, labelVal any, exact bool) bool {
+	es, ok := h.GetEdge(vtx, exact)
+	if !ok {
+		return false
 	}
 	for _, e := range es {
 		i := h.eIdx[e.Key]
@@ -514,27 +509,24 @@ func (h *hypergraph[K, W]) SetEdgeLabel(vtx []K, labelKey string, labelVal any, 
 		e.Labels[labelKey] = labelVal
 		h.edge[i] = e
 	}
-	return nil
+	return true
 }
 
-func (h *hypergraph[K, W]) DeleteEdgeLabel(vtx []K, labelKey string, exact bool) error {
-	es, err := h.GetEdge(vtx, exact)
-	if err != nil {
-		return err
+func (h *hypergraph[K, W]) DeleteEdgeLabel(vtx []K, labelKey string, exact bool) bool {
+	es, ok := h.GetEdge(vtx, exact)
+	if !ok {
+		return false
 	}
 	for _, e := range es {
 		i := h.eIdx[e.Key]
 		delete(e.Labels, labelKey)
 		h.edge[i] = e
 	}
-	return nil
+	return true
 }
 
-func (h *hypergraph[K, W]) Clone() (HyperGraph[K, W], error) {
-	bi, err := h.bi.Clone()
-	if err != nil {
-		return nil, err
-	}
+func (h *hypergraph[K, W]) Clone() HyperGraph[K, W] {
+	bi := h.bi.Clone()
 	b, _ := bi.(Bipartite[int, int])
 
 	nh := &hypergraph[K, W]{
@@ -557,41 +549,41 @@ func (h *hypergraph[K, W]) Clone() (HyperGraph[K, W], error) {
 	for k, e := range h.edge {
 		nh.edge[k] = e.Clone()
 	}
-	return nh, nil
+	return nh
 }
 
-func (h *hypergraph[K, W]) RandomVertex() (Vertex[K, W], error) {
+func (h *hypergraph[K, W]) RandomVertex() (Vertex[K, W], bool) {
 	if len(h.vIdx) == 0 {
-		return Vertex[K, W]{}, errEmptyGraph
+		return Vertex[K, W]{}, false
 	}
 	n := rand.Intn(len(h.vIdx))
 	for _, i := range h.vIdx {
 		n--
 		if n < 0 {
-			return h.vtx[i], nil
+			return h.vtx[i], true
 		}
 	}
-	return Vertex[K, W]{}, nil
+	return Vertex[K, W]{}, false
 }
 
-func (h *hypergraph[K, W]) RandomEdge() (HyperEdge[K, W], error) {
+func (h *hypergraph[K, W]) RandomEdge() (HyperEdge[K, W], bool) {
 	if len(h.eIdx) == 0 {
-		return HyperEdge[K, W]{}, errEmptyGraph
+		return HyperEdge[K, W]{}, false
 	}
 	n := rand.Intn(len(h.eIdx))
 	for _, i := range h.eIdx {
 		n--
 		if n < 0 {
-			return h.edge[i], nil
+			return h.edge[i], true
 		}
 	}
-	return HyperEdge[K, W]{}, nil
+	return HyperEdge[K, W]{}, false
 }
 
-func (h *hypergraph[K, W]) NeighbourEdgesByKey(key K) ([]HyperEdge[K, W], error) {
+func (h *hypergraph[K, W]) NeighbourEdgesByKey(key K) ([]HyperEdge[K, W], bool) {
 	i, ok := h.eIdx[key]
 	if !ok {
-		return nil, errEdgeNotExists
+		return nil, false
 	}
 	e := h.edge[i]
 	mp := make(map[int]struct{})
@@ -605,10 +597,10 @@ func (h *hypergraph[K, W]) NeighbourEdgesByKey(key K) ([]HyperEdge[K, W], error)
 	for i := range mp {
 		res = append(res, h.edge[i])
 	}
-	return res, nil
+	return res, true
 }
 
-func (h *hypergraph[K, W]) NeighbourEdges(vtx []K) ([]HyperEdge[K, W], error) {
+func (h *hypergraph[K, W]) NeighbourEdges(vtx []K) ([]HyperEdge[K, W], bool) {
 	mp := make(map[int]struct{})
 	for _, v := range vtx {
 		j := h.vIdx[v]
@@ -620,21 +612,21 @@ func (h *hypergraph[K, W]) NeighbourEdges(vtx []K) ([]HyperEdge[K, W], error) {
 	for i := range mp {
 		res = append(res, h.edge[i])
 	}
-	return res, nil
+	return res, true
 }
 
-func (h *hypergraph[K, W]) IncidentEdges(vertex K) ([]HyperEdge[K, W], error) {
+func (h *hypergraph[K, W]) IncidentEdges(vertex K) ([]HyperEdge[K, W], bool) {
 	v, ok := h.vIdx[vertex]
 	if !ok {
-		return nil, errVertexNotExists
+		return nil, false
 	}
 	var res []HyperEdge[K, W]
 	for _, ev := range h.incidentEdges(v) {
 		e, ok := h.edge[ev.Key]
 		if !ok {
-			return nil, errEdgeNotExists
+			return nil, false
 		}
 		res = append(res, e)
 	}
-	return res, nil
+	return res, true
 }

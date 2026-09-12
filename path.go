@@ -37,11 +37,9 @@ func ShortestPath[K comparable, W number](g Graph[K, W], source K, target K) (Pa
 	if g == nil {
 		return Path[K, W]{}, errNilGraph
 	}
-	p, err := g.Property(ProNegativeWeight)
-	if err != nil {
-		return Path[K, W]{}, err
-	}
+	p, _ := g.Property(ProNegativeWeight)
 	var paths []Path[K, W]
+	var err error
 	if p.Value.(bool) {
 		paths, err = shortestPathBellmanFord(g, source, target, false)
 	} else {
@@ -63,10 +61,7 @@ func ShortestPaths[K comparable, W number](g Graph[K, W], source K) ([]Path[K, W
 	if g == nil {
 		return []Path[K, W]{}, errNilGraph
 	}
-	p, err := g.Property(ProNegativeWeight)
-	if err != nil {
-		return nil, err
-	}
+	p, _ := g.Property(ProNegativeWeight)
 	if p.Value.(bool) {
 		return shortestPathBellmanFord(g, source, source, true)
 	}
@@ -75,12 +70,7 @@ func ShortestPaths[K comparable, W number](g Graph[K, W], source K) ([]Path[K, W
 
 // get edge from v1 to v2(or v2 to v1) with the minimum weight.
 func getMinWeightEdge[K comparable, W number](g Graph[K, W], v1, v2 K) (*Edge[K, W], W, error) {
-	es, err := g.GetEdge(v1, v2)
-	if err != nil {
-		if !IsNotExists(err) {
-			return nil, 0, err
-		}
-	}
+	es, _ := g.GetEdge(v1, v2)
 	var edge *Edge[K, W]
 	var n W
 	w := getMaxValue(n)
@@ -586,19 +576,16 @@ func countPaths[K comparable, W number](g Graph[K, W], start, end K, n int, visi
 
 	if n == 0 {
 		// check edge start->end exists.
-		if _, err := g.GetEdge(start, end); err != nil {
-			if !IsNotExists(err) {
-				return 0, err
-			}
+		if _, ok := g.GetEdge(start, end); !ok {
 			return 0, nil
 		}
 		return 1, nil
 	}
 
 	var count int
-	vs, err := g.Neighbours(start)
-	if err != nil {
-		return 0, err
+	vs, ok := g.Neighbours(start)
+	if !ok {
+		return 0, errVertexNotExists
 	}
 	for _, v := range vs {
 		if _, ok := visited[v.Key]; !ok {

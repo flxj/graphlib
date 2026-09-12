@@ -30,7 +30,7 @@ func LineGraph[K comparable, W number](g Graph[K, W]) (Graph[int, int], error) {
 	lg := NewGraph[int, int](false, g.Name()+"_line")
 	for i, e := range edges {
 		idx[e.Key] = i
-		err := lg.AddVertex(Vertex[int, int]{
+		ok := lg.AddVertex(Vertex[int, int]{
 			Key:   i,
 			Value: e.Labels,
 			Labels: map[string]any{
@@ -39,20 +39,20 @@ func LineGraph[K comparable, W number](g Graph[K, W]) (Graph[int, int], error) {
 				"tail":   fmt.Sprintf("%v", e.Tail),
 				"weight": fmt.Sprintf("%v", e.Weight),
 			}})
-		if err != nil {
-			return nil, err
+		if !ok {
+			return nil, errVertexExists
 		}
 	}
 	var ek int
 	addEdges := func(i int, e, v K) error {
-		es, err := g.IncidentEdges(v)
-		if err != nil {
-			return err
+		es, ok := g.IncidentEdges(v)
+		if !ok {
+			return errVertexNotExists
 		}
 		for _, e1 := range es {
 			j := idx[e1.Key]
 			if j > i {
-				if err := lg.AddEdge(Edge[int, int]{
+				if ok := lg.AddEdge(Edge[int, int]{
 					Key:  ek,
 					Head: i,
 					Tail: j,
@@ -60,8 +60,8 @@ func LineGraph[K comparable, W number](g Graph[K, W]) (Graph[int, int], error) {
 						"edge1": fmt.Sprintf("%v", e),
 						"edge2": fmt.Sprintf("%v", e1.Key),
 					},
-				}); err != nil {
-					return err
+				}); !ok {
+					return errVertexNotExists
 				}
 				ek++
 			}
@@ -88,7 +88,7 @@ func LineDigraph[K comparable, W number](g Digraph[K, W]) (Digraph[int, int], er
 	lg := NewDigraph[int, int](g.Name() + "_line")
 	for i, e := range edges {
 		idx[e.Key] = i
-		err := lg.AddVertex(Vertex[int, int]{
+		ok := lg.AddVertex(Vertex[int, int]{
 			Key:   i,
 			Value: e.Labels,
 			Labels: map[string]any{
@@ -97,19 +97,19 @@ func LineDigraph[K comparable, W number](g Digraph[K, W]) (Digraph[int, int], er
 				"tail":   fmt.Sprintf("%v", e.Tail),
 				"weight": fmt.Sprintf("%v", e.Weight),
 			}})
-		if err != nil {
-			return nil, err
+		if !ok {
+			return nil, errVertexExists
 		}
 	}
 	var ek int
 	addEdges := func(i int, e, head K) error {
-		es, err := g.OutEdges(head)
-		if err != nil {
-			return err
+		es, ok := g.OutEdges(head)
+		if !ok {
+			return errVertexNotExists
 		}
 		for _, e1 := range es {
 			j := idx[e1.Key]
-			err := lg.AddEdge(Edge[int, int]{
+			ok := lg.AddEdge(Edge[int, int]{
 				Key:  ek,
 				Tail: i,
 				Head: j,
@@ -118,8 +118,8 @@ func LineDigraph[K comparable, W number](g Digraph[K, W]) (Digraph[int, int], er
 					"edge2": fmt.Sprintf("%v", e1.Key),
 				},
 			})
-			if err != nil {
-				return err
+			if !ok {
+				return errVertexNotExists
 			}
 			ek++
 		}

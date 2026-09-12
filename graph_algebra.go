@@ -53,14 +53,10 @@ func Union[K comparable, W number](g1, g2 Graph[K, W]) (Graph[K, W], error) {
 	ug := NewGraph[K, W](g1.IsDigraph(), fmt.Sprintf("%s-union-%s", g1.Name(), g2.Name()))
 
 	for _, v := range uv {
-		if err := ug.AddVertex(*v); err != nil {
-			return nil, err
-		}
+		_ = ug.AddVertex(*v)
 	}
 	for _, e := range ue {
-		if err := ug.AddEdge(*e); err != nil {
-			return nil, err
-		}
+		_ = ug.AddEdge(*e)
 	}
 
 	return ug, nil
@@ -103,14 +99,10 @@ func Intersection[K comparable, W number](g1, g2 Graph[K, W]) (Graph[K, W], erro
 	ug := NewGraph[K, W](g1.IsDigraph(), fmt.Sprintf("%s-intersection-%s", g1.Name(), g2.Name()))
 
 	for _, v := range uv {
-		if err := ug.AddVertex(*v); err != nil {
-			return nil, err
-		}
+		_ = ug.AddVertex(*v)
 	}
 	for _, e := range ue {
-		if err := ug.AddEdge(*e); err != nil {
-			return nil, err
-		}
+		_ = ug.AddEdge(*e)
 	}
 
 	return ug, nil
@@ -136,9 +128,7 @@ func CartesianProduct[K comparable, W number](g1, g2 Graph[K, W]) (Graph[string,
 					g2.Name(): fmt.Sprintf("%v", v2.Key),
 				},
 			}
-			if err := g.AddVertex(v); err != nil {
-				return nil, err
-			}
+			_ = g.AddVertex(v)
 		}
 	}
 	for _, e := range g1es {
@@ -151,9 +141,7 @@ func CartesianProduct[K comparable, W number](g1, g2 Graph[K, W]) (Graph[string,
 				Head: head,
 				Tail: tail,
 			}
-			if err := g.AddEdge(e); err != nil {
-				return nil, err
-			}
+			_ = g.AddEdge(e)
 		}
 	}
 	for _, e := range g2es {
@@ -166,9 +154,7 @@ func CartesianProduct[K comparable, W number](g1, g2 Graph[K, W]) (Graph[string,
 				Head: head,
 				Tail: tail,
 			}
-			if err := g.AddEdge(e); err != nil {
-				return nil, err
-			}
+			_ = g.AddEdge(e)
 		}
 	}
 
@@ -180,30 +166,25 @@ func Identify[K comparable, W number](g Graph[K, W], v1, v2 K, newVertex Vertex[
 }
 
 func Contract[K comparable, W number](g Graph[K, W], v1, v2 K, newVertex Vertex[K, W], createGraph bool) (Graph[K, W], error) {
-	var err error
-	if _, err = g.GetVertex(v1); err != nil {
-		return nil, err
+	if _, ok := g.GetVertex(v1); !ok {
+		return nil, errVertexNotExists
 	}
-	if _, err = g.GetVertex(v2); err != nil {
-		return nil, err
+	if _, ok := g.GetVertex(v2); !ok {
+		return nil, errVertexNotExists
 	}
 
 	g2 := g
 	if createGraph {
-		if g2, err = g.Clone(); err != nil {
-			return nil, err
-		}
+		g2 = g.Clone()
 	}
 	// add new vertex
-	if err = g2.AddVertex(newVertex); err != nil {
-		return nil, err
-	}
+	_ = g2.AddVertex(newVertex)
 
 	newEdges := make(map[K]Edge[K, W])
 	// if find A={v1-x,x-v1 | x!=v2}, then add new edges x-new new-x
-	es1, err := g.IncidentEdges(v1)
-	if err != nil {
-		return nil, err
+	es1, ok := g.IncidentEdges(v1)
+	if !ok {
+		return nil, errVertexNotExists
 	}
 	for _, e := range es1 {
 		if v1 == e.Head {
@@ -229,9 +210,9 @@ func Contract[K comparable, W number](g Graph[K, W], v1, v2 K, newVertex Vertex[
 		}
 	}
 	// if find B = {v2-x,x-v2 | x!=v1}, then add new edges x-new new-x
-	es2, err := g.IncidentEdges(v2)
-	if err != nil {
-		return nil, err
+	es2, ok := g.IncidentEdges(v2)
+	if !ok {
+		return nil, errVertexNotExists
 	}
 	for _, e := range es2 {
 		if v1 == e.Head {
@@ -259,55 +240,38 @@ func Contract[K comparable, W number](g Graph[K, W], v1, v2 K, newVertex Vertex[
 
 	// delete A,B
 	for _, e := range es1 {
-		if err = g2.RemoveEdgeByKey(e.Key); err != nil {
-			if !IsNotExists(err) {
-				return nil, err
-			}
-		}
+		_, _ = g2.RemoveEdgeByKey(e.Key)
 	}
 	for _, e := range es2 {
-		if err = g2.RemoveEdgeByKey(e.Key); err != nil {
-			if !IsNotExists(err) {
-				return nil, err
-			}
-		}
+		_, _ = g2.RemoveEdgeByKey(e.Key)
 	}
 
 	// delete edge v1-v2
-	if err = g2.RemoveEdge(v1, v2); err != nil {
-		if !IsNotExists(err) {
-			return nil, err
-		}
-	}
+	_, _ = g2.RemoveEdge(v1, v2)
 
 	for _, e := range newEdges {
-		if err = g2.AddEdge(e); err != nil {
-			return nil, err
-		}
+		_ = g2.AddEdge(e)
 	}
 	return g2, nil
 }
 
 func Split[K comparable, W number](g Graph[K, W], vertex K, edge Edge[K, W], newEdgeKey func(Edge[K, W]) K, createGraph bool) (Graph[K, W], error) {
-	var err error
-	if _, err = g.GetVertex(edge.Head); err == nil {
+	if _, ok := g.GetVertex(edge.Head); ok {
 		return nil, fmt.Errorf("vertex %v already exists", edge.Head)
 	}
-	if _, err = g.GetVertex(edge.Tail); err == nil {
+	if _, ok := g.GetVertex(edge.Tail); ok {
 		return nil, fmt.Errorf("vertex %v already exists", edge.Tail)
 	}
 
 	g2 := g
 	if createGraph {
-		if g2, err = g.Clone(); err != nil {
-			return nil, err
-		}
+		g2 = g.Clone()
 	}
 
 	newEdges := make(map[K]Edge[K, W])
-	es, err := g.IncidentEdges(vertex)
-	if err != nil {
-		return nil, err
+	es, ok := g.IncidentEdges(vertex)
+	if !ok {
+		return nil, errVertexNotExists
 	}
 	for _, e := range es {
 		if e.Head == vertex {
@@ -349,38 +313,30 @@ func Split[K comparable, W number](g Graph[K, W], vertex K, edge Edge[K, W], new
 		}
 	}
 	//
-	if err = g2.RemoveVertex(vertex); err != nil {
-		return nil, err
-	}
+	_, _ = g2.RemoveVertex(vertex)
 
 	for _, e := range newEdges {
-		if err = g2.AddEdge(e); err != nil {
-			return nil, err
-		}
+		_ = g2.AddEdge(e)
 	}
-	if err = g2.AddEdge(edge); err != nil {
-		return nil, err
-	}
+	_ = g2.AddEdge(edge)
 
 	return g2, nil
 }
 
 func Subdivide[K comparable, W number](g Graph[K, W], edge K, vertex Vertex[K, W], newEdgeKey func(Edge[K, W]) K, createGraph bool) (Graph[K, W], error) {
-	_, err := g.GetVertex(vertex.Key)
-	if err == nil {
+	_, ok := g.GetVertex(vertex.Key)
+	if ok {
 		return nil, fmt.Errorf("vertex %v already exists", vertex.Key)
 	}
 
 	g2 := g
 	if createGraph {
-		if g2, err = g.Clone(); err != nil {
-			return nil, err
-		}
+		g2 = g.Clone()
 	}
 
-	e, err := g.GetEdgeByKey(edge)
-	if err != nil {
-		return nil, err
+	e, ok := g.GetEdgeByKey(edge)
+	if !ok {
+		return nil, errEdgeNotExists
 	}
 	ne := Edge[K, W]{
 		Head: e.Head,
@@ -388,41 +344,33 @@ func Subdivide[K comparable, W number](g Graph[K, W], edge K, vertex Vertex[K, W
 	}
 	ne.Key = newEdgeKey(ne)
 
-	if err = g2.AddEdge(ne); err != nil {
-		return nil, err
-	}
+	_ = g2.AddEdge(ne)
 
 	ne = Edge[K, W]{
 		Head: vertex.Key,
 		Tail: e.Tail,
 	}
 	ne.Key = newEdgeKey(ne)
-	if err = g2.AddEdge(ne); err != nil {
-		return nil, err
-	}
+	_ = g2.AddEdge(ne)
 
-	if err = g2.RemoveEdgeByKey(edge); err != nil {
-		return nil, err
-	}
+	_, _ = g2.RemoveEdgeByKey(edge)
 
 	return g2, nil
 }
 
 func Complement[K comparable, W number](g Graph[K, W]) (Graph[K, W], error) {
 	if g == nil {
-		return nil, nil
+		return nil, errNilGraph
 	}
 	ng := newGraph[K, W](g.IsDigraph(), g.Name()+"_complement")
 	vtx := g.AllVertexes()
 	for _, v := range vtx {
-		if err := ng.AddVertex(v); err != nil {
-			return nil, err
-		}
+		_ = ng.AddVertex(v)
 	}
 	ek := make(map[K]struct{})
 	genKey := func(v1, v2 K) K {
 		for {
-			nk := randEdgeKey(v1, v2)
+			nk, _ := randEdgeKey(v1, v2)
 			if _, ok := ek[nk]; !ok {
 				ek[nk] = struct{}{}
 				return nk
@@ -433,45 +381,48 @@ func Complement[K comparable, W number](g Graph[K, W]) (Graph[K, W], error) {
 	for i, v := range vtx {
 		for j := i + 1; j < len(vtx); j++ {
 			// u := vtx[j], try to add edge (v,u) to new graph.
-			es, err := g.GetEdge(v.Key, vtx[j].Key)
-			if err != nil {
-				return nil, err
-			}
+			es, _ := g.GetEdge(v.Key, vtx[j].Key)
 			if g.IsDigraph() {
 				switch len(es) {
 				case 0:
-					err = ng.AddEdge(Edge[K, W]{
+					ok := ng.AddEdge(Edge[K, W]{
 						Key:  genKey(v.Key, vtx[j].Key),
 						Head: v.Key,
 						Tail: vtx[j].Key,
 					})
-					if err != nil {
-						return nil, err
+					if !ok {
+						return nil, errEdgeExists
 					}
-					err = ng.AddEdge(Edge[K, W]{
+					ok = ng.AddEdge(Edge[K, W]{
 						Key:  genKey(vtx[j].Key, v.Key),
 						Head: vtx[j].Key,
 						Tail: v.Key,
 					})
+					if !ok {
+						return nil, errEdgeExists
+					}
 				case 1:
-					err = ng.AddEdge(Edge[K, W]{
+					ok := ng.AddEdge(Edge[K, W]{
 						Key:  genKey(v.Key, vtx[j].Key),
 						Head: es[0].Tail,
 						Tail: es[0].Head,
 					})
+					if !ok {
+						return nil, errEdgeExists
+					}
 				default:
 				}
 			} else {
 				if len(es) == 0 {
-					err = ng.AddEdge(Edge[K, W]{
+					ok := ng.AddEdge(Edge[K, W]{
 						Key:  genKey(v.Key, vtx[j].Key),
 						Head: v.Key,
 						Tail: vtx[j].Key,
 					})
+					if !ok {
+						return nil, errEdgeExists
+					}
 				}
-			}
-			if err != nil {
-				return nil, err
 			}
 		}
 	}

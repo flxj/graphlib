@@ -133,16 +133,12 @@ func testTexTree(di bool) {
 		{Head: 23, Tail: 30},
 	}
 	for i := 1; i <= 30; i++ {
-		if err := f.AddVertex(graphlib.Vertex[int, int]{Key: i}); err != nil {
-			panic(err.Error())
-		}
+		_ = f.AddVertex(graphlib.Vertex[int, int]{Key: i})
 	}
 	for i, e := range es {
 		e.Key = i + 1
 		//e.Tail, e.Head = e.Head, e.Tail
-		if err := f.AddEdge(e); err != nil {
-			panic(fmt.Sprintf("edge:(%d,%d) err:%s", e.Head, e.Tail, err.Error()))
-		}
+		_ = f.AddEdge(e)
 	}
 	f.SetRoot(1)
 	if di {

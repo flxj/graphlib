@@ -21,16 +21,16 @@ import (
 	"strings"
 )
 
-func fmtGraphTex[K comparable, W number](g Graph[K, W], F func(v K) ([]Edge[K, W], error)) (string, error) {
+func fmtGraphTex[K comparable, W number](g Graph[K, W], F func(v K) ([]Edge[K, W], bool)) (string, error) {
 	var bu strings.Builder
 	_, _ = bu.WriteString("{\n")
 	var bfs func(K) error
 	vis := make(map[K]struct{})
 	bfs = func(v K) error {
 		_, _ = fmt.Fprintf(&bu, "%v", v)
-		out, err := F(v)
-		if err != nil {
-			return err
+		out, ok := F(v)
+		if !ok {
+			return errVertexNotExists
 		}
 		var filter []Edge[K, W]
 		for _, e := range out {
@@ -105,9 +105,9 @@ func fmtForestTex[K comparable, W number](f *Forest[K, W]) (string, error) {
 	vis := make(map[K]struct{})
 	dfs = func(u K) error {
 		_, _ = fmt.Fprintf(&bu, "%v", u)
-		es, err := f.IncidentEdges(u)
-		if err != nil {
-			return err
+		es, ok := f.IncidentEdges(u)
+		if !ok {
+			return errVertexNotExists
 		}
 		var out []Edge[K, W]
 		if digraph {

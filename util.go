@@ -77,34 +77,34 @@ func getMaxValue[W number](n W) W {
 	}
 }
 
-func randEdgeKey[K comparable](v1, v2 K) K {
+func randEdgeKey[K comparable](v1, v2 K) (K, bool) {
 	switch any(v1).(type) {
 	case int:
-		return any(rand.Int()).(K)
+		return any(rand.Int()).(K), true
 	case string:
-		return any(fmt.Sprintf("%v-%v-%s", v1, v2, randStr(10))).(K)
+		return any(fmt.Sprintf("%v-%v-%s", v1, v2, randStr(10))).(K), true
 	case int8:
-		return any(int8(rand.Int())).(K)
+		return any(int8(rand.Int())).(K), true
 	case int16:
-		return any(int16(rand.Int())).(K)
+		return any(int16(rand.Int())).(K), true
 	case int32:
-		return any(rand.Int31()).(K)
+		return any(rand.Int31()).(K), true
 	case int64:
-		return any(rand.Int63()).(K)
+		return any(rand.Int63()).(K), true
 	case uint:
-		return any(uint(rand.Uint64())).(K)
+		return any(uint(rand.Uint64())).(K), true
 	case uint8:
-		return any(uint8(rand.Uint32())).(K)
+		return any(uint8(rand.Uint32())).(K), true
 	case uint16:
-		return any(uint16(rand.Uint32())).(K)
+		return any(uint16(rand.Uint32())).(K), true
 	case uint32:
-		return any(rand.Uint32()).(K)
+		return any(rand.Uint32()).(K), true
 	case uint64:
-		return any(rand.Uint64()).(K)
+		return any(rand.Uint64()).(K), true
 	case []byte:
-		return any(fmt.Sprintf("%v-%v-%s", v1, v2, randStr(10))).(K)
+		return any(fmt.Sprintf("%v-%v-%s", v1, v2, randStr(10))).(K), true
 	default:
-		return v1
+		return v1, false
 	}
 }
 

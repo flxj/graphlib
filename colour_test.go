@@ -17,7 +17,6 @@
 package graphlib
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -25,11 +24,11 @@ func TestColour(t *testing.T) {
 	g := PetersenGraph()
 	col, x, err := GreedyVertexColouring(g)
 	if err != nil {
-		panic(err.Error())
+		t.Fatal(err.Error())
 	}
-	fmt.Println("colour=", x)
+	t.Log("colour=", x)
 	for v, c := range col {
-		fmt.Println("v=", v, " c=", c)
+		t.Log("v=", v, " c=", c)
 	}
 }
 
@@ -64,14 +63,11 @@ func TestMCQ(t *testing.T) {
 		_ = k5.AddEdge(e)
 		ek++
 	}
-	c, err := MaximumClique(k5)
-	if err != nil {
-		t.Error(err)
-	}
+	c := MaximumClique(k5)
 	if len(c) != 5 {
 		t.Errorf("find %d, but expect 5", len(c))
 	}
 	for _, k := range c {
-		fmt.Println(k)
+		t.Log(k)
 	}
 }

@@ -31,9 +31,9 @@ func updateMatching[K comparable, W number](g Bipartite[K, W], pairU, pairV map[
 	if u != dummyK {
 		// get u's neighbours(in partB).
 		// and check the already matched neighbour
-		vs, err := g.Neighbours(u)
-		if err != nil {
-			return false, err
+		vs, ok := g.Neighbours(u)
+		if !ok {
+			return false, errVertexNotExists
 		}
 		// edge u-v not in current matching.
 		for _, v := range vs {
@@ -129,9 +129,9 @@ func mmHopcroftKarp[K comparable, W number](partA, partB []Vertex[K, W], g Bipar
 			if dist[u] < dist[dummyK] {
 				// so we should try to visit its neighbours(in partB) v,
 				// obvious edge u-v is not in current matching.
-				vs, err := g.Neighbours(u)
-				if err != nil {
-					return false, err
+				vs, ok := g.Neighbours(u)
+				if !ok {
+					return false, errVertexNotExists
 				}
 				// travel vs, and find some v that already matched with some vertex(in partA),
 				// which means we find some edges that in current matching.
@@ -175,9 +175,9 @@ func mmHopcroftKarp[K comparable, W number](partA, partB []Vertex[K, W], g Bipar
 	var edges []Edge[K, W]
 	for u, v := range pairU {
 		if v != dummyK {
-			es, err := g.GetEdge(u, v)
-			if err != nil {
-				return nil, err
+			es, ok := g.GetEdge(u, v)
+			if !ok {
+				return nil, errVertexNotExists
 			}
 			if len(es) > 0 {
 				edges = append(edges, es[0])
@@ -195,14 +195,14 @@ func BipartiteMaxMatching[K comparable, W number](g Bipartite[K, W]) ([]Edge[K, 
 	if g.Order() == 0 || g.Size() == 0 {
 		return []Edge[K, W]{}, nil
 	}
-	var err error
+	var ok bool
 	var partA []Vertex[K, W]
 	var partB []Vertex[K, W]
-	if partA, err = g.Part(true); err != nil {
-		return nil, err
+	if partA, ok = g.Part(true); !ok {
+		return nil, nil
 	}
-	if partB, err = g.Part(false); err != nil {
-		return nil, err
+	if partB, ok = g.Part(false); !ok {
+		return nil, nil
 	}
 	return mmHopcroftKarp(partA, partB, g)
 }
@@ -215,9 +215,9 @@ func BipartitePerfectMatching[K comparable, W number](g Bipartite[K, W]) ([]Edge
 	}
 	vs := make(map[K]bool)
 	for _, k := range mm {
-		e, err := g.GetEdgeByKey(k.Key)
-		if err != nil {
-			return nil, err
+		e, ok := g.GetEdgeByKey(k.Key)
+		if !ok {
+			return nil, errEdgeNotExists
 		}
 		vs[e.Head] = true
 		vs[e.Tail] = true
@@ -241,12 +241,12 @@ func BipartiteWeightedMatching[K comparable, W number](g Bipartite[K, W], maximu
 		return []Edge[K, W]{}, nil
 	}
 	var A, B []Vertex[K, W]
-	var err error
-	if A, err = g.Part(true); err != nil {
-		return nil, err
+	var ok bool
+	if A, ok = g.Part(true); !ok {
+		return nil, nil
 	}
-	if B, err = g.Part(false); err != nil {
-		return nil, err
+	if B, ok = g.Part(false); !ok {
+		return nil, nil
 	}
 	if len(A) != len(B) { // TODO: add dummy verties to make equal
 		return nil, errors.New("not regular complete bipartite")
@@ -259,13 +259,9 @@ func BipartiteWeightedMatching[K comparable, W number](g Bipartite[K, W], maximu
 		}
 		for i := 1; i <= len(A); i++ {
 			for j := 1; j <= len(A); j++ {
-				es, err := g.GetEdge(A[i-1].Key, B[j-1].Key)
-				if err != nil {
-					if err != errEdgeNotExists {
-						return nil, err
-					} else {
-						weight[i][j] = weight[0][0] // zero
-					}
+				es, ok := g.GetEdge(A[i-1].Key, B[j-1].Key)
+				if !ok {
+					weight[i][j] = weight[0][0] // zero
 				} else {
 					weight[i][j] = es[0].Weight
 				}
@@ -281,13 +277,9 @@ func BipartiteWeightedMatching[K comparable, W number](g Bipartite[K, W], maximu
 		inf := maxValue(weight[0][0])
 		for i := 1; i <= len(A); i++ {
 			for j := 1; j <= len(A); j++ {
-				es, err := g.GetEdge(A[i-1].Key, B[j-1].Key)
-				if err != nil {
-					if err != errEdgeNotExists {
-						return nil, err
-					} else {
-						weight[i][j] = inf
-					}
+				es, ok := g.GetEdge(A[i-1].Key, B[j-1].Key)
+				if !ok {
+					weight[i][j] = inf
 				} else {
 					weight[i][j] = es[0].Weight
 				}
@@ -299,13 +291,9 @@ func BipartiteWeightedMatching[K comparable, W number](g Bipartite[K, W], maximu
 	res := make([]Edge[K, W], len(M)-1)
 	for i := 1; i < len(M); i++ {
 		u, v := i-1, M[i]-1
-		es, err := g.GetEdge(A[u].Key, B[v].Key)
-		if err != nil {
-			if err == errEdgeNotExists {
-				res[i-1] = Edge[K, W]{Head: A[u].Key, Tail: B[v].Key}
-			} else {
-				return nil, err
-			}
+		es, ok := g.GetEdge(A[u].Key, B[v].Key)
+		if !ok {
+			res[i-1] = Edge[K, W]{Head: A[u].Key, Tail: B[v].Key}
 		} else {
 			res[i-1] = es[0]
 		}
@@ -341,7 +329,7 @@ func maxMatchingHungarian0[K comparable, W number](V1, V2 []Vertex[K, W], weight
 		_ = Gyz.AddVertexTo(Z[i], false)
 	}
 	equalSubgraph := func() {
-		_ = Gyz.RemoveAllEdge()
+		Gyz.RemoveAllEdge()
 		for u := 0; u < n; u++ {
 			for v := 0; v < n; v++ {
 				if y[u]+z[v] == weight[u][v] {
@@ -669,12 +657,12 @@ func BipartiteMinimumVertexCover[K comparable, W number](g Bipartite[K, W]) (map
 		return make(map[K]struct{}), nil
 	}
 	var A, B []Vertex[K, W]
-	var err error
-	if A, err = g.Part(true); err != nil {
-		return nil, err
+	var ok bool
+	if A, ok = g.Part(true); !ok {
+		return nil, nil
 	}
-	if B, err = g.Part(false); err != nil {
-		return nil, err
+	if B, ok = g.Part(false); !ok {
+		return nil, nil
 	}
 	M, err := mmHopcroftKarp(A, B, g)
 	if err != nil {
@@ -708,8 +696,8 @@ func bipartiteMVC[K comparable, W number](A, B []Vertex[K, W], M []Edge[K, W], g
 		S[v] = struct{}{} // add it to S
 		if free {
 			// find a unmatch edge (v,w)
-			ns, err := g.Neighbours(v)
-			if err != nil {
+			ns, ok := g.Neighbours(v)
+			if !ok {
 				return false
 			}
 			for _, w := range ns {
@@ -771,9 +759,9 @@ func PerfectMatching[K comparable, W number](g Graph[K, W]) ([]Edge[K, W], error
 	}
 	vs := make(map[K]bool)
 	for _, k := range mm {
-		e, err := g.GetEdgeByKey(k.Key)
-		if err != nil {
-			return nil, err
+		e, ok := g.GetEdgeByKey(k.Key)
+		if !ok {
+			return nil, errEdgeNotExists
 		}
 		vs[e.Head] = true
 		vs[e.Tail] = true
@@ -910,9 +898,9 @@ func (b *blossomAlgo[K, W]) findAugmentingPath() ([]K, error) {
 		b.dist[v] = 0
 	}
 	for v := range b.parent {
-		ns, err := b.g.Neighbours(v)
-		if err != nil {
-			return nil, err
+		ns, ok := b.g.Neighbours(v)
+		if !ok {
+			return nil, errVertexNotExists
 		}
 		for _, n := range ns {
 			w := n.Key
@@ -1268,9 +1256,9 @@ func (mm *maxMatchingBlossom[K, W]) find() ([]Edge[K, W], error) {
 	for u := 0; u < mm.n; u++ {
 		v := mm.mate[u]
 		if u < v {
-			e, err := mm.graph.GetEdge(mm.vtx[u].Key, mm.vtx[v].Key)
-			if err != nil {
-				return nil, err
+			e, ok := mm.graph.GetEdge(mm.vtx[u].Key, mm.vtx[v].Key)
+			if !ok {
+				return nil, errEdgeNotExists
 			} else {
 				res = append(res, e[0])
 			}

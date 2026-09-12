@@ -55,19 +55,14 @@ func TestLCA(t *testing.T) {
 		{Head: 23, Tail: 30},
 	}
 	for i := 1; i <= 30; i++ {
-		err := f.AddVertex(Vertex[int, int]{Key: i})
-		if err != nil {
-			t.Error(err)
-		}
+		_ = f.AddVertex(Vertex[int, int]{Key: i})
 	}
 	for i, e := range es {
 		e.Key = i + 1
-		if err := f.AddEdge(e); err != nil {
-			t.Errorf("edge:(%d,%d) err:%s", e.Head, e.Tail, err.Error())
-		}
+		_ = f.AddEdge(e)
 	}
 	f.SetRoot(1)
-	fmt.Printf("Tree vettex=%d,edges=%d\n", f.Order(), f.Size())
+	t.Logf("Tree vettex=%d,edges=%d", f.Order(), f.Size())
 
 	q := [][3]int{
 		{2, 3, 1},

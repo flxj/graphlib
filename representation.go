@@ -25,10 +25,7 @@ func NewWeightMatrix[K comparable, W number](g Graph[K, W]) (*WeightMatrix[K, W]
 	if g == nil {
 		return nil, errNilGraph
 	}
-	p, err := g.Property(ProSimple)
-	if err != nil {
-		return nil, err
-	}
+	p, _ := g.Property(ProSimple)
 	if !p.Value.(bool) {
 		return nil, errNotSimple
 	}
@@ -100,9 +97,9 @@ func NewAdjacencytMatrix[K comparable, W number](g Graph[K, W]) (*AdjacencyMatri
 	return am, nil
 }
 
-func NewDegreeMatrix[K comparable, W number](g Graph[K, W]) (*DegreeMatrix[K], error) {
+func NewDegreeMatrix[K comparable, W number](g Graph[K, W]) *DegreeMatrix[K] {
 	if g == nil {
-		return nil, errNilGraph
+		return nil
 	}
 	vs := g.AllVertexes()
 	dm := &DegreeMatrix[K]{
@@ -112,14 +109,13 @@ func NewDegreeMatrix[K comparable, W number](g Graph[K, W]) (*DegreeMatrix[K], e
 	for i, v := range vs {
 		dm.vertexes[i] = v.Key
 		dm.data[i] = make([]int, len(vs))
-		d, err := g.Degree(v.Key)
-		if err != nil {
-			return nil, err
+		d, ok := g.Degree(v.Key)
+		if !ok {
+			return nil
 		}
 		dm.data[i][i] = d
 	}
-
-	return dm, nil
+	return dm
 }
 
 type AdjacencyMatrix[K comparable] struct {
@@ -191,11 +187,10 @@ func (m *WeightMatrix[K, W]) Columns() []K {
 }
 
 type endpoint[K comparable, W number] struct {
-	key    K // vertex key
+	vtx    K // vertex key
 	edge   K // edge key
 	weight W
 	next   *endpoint[K, W]
-	//prev   *endpoint[K, W]
 }
 
 type edge[K comparable, W number] struct {
@@ -222,36 +217,28 @@ func newAdjacencyLis[K comparable, W number](digraph bool) *adjList[K, W] {
 	return adj
 }
 
-func newAdjacencyListFromGraph[K comparable, W number](g Graph[K, W]) (*adjList[K, W], error) {
-	var (
-		err error
-		adj *adjList[K, W]
-	)
+func newAdjacencyListFromGraph[K comparable, W number](g Graph[K, W]) *adjList[K, W] {
+	var adj *adjList[K, W]
 	vs := g.AllVertexes()
 	es := g.AllEdges()
 	adj = newAdjacencyLis[K, W](g.IsDigraph())
 
 	for _, v := range vs {
-		if err = adj.addVertexes(v.Key); err != nil {
-			return nil, err
-		}
+		adj.addVertexes(v.Key)
 	}
 	for _, e := range es {
-		if err = adj.addEdge(e.Head, e.Tail, e.Key, e.Weight); err != nil {
-			return nil, err
-		}
+		adj.addEdge(e.Head, e.Tail, e.Key, e.Weight)
 	}
-	return adj, nil
+	return adj
 }
 
-func (l *adjList[K, W]) reverse() error {
+func (l *adjList[K, W]) reverse() {
 	var out = l.outAdj
 	l.outAdj = l.inAdj
 	l.inAdj = out
-	return nil
 }
 
-func (l *adjList[K, W]) addVertexes(vs ...K) error {
+func (l *adjList[K, W]) addVertexes(vs ...K) {
 	for _, v := range vs {
 		if _, ok := l.outAdj[v]; !ok {
 			l.outAdj[v] = nil
@@ -262,19 +249,17 @@ func (l *adjList[K, W]) addVertexes(vs ...K) error {
 			}
 		}
 	}
-	return nil
 }
 
-func (l *adjList[K, W]) delVertex(v K) error {
+func (l *adjList[K, W]) delVertex(v K) bool {
 	del := func(v K, adj map[K]*endpoint[K, W]) {
 		delete(adj, v)
 		for k, p := range adj {
 			var head = p
 			var prev = &endpoint[K, W]{next: head}
-			//prev.next = head
 
 			for q := head; q != nil; {
-				if q.key == v {
+				if q.vtx == v {
 					if q == head {
 						// remove head element
 						prev = q
@@ -300,24 +285,24 @@ func (l *adjList[K, W]) delVertex(v K) error {
 	if l.digraph {
 		del(v, l.inAdj)
 	}
-	return nil
+	return true
 }
 
-func (l *adjList[K, W]) delVertexes(vs ...K) error {
+func (l *adjList[K, W]) delVertexes(vs ...K) bool {
 	for _, v := range vs {
 		if _, ok := l.outAdj[v]; !ok {
-			return fmt.Errorf("vertex %v not exists", v)
+			return false
 		}
 	}
 	for _, v := range vs {
-		if err := l.delVertex(v); err != nil {
-			return err
+		if ok := l.delVertex(v); !ok {
+			return false
 		}
 	}
-	return nil
+	return true
 }
 
-func (l *adjList[K, W]) addEdge(head, tail, key K, weight W) error {
+func (l *adjList[K, W]) addEdge(head, tail, key K, weight W) bool {
 	insert := func(v1, v2, edge K, w W, adj map[K]*endpoint[K, W]) error {
 		p, ok := adj[v1]
 		if !ok {
@@ -325,7 +310,7 @@ func (l *adjList[K, W]) addEdge(head, tail, key K, weight W) error {
 		}
 		var exists bool
 		for q := p; q != nil; q = q.next {
-			if q.key == v2 && q.edge == edge {
+			if q.vtx == v2 && q.edge == edge {
 				q.weight = w
 				exists = true
 				break
@@ -333,7 +318,7 @@ func (l *adjList[K, W]) addEdge(head, tail, key K, weight W) error {
 		}
 		if !exists {
 			q := &endpoint[K, W]{
-				key:    v2,
+				vtx:    v2,
 				edge:   edge,
 				weight: w,
 			}
@@ -346,22 +331,22 @@ func (l *adjList[K, W]) addEdge(head, tail, key K, weight W) error {
 	}
 	// insert to outAdj
 	if err := insert(tail, head, key, weight, l.outAdj); err != nil {
-		return err
+		return false
 	}
 	if l.digraph {
 		// insert to inAdj
 		if err := insert(head, tail, key, weight, l.inAdj); err != nil {
-			return err
+			return false
 		}
 	} else {
 		if err := insert(head, tail, key, weight, l.outAdj); err != nil {
-			return err
+			return false
 		}
 	}
-	return nil
+	return true
 }
 
-func (l *adjList[K, W]) delEdge(head, tail, key K) error {
+func (l *adjList[K, W]) delEdge(head, tail, key K) bool {
 	del := func(v1, v2, edge K, adj map[K]*endpoint[K, W]) error {
 		p, ok := adj[v1]
 		if !ok {
@@ -373,7 +358,7 @@ func (l *adjList[K, W]) delEdge(head, tail, key K) error {
 		var prev = &endpoint[K, W]{next: p}
 		var q *endpoint[K, W]
 		for e := p; e != nil; e = e.next {
-			if e.key == v2 && e.edge == edge {
+			if e.vtx == v2 && e.edge == edge {
 				q = e
 				break
 			}
@@ -393,74 +378,77 @@ func (l *adjList[K, W]) delEdge(head, tail, key K) error {
 	}
 	//
 	if err := del(tail, head, key, l.outAdj); err != nil {
-		return err
+		return false
 	}
 	if l.digraph {
 		if err := del(head, tail, key, l.inAdj); err != nil {
-			return err
+			return false
 		}
 	} else {
 		if err := del(head, tail, key, l.outAdj); err != nil {
-			return err
+			return false
 		}
 	}
-	return nil
+	return true
 }
 
-func (l *adjList[K, W]) addEdges(es ...*edge[K, W]) error {
+func (l *adjList[K, W]) addEdges(es ...*edge[K, W]) bool {
 	for _, e := range es {
 		if _, ok := l.outAdj[e.tail]; !ok {
-			return fmt.Errorf("vertex %v not exists", e.tail)
+			//return fmt.Errorf("vertex %v not exists", e.tail)
+			return false
 		}
 		if _, ok := l.outAdj[e.head]; !ok {
-			return fmt.Errorf("vertex %v not exists", e.head)
+			//return fmt.Errorf("vertex %v not exists", e.head)
+			return false
 		}
 	}
 	for _, e := range es {
-		if err := l.addEdge(e.head, e.tail, e.key, e.weight); err != nil {
-			return err
+		if ok := l.addEdge(e.head, e.tail, e.key, e.weight); !ok {
+			return false
 		}
 	}
-	return nil
+	return true
 }
 
-func (l *adjList[K, W]) delEdges(es ...*edge[K, W]) error {
+func (l *adjList[K, W]) delEdges(es ...Edge[K, W]) bool {
 	for _, e := range es {
-		if err := l.delEdge(e.head, e.tail, e.key); err != nil {
-			return err
+		if ok := l.delEdge(e.Head, e.Tail, e.Key); !ok {
+			return false
 		}
 	}
-	return nil
+	return true
 }
 
-func (l *adjList[K, W]) degree(v K) (int, error) {
-	d, err := l.outDegree(v)
-	if err != nil {
-		return 0, err
+func (l *adjList[K, W]) degree(v K) (int, bool) {
+	d, ok := l.outDegree(v)
+	if !ok {
+		return 0, false
 	}
 	if l.digraph {
-		in, err := l.inDegree(v)
-		if err != nil {
-			return 0, err
+		in, ok := l.inDegree(v)
+		if !ok {
+			return 0, false
 		}
 		d += in
 	}
-	return d, nil
+	return d, true
 }
 
-func (l *adjList[K, W]) outDegree(v K) (int, error) {
+func (l *adjList[K, W]) outDegree(v K) (int, bool) {
 	p, ok := l.outAdj[v]
 	if !ok {
-		return 0, fmt.Errorf("vertex %v not exists", v)
+		//return 0, fmt.Errorf("vertex %v not exists", v)
+		return 0, false
 	}
 	var d int
 	for q := p; q != nil; q = q.next {
 		d++
 	}
-	return d, nil
+	return d, true
 }
 
-func (l *adjList[K, W]) inDegree(v K) (int, error) {
+func (l *adjList[K, W]) inDegree(v K) (int, bool) {
 	var adj map[K]*endpoint[K, W]
 	if l.digraph {
 		adj = l.inAdj
@@ -469,38 +457,41 @@ func (l *adjList[K, W]) inDegree(v K) (int, error) {
 	}
 	p, ok := adj[v]
 	if !ok {
-		return 0, fmt.Errorf("vertex %v not exists", v)
+		//return 0, fmt.Errorf("vertex %v not exists", v)
+		return 0, false
 	}
 	var d int
 	for q := p; q != nil; q = q.next {
 		d++
 	}
-	return d, nil
+	return d, true
 }
 
-func (l *adjList[K, W]) neighbours(v K, multiple bool) (map[K]struct{}, error) {
+func (l *adjList[K, W]) neighbours(v K, multiple bool) (map[K]struct{}, bool) {
 	ks := make(map[K]struct{})
 	p, ok := l.outAdj[v]
 	if !ok {
-		return nil, fmt.Errorf("vertex %v not exists", v)
+		//return nil, fmt.Errorf("vertex %v not exists", v)
+		return nil, false
 	}
 	//
 	for q := p; q != nil; q = q.next {
-		ks[q.key] = struct{}{}
+		ks[q.vtx] = struct{}{}
 	}
 	if l.digraph {
 		p, ok = l.inAdj[v]
 		if !ok {
-			return nil, fmt.Errorf("vertex %v not exists", v)
+			//return nil, fmt.Errorf("vertex %v not exists", v)
+			return nil, false
 		}
 		for q := p; q != nil; q = q.next {
-			ks[q.key] = struct{}{}
+			ks[q.vtx] = struct{}{}
 		}
 	}
-	return ks, nil
+	return ks, true
 }
 
-func (l *adjList[K, W]) inNeighbours(v K, multiple bool) (map[K]int, error) {
+func (l *adjList[K, W]) inNeighbours(v K, multiple bool) (map[K]int, bool) {
 	var adj map[K]*endpoint[K, W]
 	if l.digraph {
 		adj = l.inAdj
@@ -510,51 +501,29 @@ func (l *adjList[K, W]) inNeighbours(v K, multiple bool) (map[K]int, error) {
 	ks := make(map[K]int)
 	p, ok := adj[v]
 	if !ok {
-		return nil, fmt.Errorf("vertex %v not exists", v)
+		//return nil, fmt.Errorf("vertex %v not exists", v)
+		return nil, false
 	}
 	for q := p; q != nil; q = q.next {
-		ks[q.key] = ks[q.key] + 1
+		ks[q.vtx] = ks[q.vtx] + 1
 	}
-	/*
-		var ns []K
-		for k, n := range ks {
-			if multiple {
-				for i := 0; i < n; i++ {
-					ns = append(ns, k)
-				}
-			} else {
-				ns = append(ns, k)
-			}
-		}
-	*/
-	return ks, nil
+	return ks, true
 }
 
-func (l *adjList[K, W]) outNeighbours(v K, multiple bool) (map[K]int, error) {
+func (l *adjList[K, W]) outNeighbours(v K, multiple bool) (map[K]int, bool) {
 	ks := make(map[K]int)
 	p, ok := l.outAdj[v]
 	if !ok {
-		return nil, fmt.Errorf("vertex %v not exists", v)
+		//return nil, fmt.Errorf("vertex %v not exists", v)
+		return nil, false
 	}
 	for q := p; q != nil; q = q.next {
-		ks[q.key] = ks[q.key] + 1
+		ks[q.vtx] = ks[q.vtx] + 1
 	}
-	/*
-		var ns []K
-		for k, n := range ks {
-			if multiple {
-				for i := 0; i < n; i++ {
-					ns = append(ns, k)
-				}
-			} else {
-				ns = append(ns, k)
-			}
-		}
-	*/
-	return ks, nil
+	return ks, true
 }
 
-func (l *adjList[K, W]) inEdges(v K) ([]K, error) {
+func (l *adjList[K, W]) inEdges(v K) ([]K, bool) {
 	var adj map[K]*endpoint[K, W]
 	if l.digraph {
 		adj = l.inAdj
@@ -564,29 +533,32 @@ func (l *adjList[K, W]) inEdges(v K) ([]K, error) {
 	var ks []K
 	p, ok := adj[v]
 	if !ok {
-		return nil, fmt.Errorf("vertex %v not exists", v)
+		//return nil, fmt.Errorf("vertex %v not exists", v)
+		return nil, false
 	}
 	for q := p; q != nil; q = q.next {
 		ks = append(ks, q.edge)
 	}
-	return ks, nil
+	return ks, true
 }
 
-func (l *adjList[K, W]) outEdges(v K) ([]K, error) {
+func (l *adjList[K, W]) outEdges(v K) ([]K, bool) {
 	p, ok := l.outAdj[v]
 	if !ok {
-		return nil, fmt.Errorf("vertex %v not exists", v)
+		//return nil, fmt.Errorf("vertex %v not exists", v)
+		return nil, false
 	}
 	var ks []K
 	for q := p; q != nil; q = q.next {
 		ks = append(ks, q.edge)
 	}
-	return ks, nil
+	return ks, true
 }
 
-func (l *adjList[K, W]) sources() ([]K, error) {
+func (l *adjList[K, W]) sources() ([]K, bool) {
 	if !l.digraph {
-		return nil, errNotDigraph
+		//return nil, errNotDigraph
+		return nil, false
 	}
 	var vs []K
 	for k, v := range l.inAdj {
@@ -594,12 +566,13 @@ func (l *adjList[K, W]) sources() ([]K, error) {
 			vs = append(vs, k)
 		}
 	}
-	return vs, nil
+	return vs, true
 }
 
-func (l *adjList[K, W]) sinks() ([]K, error) {
+func (l *adjList[K, W]) sinks() ([]K, bool) {
 	if !l.digraph {
-		return nil, errNotDigraph
+		//return nil, errNotDigraph
+		return nil, false
 	}
 	var vs []K
 	for k, v := range l.outAdj {
@@ -607,61 +580,61 @@ func (l *adjList[K, W]) sinks() ([]K, error) {
 			vs = append(vs, k)
 		}
 	}
-	return vs, nil
+	return vs, true
 }
 
-func (l *adjList[K, W]) minDegree() (int, error) {
+func (l *adjList[K, W]) minDegree() (int, bool) {
 	minD := len(l.outAdj)
 	for v := range l.outAdj {
-		d, err := l.degree(v)
-		if err != nil {
-			return 0, err
+		d, ok := l.degree(v)
+		if !ok {
+			return 0, false
 		}
 		if d < minD {
 			minD = d
 		}
 	}
-	return minD, nil
+	return minD, true
 }
 
-func (l *adjList[K, W]) maxDegree() (int, error) {
+func (l *adjList[K, W]) maxDegree() (int, bool) {
 	maxD := len(l.outAdj)
 	for v := range l.outAdj {
-		d, err := l.degree(v)
-		if err != nil {
-			return 0, err
+		d, ok := l.degree(v)
+		if !ok {
+			return 0, false
 		}
 		if d > maxD {
 			maxD = d
 		}
 	}
-	return maxD, nil
+	return maxD, true
 }
 
-func (l *adjList[K, W]) avgDegree() (float64, error) {
+func (l *adjList[K, W]) avgDegree() (float64, bool) {
 	if len(l.outAdj) == 0 {
-		return 0.0, nil
+		return 0, false
 	}
-	var sumD int
+	var sum int
 	for v := range l.outAdj {
-		d, err := l.degree(v)
-		if err != nil {
-			return 0, err
+		d, ok := l.degree(v)
+		if !ok {
+			return 0, false
 		}
-		sumD += d
+		sum += d
 	}
-	return float64(sumD) / float64(len(l.outAdj)), nil
+	return float64(sum) / float64(len(l.outAdj)), true
 }
 
-func (l *adjList[K, W]) isDAG() (bool, error) {
+func (l *adjList[K, W]) isDAG() bool {
 	if len(l.outAdj) == 0 {
-		return true, nil
+		return true
 	}
 	inDegrees := make(map[K]int)
 	for k := range l.outAdj {
-		dk, err := l.inDegree(k)
-		if err != nil {
-			return false, err
+		dk, ok := l.inDegree(k)
+		if !ok {
+			return false
 		}
 		inDegrees[k] = dk
 	}
@@ -674,17 +647,17 @@ func (l *adjList[K, W]) isDAG() (bool, error) {
 			}
 		}
 		if len(ks) == 0 {
-			return false, nil
+			return false
 		}
 		for _, k := range ks {
-			vs, err := l.outNeighbours(k, true)
-			if err != nil {
-				return false, err
+			vs, ok := l.outNeighbours(k, true)
+			if !ok {
+				return false
 			}
 			for v := range vs {
 				// loop
 				if v == k {
-					return false, nil
+					return false
 				}
 				inDegrees[v] = inDegrees[v] - 1
 			}
@@ -692,16 +665,16 @@ func (l *adjList[K, W]) isDAG() (bool, error) {
 			delete(inDegrees, k)
 		}
 	}
-	return true, nil
+	return true
 }
 
-func (l *adjList[K, W]) isAcyclic() (bool, error) {
+func (l *adjList[K, W]) isAcyclic() bool {
 	if l.digraph {
 		return l.isDAG()
 	}
 
 	if len(l.outAdj) == 0 {
-		return true, nil
+		return true
 	}
 
 	var start K
@@ -720,14 +693,14 @@ func (l *adjList[K, W]) isAcyclic() (bool, error) {
 		if _, ok := visited[v]; !ok {
 			visited[v] = true
 		}
-		vs, err := l.neighbours(v, false)
-		if err != nil {
-			return false, err
+		vs, ok := l.neighbours(v, false)
+		if !ok {
+			return false
 		}
 		for k := range vs {
 			// loop
 			if k == v {
-				return false, nil
+				return false
 			}
 			// exclude the parent vertex that visited just now.
 			// (undigraph need this)
@@ -736,7 +709,7 @@ func (l *adjList[K, W]) isAcyclic() (bool, error) {
 				_, pv := prev[v]
 				_, vk := visited[k]
 				if vk && pv {
-					return false, nil
+					return false
 				} else {
 					stack.push(k)
 					prev[k] = v
@@ -753,34 +726,33 @@ func (l *adjList[K, W]) isAcyclic() (bool, error) {
 			}
 		}
 	}
-	return true, nil
+	return true
 }
 
-func (l *adjList[K, W]) isUC() (bool, error) {
+func (l *adjList[K, W]) isUC() bool {
 	if len(l.outAdj) == 0 {
-		return false, nil
+		return false
 	}
 	var (
-		err    error
+		ok     bool
 		source []K
 		sink   []K
 	)
-	if source, err = l.sources(); err != nil {
-		return false, err
+	if source, ok = l.sources(); !ok {
+		return false
 	}
-	if sink, err = l.sinks(); err != nil {
-		return false, err
+	if sink, ok = l.sinks(); !ok {
+		return false
 	}
-
-	return len(source) <= 1 && len(sink) <= 1, nil
+	return len(source) <= 1 && len(sink) <= 1
 }
 
-func (l *adjList[K, W]) isConnected(unidirectional bool) (bool, error) {
+func (l *adjList[K, W]) isConnected(unidirectional bool) bool {
 	if unidirectional && l.digraph {
 		return l.isUC()
 	}
 	if len(l.outAdj) == 0 {
-		return false, nil
+		return false
 	}
 	// bfs
 	var start K
@@ -797,9 +769,9 @@ func (l *adjList[K, W]) isConnected(unidirectional bool) (bool, error) {
 		if _, ok := visited[v]; !ok {
 			visited[v] = true
 		}
-		vs, err := l.neighbours(v, false)
-		if err != nil {
-			return false, err
+		vs, ok := l.neighbours(v, false)
+		if !ok {
+			return false
 		}
 		for v := range vs {
 			if _, ok := visited[v]; !ok {
@@ -807,92 +779,89 @@ func (l *adjList[K, W]) isConnected(unidirectional bool) (bool, error) {
 			}
 		}
 	}
-	if len(visited) != len(l.outAdj) {
-		return false, nil
-	}
-	return true, nil
+	return len(visited) == len(l.outAdj)
 }
 
-func (l *adjList[K, W]) isSimple() (bool, error) {
+func (l *adjList[K, W]) isSimple() bool {
 	if l.digraph {
 		for k, v := range l.outAdj {
 			heads := make(map[K]int)
 			for p := v; p != nil; p = p.next {
 				// loop
-				if p.key == k {
-					return false, nil
+				if p.vtx == k {
+					return false
 				}
 				//
-				t := heads[p.key]
+				t := heads[p.vtx]
 				if t >= 1 {
-					return false, nil
+					return false
 				} else {
-					heads[p.key] = t + 1
+					heads[p.vtx] = t + 1
 					in := l.inAdj[k]
 					for q := in; q != nil; q = q.next {
-						if q.key == p.key {
-							return false, nil
+						if q.vtx == p.vtx {
+							return false
 						}
 					}
 				}
 			}
 		}
-		return true, nil
+		return true
 	}
 	//
 	for k, v := range l.outAdj {
 		vs := make(map[K]struct{})
 		for p := v; p != nil; p = p.next {
-			if p.key == k {
-				return false, nil
+			if p.vtx == k {
+				return false
 			}
-			if _, ok := vs[p.key]; ok {
-				return false, nil
+			if _, ok := vs[p.vtx]; ok {
+				return false
 			}
-			vs[p.key] = struct{}{}
+			vs[p.vtx] = struct{}{}
 		}
 	}
-	return true, nil
+	return true
 }
 
-func (l *adjList[K, W]) isRegular() (bool, error) {
+func (l *adjList[K, W]) isRegular() bool {
 	d := -1
 	for k := range l.outAdj {
-		n, err := l.degree(k)
-		if err != nil {
-			return false, err
+		n, ok := l.degree(k)
+		if !ok {
+			return false
 		}
 		if d >= 0 {
 			if n != d {
-				return false, nil
+				return false
 			}
 		} else {
 			d = n
 		}
 	}
-	return true, nil
+	return true
 }
 
-func (l *adjList[K, W]) isForest() (bool, error) {
+func (l *adjList[K, W]) isForest() bool {
 	return l.isAcyclic()
 }
 
-func (l *adjList[K, W]) hasLoop() (bool, error) {
+func (l *adjList[K, W]) hasLoop() bool {
 	for k, v := range l.outAdj {
 		for p := v; p != nil; p = p.next {
-			if p.key == k {
-				return true, nil
+			if p.vtx == k {
+				return true
 			}
 		}
 	}
-	return false, nil
+	return false
 }
 
-func (l *adjList[K, W]) hasNegativeWeight() (bool, error) {
+func (l *adjList[K, W]) hasNegativeWeight() bool {
 	for _, v := range l.outAdj {
 		for p := v; p != nil; p = p.next {
 			if p.weight < 0 {
-				return true, nil
+				return true
 			}
 		}
 	}
@@ -900,51 +869,47 @@ func (l *adjList[K, W]) hasNegativeWeight() (bool, error) {
 		for _, v := range l.inAdj {
 			for p := v; p != nil; p = p.next {
 				if p.weight < 0 {
-					return true, nil
+					return true
 				}
 			}
 		}
 	}
-	return false, nil
+	return false
 }
 
-func (l *adjList[K, W]) property(p int) (property[bool], error) {
+func (l *adjList[K, W]) property(p int) (property[bool], bool) {
 	var r bool
-	var err error
 	switch p {
 	case acyclic:
-		r, err = l.isAcyclic()
+		r = l.isAcyclic()
 	case connected:
-		r, err = l.isConnected(false)
+		r = l.isConnected(false)
 	case unilateralConnected:
-		r, err = l.isConnected(true)
+		r = l.isConnected(true)
 	case simple:
-		r, err = l.isSimple()
+		r = l.isSimple()
 	case regular:
-		r, err = l.isRegular()
+		r = l.isRegular()
 	case forest:
-		r, err = l.isForest()
+		r = l.isForest()
 	case negativeWeight:
-		r, err = l.hasNegativeWeight()
+		r = l.hasNegativeWeight()
 	case loop:
-		r, err = l.hasLoop()
+		r = l.hasLoop()
 	default:
-		err = errUnknownProperty
-	}
-	if err != nil {
-		return property[bool]{}, err
 	}
 	return property[bool]{
 		name:  p,
 		value: r,
-	}, nil
+	}, r
 }
 
-func (l *adjList[K, W]) incidentEdges(v K) ([]K, error) {
+func (l *adjList[K, W]) incidentEdges(v K) ([]K, bool) {
 	var ks []K
 	p, ok := l.outAdj[v]
 	if !ok {
-		return nil, fmt.Errorf("vertex %v not exists", v)
+		//return nil, fmt.Errorf("vertex %v not exists", v)
+		return nil, false
 	}
 	for q := p; q != nil; q = q.next {
 		ks = append(ks, q.edge)
@@ -952,13 +917,14 @@ func (l *adjList[K, W]) incidentEdges(v K) ([]K, error) {
 	if l.digraph {
 		p, ok = l.inAdj[v]
 		if !ok {
-			return nil, fmt.Errorf("vertex %v not exists", v)
+			//return nil, fmt.Errorf("vertex %v not exists", v)
+			return nil, false
 		}
 		for q := p; q != nil; q = q.next {
 			ks = append(ks, q.edge)
 		}
 	}
-	return ks, nil
+	return ks, true
 }
 
 func (l *adjList[K, W]) delAllEdge() {
@@ -977,17 +943,17 @@ func (l *adjList[K, W]) multiplicity() int {
 	for k, v := range l.outAdj {
 		cnt := make(map[K]int)
 		for p := v; p != nil; p = p.next {
-			cnt[p.key] += 1
-			if cnt[p.key] > m {
-				m = cnt[p.key]
+			cnt[p.vtx] += 1
+			if cnt[p.vtx] > m {
+				m = cnt[p.vtx]
 			}
 		}
 		if l.digraph {
 			for p := l.inAdj[k]; p != nil; p = p.next {
-				if _, ok := cnt[p.key]; ok {
-					cnt[p.key] += 1
-					if cnt[p.key] > m {
-						m = cnt[p.key]
+				if _, ok := cnt[p.vtx]; ok {
+					cnt[p.vtx] += 1
+					if cnt[p.vtx] > m {
+						m = cnt[p.vtx]
 					}
 				}
 			}

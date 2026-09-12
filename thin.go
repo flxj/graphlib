@@ -17,7 +17,6 @@
 package graphlib
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -183,9 +182,9 @@ func (f *Forest[K, W]) TreeVerties(v K) ([]Vertex[K, W], error) {
 func (f *Forest[K, W]) TreeEdges(v K) (map[K]Edge[K, W], error) {
 	res := make(map[K]Edge[K, W])
 	err := dfs(f, v, func(u Vertex[K, W]) error {
-		es, err := f.IncidentEdges(u.Key)
-		if err != nil {
-			return err
+		es, ok := f.IncidentEdges(u.Key)
+		if !ok {
+			return errVertexNotExists
 		}
 		for _, e := range es {
 			res[e.Key] = e
@@ -198,34 +197,31 @@ func (f *Forest[K, W]) TreeEdges(v K) (map[K]Edge[K, W], error) {
 	return res, nil
 }
 
-func (f *Forest[K, W]) AddVertex(v Vertex[K, W]) error {
-	err := f.Graph.AddVertex(v)
-	if err != nil {
-		if err == errVertexExists {
-			return nil
-		}
-		return err
+func (f *Forest[K, W]) AddVertex(v Vertex[K, W]) bool {
+	ok := f.Graph.AddVertex(v)
+	if !ok {
+		return false
 	}
 	f.vtx = append(f.vtx, v.Key)
 	f.idx[v.Key] = len(f.vtx) - 1
 	f.duf.Add(1)
-	return nil
+	return true
 }
 
-func (f *Forest[K, W]) AddEdge(e Edge[K, W]) error {
+func (f *Forest[K, W]) AddEdge(e Edge[K, W]) bool {
 	var ok bool
 	var u, v int
 	if u, ok = f.idx[e.Head]; !ok {
-		return errVertexNotExists
+		return false
 	}
 	if v, ok = f.idx[e.Tail]; !ok {
-		return errVertexNotExists
+		return false
 	}
 	if f.duf.Find(u) == f.duf.Find(v) {
-		return errExistsCycle
+		return false
 	}
-	if err := f.Graph.AddEdge(e); err != nil {
-		return err
+	if ok := f.Graph.AddEdge(e); !ok {
+		return false
 	}
 	r1, ok1 := f.Root(e.Tail)
 	r2, ok2 := f.Root(e.Head)
@@ -233,60 +229,69 @@ func (f *Forest[K, W]) AddEdge(e Edge[K, W]) error {
 		delete(f.roots, r2)
 	}
 	f.duf.Union(u, v)
-	return nil
+	return true
 }
 
-func (f *Forest[K, W]) RemoveVertex(k K) error { // delete tree root,will lose the directed info.
-	if err := f.Graph.RemoveVertex(k); err != nil {
-		return err
+func (f *Forest[K, W]) RemoveVertex(k K) (Vertex[K, W], bool) { // delete tree root,will lose the directed info.
+	v, ok := f.Graph.RemoveVertex(k)
+	if !ok {
+		return Vertex[K, W]{}, false
 	}
 	delete(f.roots, k)
-	return f.rebuild()
+	_ = f.rebuild()
+	return v, true
 }
 
-func (f *Forest[K, W]) RemoveVertexs(keys ...K) error {
+func (f *Forest[K, W]) RemoveVertexs(keys ...K) bool {
 	for _, k := range keys {
-		if err := f.Graph.RemoveVertex(k); err != nil {
-			return err
+		if _, ok := f.Graph.RemoveVertex(k); !ok {
+			return false
 		}
 		delete(f.roots, k)
 	}
-	return f.rebuild()
+	_ = f.rebuild()
+	return true
 }
 
-func (f *Forest[K, W]) RemoveEdge(endpoint1, endpoint2 K) error {
-	if err := f.Graph.RemoveEdge(endpoint1, endpoint2); err != nil {
-		return err
+func (f *Forest[K, W]) RemoveEdge(endpoint1, endpoint2 K) ([]Edge[K, W], bool) {
+	es, ok := f.Graph.RemoveEdge(endpoint1, endpoint2)
+	if !ok {
+		return nil, false
 	}
-	return f.rebuild()
+	_ = f.rebuild()
+	return es, true
 }
 
-func (f *Forest[K, W]) RemoveEdges(endpoint1, endpoint2 []K) error {
+func (f *Forest[K, W]) RemoveEdges(endpoint1, endpoint2 []K) bool {
 	if len(endpoint1) != len(endpoint2) {
-		return errors.New("")
+		return false
 	}
 	for i := 0; i < len(endpoint1); i++ {
-		if err := f.Graph.RemoveEdge(endpoint1[i], endpoint2[i]); err != nil {
-			return err
+		if _, ok := f.Graph.RemoveEdge(endpoint1[i], endpoint2[i]); !ok {
+			return false
 		}
 	}
-	return f.rebuild()
+	_ = f.rebuild()
+	return true
 }
 
-func (f *Forest[K, W]) RemoveEdgeByKey(k K) error {
-	if err := f.Graph.RemoveEdgeByKey(k); err != nil {
-		return err
+func (f *Forest[K, W]) RemoveEdgeByKey(k K) (Edge[K, W], bool) {
+	e, ok := f.Graph.RemoveEdgeByKey(k)
+	if !ok {
+		return Edge[K, W]{}, false
 	}
-	return f.rebuild()
+	_ = f.rebuild()
+	return e, true
 }
 
-func (f *Forest[K, W]) RemoveEdgeByKeys(keys ...K) error {
+func (f *Forest[K, W]) RemoveEdgeByKeys(keys ...K) bool {
 	for _, k := range keys {
-		if err := f.Graph.RemoveEdgeByKey(k); err != nil {
-			return err
+		if _, ok := f.Graph.RemoveEdgeByKey(k); !ok {
+			return false
 		}
 	}
-	return f.rebuild()
+	_ = f.rebuild()
+	return true
 }
 
 func (f *Forest[K, W]) rebuild() error {
@@ -344,10 +349,7 @@ func (f *Forest[K, W]) LeastCommonAncestor(k1, k2 K) (K, bool) {
 			return
 		}
 		vst[u] = true // visited u
-		ns, err := f.Neighbours(f.vtx[u])
-		if err != nil {
-			return
-		}
+		ns, _ := f.Neighbours(f.vtx[u])
 		for _, n := range ns {
 			v := f.idx[n.Key]
 			if !vst[v] {

@@ -18,23 +18,13 @@ package graphlib
 
 // backtracking
 func vertexColouring[K comparable, W number](g Graph[K, W], n int) (map[K]int, error) {
-	p, err := g.Property(ProMaxDegree)
-	if err != nil {
-		return nil, err
-	}
+	p, _ := g.Property(ProMaxDegree)
 	if n < p.Value.(int) {
 		return nil, errNoColouring
 	}
 
 	vertexes := g.AllVertexes()
 	colouring := make(map[K]int)
-	/*
-		if _,err = vertexColouringFrom(g,n,vertexes[0],colouring);err!=nil{
-			return nil,err
-		}
-		return colouring,nil
-	*/
-	//
 	safe := func(c int, vs []Vertex[K, W]) bool {
 		for _, v := range vs {
 			if colouring[v.Key] == c {
@@ -60,9 +50,9 @@ func vertexColouring[K comparable, W number](g Graph[K, W], n int) (map[K]int, e
 		if _, ok := colouring[v]; ok {
 			continue
 		}
-		vs, err := g.Neighbours(v)
-		if err != nil {
-			return nil, err
+		vs, ok := g.Neighbours(v)
+		if !ok {
+			return nil, errVertexNotExists
 		}
 		//
 		var col int
@@ -110,10 +100,7 @@ func TryVertexColouring[K comparable, W number](g Graph[K, W], colours int) (map
 }
 
 func edgeColouring[K comparable, W number](g Graph[K, W], n int) (map[K]int, error) {
-	p, err := g.Property(ProMaxDegree)
-	if err != nil {
-		return nil, err
-	}
+	p, _ := g.Property(ProMaxDegree)
 	if n < p.Value.(int)+1 {
 		return nil, errNoColouring
 	}
@@ -146,9 +133,9 @@ func edgeColouring[K comparable, W number](g Graph[K, W], n int) (map[K]int, err
 		if _, ok := colouring[e]; ok {
 			continue
 		}
-		es, err := g.NeighbourEdgesByKey(e)
-		if err != nil {
-			return nil, err
+		es, ok := g.NeighbourEdgesByKey(e)
+		if !ok {
+			return nil, errEdgeNotExists
 		}
 		//
 		var col int
@@ -204,9 +191,9 @@ func GreedyVertexColouring[K comparable, W number](g Graph[K, W]) (map[K]int, in
 	col := make(map[K]int)
 	var cnt int
 	for i := 0; i < len(vtx); i++ {
-		vs, err := g.Neighbours(vtx[i].Key)
-		if err != nil {
-			return nil, 0, err
+		vs, ok := g.Neighbours(vtx[i].Key)
+		if !ok {
+			return nil, 0, errVertexNotExists
 		}
 		used := make(map[int]bool)
 		for _, u := range vs {
@@ -237,9 +224,9 @@ func GreedyEdgeColouring[K comparable, W number](g Graph[K, W]) (map[K]int, int,
 	col := make(map[K]int)
 	var cnt int
 	for i := 0; i < len(edge); i++ {
-		es, err := g.NeighbourEdges(edge[i].Head, edge[i].Tail)
-		if err != nil {
-			return nil, 0, err
+		es, ok := g.NeighbourEdges(edge[i].Head, edge[i].Tail)
+		if !ok {
+			return nil, 0, errEdgeNotExists
 		}
 		used := make(map[int]bool)
 		for _, e := range es {
@@ -261,24 +248,18 @@ func GreedyEdgeColouring[K comparable, W number](g Graph[K, W]) (map[K]int, int,
 	return col, cnt + 1, nil
 }
 
-/*
-func MaximalIndependentSet[K comparable, W number](g Graph[K, W]) ([]K, error) {
-	return nil, errNotImplement
-}
-*/
-
 // Calculate the maximum independent set of the graph and return a
 // slice of vertices from the maximum independent set.
-func MaximumIndependentSet[K comparable, W number](g Graph[K, W]) ([]K, error) {
+func MaximumIndependentSet[K comparable, W number](g Graph[K, W]) []K {
 	cg, err := Complement(g)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 	return MaximumClique(cg)
 }
 
 // Calculate the maximum clique of the graph and
 // return a slice of the vertices of the maximum clique.
-func MaximumClique[K comparable, W number](g Graph[K, W]) ([]K, error) { //TODO
+func MaximumClique[K comparable, W number](g Graph[K, W]) []K {
 	return mcq(g)
 }

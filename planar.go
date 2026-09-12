@@ -465,8 +465,8 @@ func (p *planarTestHT[K, W]) dfs(u, v int) { // u is father node of v
 	p.lowpt1[v], p.lowpt2[v] = p.number[v], p.number[v]
 
 	vk := p.vtx[v].Key
-	es, err := p.g.IncidentEdges(vk)
-	if err != nil {
+	es, ok := p.g.IncidentEdges(vk)
+	if !ok {
 		return
 	}
 	for _, e := range es {

@@ -31,10 +31,10 @@ package graphlib
 //  2. For each u ∈ N+(v) do: if tvisit(u) = 0 then pred(u) :=v and perform
 //     DFS-PROC(u).
 //  3. Set time := time+1, texpl(v):=time.
-func dfs[K comparable, W number](g Graph[K, W], start K, visitor func(Vertex[K, W]) error, neighbours func(K) ([]Vertex[K, W], error)) error {
-	startV, err := g.GetVertex(start)
-	if err != nil {
-		return err
+func dfs[K comparable, W number](g Graph[K, W], start K, visitor func(Vertex[K, W]) error, neighbours func(K) ([]Vertex[K, W], bool)) error {
+	startV, ok := g.GetVertex(start)
+	if !ok {
+		return errVertexNotExists
 	}
 	visited := make(map[K]struct{})
 	stack := newStack[*Vertex[K, W]]()
@@ -48,9 +48,9 @@ func dfs[K comparable, W number](g Graph[K, W], start K, visitor func(Vertex[K, 
 			}
 			visited[v.Key] = struct{}{}
 		}
-		vs, err := neighbours(v.Key)
-		if err != nil {
-			return err
+		vs, ok := neighbours(v.Key)
+		if !ok {
+			return errVertexNotExists
 		}
 		for _, v := range vs {
 			if _, ok := visited[v.Key]; !ok {
@@ -73,22 +73,19 @@ func DFS[K comparable, W number](g Graph[K, W], start K, visitor func(Vertex[K, 
 		if ok {
 			neighbours = dg.OutNeighbours
 		} else {
-			neighbours = func(v K) ([]Vertex[K, W], error) {
-				es, err := g.IncidentEdges(v)
-				if err != nil {
-					return nil, err
-				}
+			neighbours = func(v K) ([]Vertex[K, W], bool) {
+				es, _ := g.IncidentEdges(v)
 				var res []Vertex[K, W]
 				for _, e := range es {
 					if e.Tail == v {
-						w, err := g.GetVertex(e.Head)
-						if err != nil {
-							return nil, err
+						w, ok := g.GetVertex(e.Head)
+						if !ok {
+							return nil, false
 						}
 						res = append(res, w)
 					}
 				}
-				return res, nil
+				return res, true
 			}
 		}
 	}
@@ -101,7 +98,7 @@ func DFSDigraph[K comparable, W number](dg Digraph[K, W], start K, in bool, visi
 	if dg == nil {
 		return errNilGraph
 	}
-	var neighbours func(K) ([]Vertex[K, W], error)
+	var neighbours func(K) ([]Vertex[K, W], bool)
 	if in {
 		neighbours = dg.InNeighbours
 	} else {
@@ -119,10 +116,10 @@ func DFSDigraph[K comparable, W number](dg Digraph[K, W], start K, in bool, visi
 //		from Q and consider the out-neighbours of u in D one by one. If, for an
 //		out-neighbour v of u,dist(s,v)=∞,thensetdist(s,v):=dist(s,u)+1,
 //		pred(v):=u, and put v to the end of Q.
-func bfs[K comparable, W number](g Graph[K, W], start K, visitor func(Vertex[K, W]) error, neighbours func(K) ([]Vertex[K, W], error)) error {
-	startV, err := g.GetVertex(start)
-	if err != nil {
-		return err
+func bfs[K comparable, W number](g Graph[K, W], start K, visitor func(Vertex[K, W]) error, neighbours func(K) ([]Vertex[K, W], bool)) error {
+	startV, ok := g.GetVertex(start)
+	if !ok {
+		return errVertexNotExists
 	}
 	visited := make(map[K]struct{})
 	// use a fifo queue.
@@ -138,9 +135,9 @@ func bfs[K comparable, W number](g Graph[K, W], start K, visitor func(Vertex[K, 
 			}
 			visited[v.Key] = struct{}{}
 		}
-		vs, err := neighbours(v.Key)
-		if err != nil {
-			return err
+		vs, ok := neighbours(v.Key)
+		if !ok {
+			return errVertexNotExists
 		}
 		for _, v := range vs {
 			if _, ok := visited[v.Key]; !ok {
@@ -163,22 +160,22 @@ func BFS[K comparable, W number](g Graph[K, W], start K, visitor func(Vertex[K, 
 		if ok {
 			neighbours = dg.OutNeighbours
 		} else {
-			neighbours = func(v K) ([]Vertex[K, W], error) {
-				es, err := g.IncidentEdges(v)
-				if err != nil {
-					return nil, err
+			neighbours = func(v K) ([]Vertex[K, W], bool) {
+				es, ok := g.IncidentEdges(v)
+				if !ok {
+					return nil, false
 				}
 				var res []Vertex[K, W]
 				for _, e := range es {
 					if e.Tail == v {
-						w, err := g.GetVertex(e.Head)
-						if err != nil {
-							return nil, err
+						w, ok := g.GetVertex(e.Head)
+						if !ok {
+							return nil, false
 						}
 						res = append(res, w)
 					}
 				}
-				return res, nil
+				return res, true
 			}
 		}
 	}
@@ -191,7 +188,7 @@ func BFSDigraph[K comparable, W number](dg Digraph[K, W], start K, in bool, visi
 	if dg == nil {
 		return errNilGraph
 	}
-	var neighbours func(K) ([]Vertex[K, W], error)
+	var neighbours func(K) ([]Vertex[K, W], bool)
 	if in {
 		neighbours = dg.InNeighbours
 	} else {
@@ -235,10 +232,7 @@ func topologicalSort[K comparable, W number](g Digraph[K, W]) ([]Vertex[K, W], e
 
 	inDegree := make(map[K]int)
 	for _, v := range vertexes {
-		d, err := g.InDegree(v.Key)
-		if err != nil {
-			return nil, err
-		}
+		d, _ := g.InDegree(v.Key)
 		inDegree[v.Key] = d
 	}
 
@@ -260,10 +254,7 @@ func topologicalSort[K comparable, W number](g Digraph[K, W]) ([]Vertex[K, W], e
 					break
 				}
 			}
-			ns, err := g.OutNeighbours(k)
-			if err != nil {
-				return nil, err
-			}
+			ns, _ := g.OutNeighbours(k)
 			for _, v := range ns {
 				inDegree[v.Key] = inDegree[v.Key] - 1
 			}
@@ -332,10 +323,7 @@ func LexBFS[K comparable, W number](g Graph[K, W], start K, f func(Vertex[K, W])
 			k = start
 		}
 		// visited u (the number of u is |G|-i+1)
-		u, err := g.GetVertex(k)
-		if err != nil {
-			return err
-		}
+		u, _ := g.GetVertex(k)
 		if err := f(u); err != nil {
 			return err
 		}
@@ -344,10 +332,7 @@ func LexBFS[K comparable, W number](g Graph[K, W], start K, f func(Vertex[K, W])
 		// For every unvisited neighbour  of , the current step index  is appended to :
 		// The step index is incremented after each selection.
 		// All other vertices’ labels remain unchanged.
-		ns, err := g.Neighbours(u.Key)
-		if err != nil {
-			return err
-		}
+		ns, _ := g.Neighbours(u.Key)
 		for _, v := range ns {
 			ve, ok := elems[v.Key]
 			if ok {
@@ -393,10 +378,7 @@ func LexDFS[K comparable, W number](g Graph[K, W], start K, f func(Vertex[K, W])
 			k = start
 		}
 		// visited u (the number of u is i)
-		u, err := g.GetVertex(k)
-		if err != nil {
-			return err
-		}
+		u, _ := g.GetVertex(k)
 		if err := f(u); err != nil {
 			return err
 		}
@@ -405,10 +387,7 @@ func LexDFS[K comparable, W number](g Graph[K, W], start K, f func(Vertex[K, W])
 		// For every unvisited neighbour  of , the current step index  is appended to :
 		// The step index is incremented after each selection.
 		// All other vertices’ labels remain unchanged.
-		ns, err := g.Neighbours(u.Key)
-		if err != nil {
-			return err
-		}
+		ns, _ := g.Neighbours(u.Key)
 		for _, v := range ns {
 			ve, ok := elems[v.Key]
 			if ok {
