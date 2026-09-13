@@ -16,6 +16,8 @@
 
 package graphlib
 
+import "errors"
+
 // Path represents a path on the graph,
 // starting from Source and ending at Target.
 // It contains edges (the key for recording edges),
@@ -372,7 +374,7 @@ func shortestPathBellmanFord[K comparable, W number](g Graph[K, W], source K, ta
 			if du, ok = dist[edge.Tail]; !ok {
 				return nil, errVertexNotExists
 			}
-			if dv, ok = dist[edge.Head]; ok {
+			if dv, ok = dist[edge.Head]; !ok {
 				return nil, errVertexNotExists
 			}
 			uv := edge.Weight
@@ -598,4 +600,106 @@ func countPaths[K comparable, W number](g Graph[K, W], start, end K, n int, visi
 	}
 
 	return count, nil
+}
+
+/*
+Johnson(G, w):
+    add dummy source vertex s
+    for each v in V:
+        add edge (s, v)，with weight 0
+
+    if Bellman-Ford(G, s) check has negative cycle:
+        return "negetive cycle"
+
+    for each v in V:
+        h[v] = Bellman-Ford -> dist(s, v)
+
+    for each edge (u, v) in E:
+        w'(u, v) = w(u, v) + h[u] - h[v]
+
+    remove s
+
+    for each u in V:
+        run Dijkstra(G, w', u)，get d'(u, v)
+        for each v in V:
+            if d'(u, v) == ∞:
+                d(u, v) = ∞
+            else:
+                d(u, v) = d'(u, v) - h[u] + h[v]
+
+    return d
+*/
+
+// Johnson's All Sections Shortest Paths algorithm is used to process sparse graphs with
+// negative weighted edges but no negative loops.
+func AllShortPathsJohnson[K comparable, W number](g Graph[K, W]) ([]Path[K, W], error) {
+	if g == nil {
+		return nil, errNilGraph
+	}
+	ng := g.Clone()
+	//
+	var key K
+	var ok bool
+	for {
+		key, ok = randEdgeKey(key, key)
+		if !ok {
+			return nil, errors.New("construct dummy source failed")
+		}
+		if _, ok = ng.GetVertex(key); !ok {
+			break
+		}
+	}
+	_ = ng.AddVertex(Vertex[K, W]{Key: key})
+	vtx := ng.AllVertexes()
+	for _, v := range vtx {
+		_ = ng.AddEdge(Edge[K, W]{Tail: key, Head: v.Key})
+	}
+	//
+	paths, err := shortestPathBellmanFord(ng, key, key, true)
+	if err != nil {
+		return nil, err
+	}
+	var w W
+	mw := maxValue(w)
+	h := make(map[K]W)
+	for _, v := range vtx {
+		var ok bool
+		for _, p := range paths {
+			if p.Source == key && p.Target == v.Key {
+				ok = true
+				h[v.Key] = p.Weight
+			}
+		}
+		if !ok {
+			h[v.Key] = mw
+		}
+	}
+	for _, e := range ng.AllEdges() {
+		nw := e.Weight + h[e.Tail] - h[e.Head]
+		_ = ng.SetEdgeWeight(e.Key, nw)
+	}
+	_, _ = ng.RemoveVertex(key)
+
+	var res []Path[K, W]
+	for _, u := range vtx {
+		paths, err := shortestPathDijkstra(ng, u.Key, u.Key, true)
+		if err != nil {
+			return nil, err
+		}
+		for _, v := range vtx {
+			if u.Key == v.Key {
+				continue
+			}
+			// u -> v
+			for _, p := range paths {
+				if p.Source == u.Key && p.Target == v.Key {
+					if p.Weight != mw {
+						p.Weight = p.Weight - h[u.Key] + h[v.Key]
+					}
+					res = append(res, p)
+				}
+			}
+		}
+	}
+	return res, nil
 }
