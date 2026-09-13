@@ -33,6 +33,7 @@ type SegmentTree[N number] struct {
 	fn    func(N, N) N
 }
 
+// Create a segment tree.
 func NewSegmentTree[N number]() *SegmentTree[N] {
 	return &SegmentTree[N]{}
 }
@@ -77,7 +78,7 @@ func (t *SegmentTree[N]) query(i int, tl, tr int, l, r int) (n N) {
 }
 
 // Use the array arr to reconstruct the current tree, and use the fn function
-// to calculate the data values of tree nodes, such as add(), max(), etc.
+// to calculate the data values of tree nodes, such as sum(), max(), etc.
 func (t *SegmentTree[N]) Build(arr []N, fn func(N, N) N) {
 	t.size = len(arr)
 	t.fn = fn

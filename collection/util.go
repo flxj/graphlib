@@ -23,9 +23,7 @@ import (
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-func randStr(n int, s rand.Source) string {
-	//s := rand.NewSource(time.Now().UnixNano())
-
+func randStr(n int) string {
 	b := make([]byte, n)
 	for i := 0; i < n; i++ {
 		b[i] = charset[rand.Intn(len(charset))]

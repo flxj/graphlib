@@ -22,7 +22,6 @@ import (
 	"slices"
 	"strconv"
 	"testing"
-	"time"
 )
 
 func seqStr(perfix string, n int) string {
@@ -32,7 +31,6 @@ func seqStr(perfix string, n int) string {
 func generateIntStr(start, n int, randKey bool, maxGap int) ([]int, []string) {
 	k := make([]int, n)
 	v := make([]string, n)
-	s := rand.NewSource(time.Now().UnixNano())
 
 	prev := start
 	for i := 0; i < n; i++ {
@@ -42,7 +40,7 @@ func generateIntStr(start, n int, randKey bool, maxGap int) ([]int, []string) {
 			k[i] = prev + i
 		}
 		prev = k[i]
-		v[i] = randStr(10, s)
+		v[i] = randStr(10)
 	}
 	rand.Shuffle(n, func(i, j int) {
 		k[i], k[j] = k[j], k[i]
@@ -88,9 +86,9 @@ func testBTreeReadWrite(tt *testing.T, n, degree int, randKey bool) {
 	for i := 0; i < n/2; i++ {
 		// read
 		j := rand.Intn(n)
-		val, err := t.Search(k[j])
-		if err != nil {
-			tt.Errorf("[ERROR] key=%d,err=%s", k[j], err.Error())
+		val, ok := t.Search(k[j])
+		if !ok {
+			tt.Errorf("[ERROR] key=%d", k[j])
 		}
 		if val != v[j] {
 			tt.Errorf("[ERROR] key=%d,expected_value=%s, actual_value=%s", k[j], v[j], val)
@@ -132,20 +130,17 @@ func testBTreeReadWrite(tt *testing.T, n, degree int, randKey bool) {
 
 		t.Insert(k[j], v[j])
 
-		val, err := t.Search(k[j])
-		if err != nil {
-			tt.Errorf("[ERROR] %s", err.Error())
-		}
-		if val != v[j] {
+		val, ok := t.Search(k[j])
+		if !ok || val != v[j] {
 			tt.Errorf("[ERROR] update failure key=%d, expected_value=%s, but actual_value=%s", k[j], v[j], val)
 		}
 	}
 
 	tt.Log("> 5 test delete1...")
 	for i := 0; i < n/4; i++ {
-		ok, err := t.Delete(k[i])
-		if err != nil {
-			tt.Fatal(err.Error())
+		val, ok := t.Delete(k[i])
+		if !ok || v[i] != val {
+			tt.Fatal("delete error")
 		}
 		if !ok {
 			tt.Fatal("[ERROR] delete failure")
@@ -158,9 +153,9 @@ func testBTreeReadWrite(tt *testing.T, n, degree int, randKey bool) {
 
 	tt.Log("> 6 test delete2...")
 	for i := n / 4; i < n; i++ {
-		ok, err := t.Delete(k[i])
-		if err != nil {
-			tt.Fatal(err.Error())
+		val, ok := t.Delete(k[i])
+		if !ok || v[i] != val {
+			tt.Fatal("delete error")
 		}
 		if !ok {
 			tt.Fatal("[ERROR] delete failure")
@@ -313,7 +308,7 @@ func testSkipListRW(tt *testing.T, n int, randKey bool) {
 	for i := 0; i < n/2; i++ {
 		// read
 		j := rand.Intn(n)
-		_, val, ok := t.Search(k[j])
+		val, ok := t.Search(k[j])
 		if !ok || val != v[j] {
 			tt.Errorf("[ERROR] key=%d,expected_value=%s, actual_value=%s", k[j], v[j], val)
 		}
@@ -353,7 +348,7 @@ func testSkipListRW(tt *testing.T, n int, randKey bool) {
 		if ok := t.Update(k[j], v[j]); !ok {
 			tt.Fatal("update failure")
 		}
-		_, val, ok := t.Search(k[j])
+		val, ok := t.Search(k[j])
 		if !ok || val != v[j] {
 			tt.Errorf("[ERROR] update failure key=%d, expected_value=%s, but actual_value=%s", k[j], v[j], val)
 		}

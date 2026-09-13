@@ -29,20 +29,28 @@ var (
 )
 
 // [4]N{minX, minY, maxX, maxY}
+// Use an array of length 4 to represent a two-dimensional rectangle,
+// where the first two elements represent the coordinates of the
+// bottom left corner and the last two elements represent
+// the coordinates of the top right corner.
 type Rectangle[N number] [4]N
 
+// Determine whether two rectangles overlap.
 func (t Rectangle[N]) Intersect(r Rectangle[N]) bool {
 	return !(r[0] > t[2] || r[2] < t[0] || r[1] > t[3] || r[3] < t[1])
 }
 
+// Determine whether the current rectangle can fully contain the specified rectangle.
 func (t Rectangle[N]) Cover(r Rectangle[N]) bool {
 	return t[0] <= r[0] && t[1] <= r[1] && t[2] >= r[2] && t[3] >= r[3]
 }
 
+// Calculate the area of a rectangle.
 func (t Rectangle[N]) Area() (n N) {
 	return (t[2] - t[0]) * (t[3] - t[1])
 }
 
+// Determine whether two rectangles are equal.
 func (t Rectangle[N]) Equels(r Rectangle[N]) bool {
 	return !(t[0] > r[0] || t[0] < r[0] || t[1] > r[1] || t[1] < r[1] ||
 		t[2] > r[2] || t[2] < r[2] || t[3] > r[3] || t[3] < r[3])
@@ -118,8 +126,12 @@ type rPath[T any, N number] struct {
 	idx int
 }
 
+// Distance calculation function
 type DistFunc[N number] func(Rectangle[N], Rectangle[N]) N
 
+// The default distance calculation function.
+// Box distance is calculated as the Euclidean distance
+// between the centers of two rectangles.
 func BoxDist[N number](r1, r2 Rectangle[N]) N {
 	dx := r1[0] + r1[2] - r2[0] - r2[2]
 	dy := r1[1] + r1[3] - r2[1] - r2[3]
@@ -153,6 +165,10 @@ type RTree[T any, N number] struct {
 	maxN N
 }
 
+// To create an RTree, the parameters that need to be specified are:
+// M: the maximum number of elements that an internal node can accommodate.
+// lock: Is concurrency secure;
+// dist: Specify distance function.
 func NewRTree[T any, N number](M int, lock bool, dist DistFunc[N]) *RTree[T, N] {
 	var n N
 	t := &RTree[T, N]{

@@ -106,34 +106,6 @@ func (n *node[K, V]) deleteAt(i int) {
 	}
 }
 
-// Cursors are used to access ordered collections.
-type Cursor[K, V any] interface {
-	// If the collection object is in concurrent security mode,
-	// the Open method needs to be called to attempt locking before using the cursor.
-	// After use, the Close method must be called to release the lock.
-	Open() error
-	Close()
-	// The Seek(key) method locates the cursor at the key.
-	// If the key does not exist, it locates at the next key and returns it
-	Seek(K) (K, V, bool)
-	// The First method locates the cursor at the minimum element of the set.
-	// If there is no minimum element (the set is empty), it returns false
-	First() (K, V, bool)
-	// The Last method locates the cursor at the maximum element of the set.
-	// If there is no maximum element (the set is empty), it returns false.
-	Last() (K, V, bool)
-	// HasNext returns whether the next element exists relative to the current cursor position.
-	HasNext() bool
-	// Next() moves the cursor backwards and returns the element.
-	// If the element does not exist, it returns a type zero value.
-	Next() (K, V)
-	// HasPrev() returns whether the previous element exists relative to the current cursor position.
-	HasPrev() bool
-	// Prev() moves the cursor forward and returns the element.
-	// If the element does not exist, it returns a type value of zero.
-	Prev() (K, V)
-}
-
 // BTree is an ordered collection of key value pairs in memory,
 // structurally a multi-path balanced tree.
 // Support operations such as adding, deleting, modifying, and querying.
@@ -211,8 +183,8 @@ func (bt *BTree[K, V]) Len() int {
 	return bt.count
 }
 
-func (bt *BTree[K, V]) Less(k1, k2 K) bool {
-	return bt.comp(k1, k2) < 0
+func (bt *BTree[K, V]) Compare(k1, k2 K) int {
+	return bt.comp(k1, k2)
 }
 
 // The current height of BTree.
@@ -233,16 +205,13 @@ func (bt *BTree[K, V]) Options() BTreeConfig {
 }
 
 // Query the specified element, if it does not exist, return Not Exists error.
-func (bt *BTree[K, V]) Search(key K) (V, error) {
+func (bt *BTree[K, V]) Search(key K) (V, bool) {
 	if bt.lock {
 		bt.mu.RLock()
 		defer bt.mu.RUnlock()
 	}
 	_, v, ok := bt.cur.Seek(key)
-	if !ok {
-		return v, errElemNotExists
-	}
-	return v, nil
+	return v, ok
 }
 
 // Query the specified element, if it does not exist, return next.
@@ -278,6 +247,16 @@ func (bt *BTree[K, V]) Last() (K, V, error) {
 		return k, v, nil
 	}
 	return k, v, errElemNotExists
+}
+
+func (bt *BTree[K, V]) Min() (K, V, bool) {
+	k, v, err := bt.First()
+	return k, v, err == nil
+}
+
+func (bt *BTree[K, V]) Max() (K, V, bool) {
+	k, v, err := bt.Last()
+	return k, v, err == nil
 }
 
 func (bt *BTree[K, V]) Index(n int) (k K, v V, err error) {
@@ -398,13 +377,13 @@ func (bt *BTree[K, V]) Insert(key K, value V) {
 }
 
 // Delete element, return true if successful, return NotExists error if key does not exist.
-func (bt *BTree[K, V]) Delete(key K) (bool, error) {
+func (bt *BTree[K, V]) Delete(key K) (v V, ok bool) {
 	if bt.lock {
 		bt.mu.Lock()
 		defer bt.mu.Unlock()
 	}
-	if _, _, ok := bt.cur.Seek(key); !ok {
-		return false, errElemNotExists
+	if _, v, ok = bt.cur.Seek(key); !ok {
+		return
 	}
 	nd, i := bt.cur.currentNode()
 	if nd.isLeaf() {
@@ -418,7 +397,7 @@ func (bt *BTree[K, V]) Delete(key K) (bool, error) {
 		}
 		leaf, j := bt.cur.currentNode()
 		if leaf == nil || !leaf.isLeaf() {
-			return false, errors.New("delete failed")
+			return
 		}
 		nd.updateAt(i, leaf.key[j], leaf.val[j])
 		leaf.deleteAt(j)
@@ -426,7 +405,7 @@ func (bt *BTree[K, V]) Delete(key K) (bool, error) {
 	}
 	bt.count--
 	bt.rebalance(nd)
-	return true, nil
+	return
 }
 
 // Delete all elements, BTree becomes an empty tree.

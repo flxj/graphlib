@@ -73,12 +73,12 @@ func (s *SkipList[K, V]) Len() int {
 	return s.count
 }
 
-func (s *SkipList[K, V]) Less(k1, k2 K) bool {
-	return s.comp(k1, k2) < 0
+func (s *SkipList[K, V]) Compare(k1, k2 K) int {
+	return s.comp(k1, k2)
 }
 
 // find the least element >= key, if key exists, will return true flag.
-func (s *SkipList[K, V]) Search(key K) (k K, v V, false bool) {
+func (s *SkipList[K, V]) Find(key K) (k K, v V, ok bool) {
 	if s.lock {
 		s.mu.RLock()
 		defer s.mu.RUnlock()
@@ -88,7 +88,22 @@ func (s *SkipList[K, V]) Search(key K) (k K, v V, false bool) {
 		return
 	}
 	if p.next[0] != nil {
-		return p.next[0].key, p.next[0].val, s.comp(p.next[0].key, key) == 0
+		k, v, ok = p.next[0].key, p.next[0].val, s.comp(p.next[0].key, key) == 0
+	}
+	return
+}
+
+func (s *SkipList[K, V]) Search(key K) (v V, ok bool) {
+	if s.lock {
+		s.mu.RLock()
+		defer s.mu.RUnlock()
+	}
+	p := s.searchNode(key)
+	if p == nil {
+		return
+	}
+	if p.next[0] != nil {
+		v, ok = p.next[0].val, s.comp(p.next[0].key, key) == 0
 	}
 	return
 }
@@ -196,6 +211,14 @@ func (s *SkipList[K, V]) Last() (k K, v V, false bool) {
 		return
 	}
 	return s.last.key, s.last.val, true
+}
+
+func (s *SkipList[K, V]) Min() (K, V, bool) {
+	return s.First()
+}
+
+func (s *SkipList[K, V]) Max() (K, V, bool) {
+	return s.Last()
 }
 
 func (s *SkipList[K, V]) randHeight() int {
@@ -350,6 +373,14 @@ func (s *SkipList[K, V]) DeleteAll(key K) bool {
 		}
 	}
 	return flag
+}
+
+func (s *SkipList[K, V]) Clean() {
+	s.count = 0
+	s.height = 0
+	s.head = nil
+	s.first = nil
+	s.last = nil
 }
 
 // Return a query cursor for more flexible traversal of list elements.

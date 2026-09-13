@@ -27,6 +27,10 @@ type Trie[T any] struct {
 	root *tNode256[T]
 }
 
+func NewTrie[T any]() *Trie[T] {
+	return &Trie[T]{}
+}
+
 func (t *Trie[T]) Len() int {
 	return t.cnt
 }
