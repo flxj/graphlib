@@ -44,18 +44,19 @@
 ✔️ **Data Structure:**
 
 * Stack/FIFO
-* BTree
-* SkipList
-* Splay Tree
+* Heap/PriorityQueue
+* Fibonacci Heap
 * LinkCut Tree
 * Disjoint Set
 * Difference Array
-* Heap/PriorityQueue
 * Treap
 * Scapegoat Tree
 * RedBlack Tree
-* Trie
+* Splay Tree
+* SkipList
+* BTree
 * RTree
+* Trie
 * Adaptive Radix Tree
 
 ### Getting started

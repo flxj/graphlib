@@ -110,3 +110,8 @@ func (d *DifferenceArray[N]) Get(i int) (N, bool) {
 	}
 	return n, true
 }
+
+type BitArray struct { //TODO
+	bs   []uint64
+	size uint64
+}
