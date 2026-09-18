@@ -14,7 +14,9 @@
 	limitations under the License.
 */
 
-package collection
+package stack
+
+import "github.com/flxj/graphlib/collection"
 
 type Stack[T any] struct {
 	elems []T
@@ -52,7 +54,7 @@ func (s *Stack[T]) Pop() (T, bool) {
 	return k, false
 }
 
-func (s *Stack[T]) Contains(k T, comp CompareFunc[T]) bool {
+func (s *Stack[T]) Contains(k T, comp collection.CompareFunc[T]) bool {
 	for i := 0; i < s.idx; i++ {
 		if comp(s.elems[i], k) == 0 {
 			return true

@@ -16,7 +16,7 @@
 
 package art
 
-import "github.com/flxj/graphlib/collection"
+import "github.com/flxj/graphlib/collection/stack"
 
 // Record the current search path.
 type path[V any] struct {
@@ -28,14 +28,14 @@ type path[V any] struct {
 type artCursor[V any] struct {
 	tree *art[V]
 	root node[V]
-	stk  *collection.Stack[*path[V]]
+	stk  *stack.Stack[*path[V]]
 }
 
 func newCursor[V any](tree *art[V], root node[V]) *artCursor[V] {
 	return &artCursor[V]{
 		tree: tree,
 		root: root,
-		stk:  collection.NewStack[*path[V]](),
+		stk:  stack.NewStack[*path[V]](),
 	}
 }
 

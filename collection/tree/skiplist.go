@@ -14,15 +14,15 @@
 	limitations under the License.
 */
 
-package collection
+package tree
 
 import (
 	"errors"
 	"math/rand"
 	"sync"
-)
 
-type CompareFunc[K any] func(K, K) int
+	"github.com/flxj/graphlib/collection"
+)
 
 type SkipListConfig struct {
 	Locked bool
@@ -46,7 +46,7 @@ reducing the average number of steps needed to reach it.
 */
 type SkipList[K any, V any] struct {
 	lock   bool
-	comp   CompareFunc[K]
+	comp   collection.CompareFunc[K]
 	mu     sync.RWMutex
 	count  int
 	height int
@@ -61,7 +61,7 @@ type SkipList[K any, V any] struct {
 // added in a randomized way with a geometric/negative binomial distribution,
 // so that a search in the list may quickly skip parts of the list (hence the name).
 // Insert, search and delete operations are performed in logarithmic randomized time.
-func NewSkipList[K any, V any](cfg *SkipListConfig, comp CompareFunc[K]) *SkipList[K, V] {
+func NewSkipList[K any, V any](cfg *SkipListConfig, comp collection.CompareFunc[K]) *SkipList[K, V] {
 	return &SkipList[K, V]{lock: cfg.Locked, comp: comp, height: -1}
 }
 
@@ -384,7 +384,7 @@ func (s *SkipList[K, V]) Clean() {
 }
 
 // Return a query cursor for more flexible traversal of list elements.
-func (s *SkipList[K, V]) Cursor() Cursor[K, V] {
+func (s *SkipList[K, V]) Cursor() collection.Cursor[K, V] {
 	return &slCuesor[K, V]{list: s}
 }
 

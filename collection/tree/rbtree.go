@@ -14,7 +14,9 @@
 	limitations under the License.
 */
 
-package collection
+package tree
+
+import "github.com/flxj/graphlib/collection"
 
 type rbNode[K any, V any] struct {
 	red bool
@@ -45,13 +47,13 @@ func (t *rbNode[K, V]) getVal() V {
 // enabling efficient search, insertion, and deletion operations in O(logN) time,
 // unlike standard binary search trees which can take O(N) time.
 type RedBlackTree[K any, V any] struct {
-	comp  CompareFunc[K]
+	comp  collection.CompareFunc[K]
 	count int
 	root  *rbNode[K, V]
 }
 
 // Create a red black tree.
-func NewRedBlackTree[K any, V any](comp CompareFunc[K]) *RedBlackTree[K, V] {
+func NewRedBlackTree[K any, V any](comp collection.CompareFunc[K]) *RedBlackTree[K, V] {
 	return &RedBlackTree[K, V]{comp: comp}
 }
 
@@ -691,6 +693,6 @@ func (t *RedBlackTree[K, V]) Clean() {
 	t.root = nil
 }
 
-func (t *RedBlackTree[K, V]) Cursor() Cursor[K, V] {
+func (t *RedBlackTree[K, V]) Cursor() collection.Cursor[K, V] {
 	return newBSTCursor(t.root, t.comp)
 }

@@ -23,7 +23,7 @@ import (
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-func randStr(n int) string {
+func RandStr(n int) string {
 	b := make([]byte, n)
 	for i := 0; i < n; i++ {
 		b[i] = charset[rand.Intn(len(charset))]
@@ -31,7 +31,7 @@ func randStr(n int) string {
 	return string(b)
 }
 
-func maxValue[N number](n N) N {
+func MaxValue[N number](n N) N {
 	switch any(n).(type) {
 	case int:
 		return any(math.MaxInt).(N)
@@ -62,7 +62,7 @@ func maxValue[N number](n N) N {
 	}
 }
 
-func minValue[N number](n N) N {
+func MinValue[N number](n N) N {
 	switch any(n).(type) {
 	case int:
 		return any(math.MinInt).(N)
@@ -91,60 +91,4 @@ func minValue[N number](n N) N {
 	default:
 		return n
 	}
-}
-
-type stack[K comparable] struct {
-	elems []K
-	idx   int
-}
-
-func newStack[K comparable]() *stack[K] {
-	return &stack[K]{}
-}
-
-func (s *stack[K]) size() int {
-	return s.idx
-}
-
-func (s *stack[K]) empty() bool {
-	return s.idx == 0
-}
-
-func (s *stack[K]) push(k K) {
-	if s.idx < len(s.elems) {
-		s.elems[s.idx] = k
-	} else {
-		s.elems = append(s.elems, k)
-	}
-	s.idx++
-}
-
-func (s *stack[K]) pop() (K, bool) {
-	var k K
-	if !s.empty() {
-		k = s.elems[s.idx-1]
-		s.idx--
-		return k, true
-	}
-	return k, false
-}
-
-func (s *stack[K]) contains(k K) bool {
-	for i := 0; i < s.idx; i++ {
-		if s.elems[i] == k {
-			return true
-		}
-	}
-	return false
-}
-
-func (s *stack[K]) top() (k K) {
-	if s.idx > 0 {
-		return s.elems[s.idx-1]
-	}
-	return
-}
-
-func (s *stack[K]) clean() {
-	s.idx = 0
 }

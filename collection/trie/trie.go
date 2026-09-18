@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-package collection
+package trie
 
 type tNode256[T any] struct {
 	flag int8

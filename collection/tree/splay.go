@@ -14,7 +14,9 @@
 	limitations under the License.
 */
 
-package collection
+package tree
+
+import "github.com/flxj/graphlib/collection"
 
 type stNode[K any, V any] struct {
 	key K
@@ -54,13 +56,13 @@ func (t *stNode[K, V]) getVal() V {
 // of operations, splay trees perform better than other search trees, even when the specific
 // pattern of the sequence is unknown. The splay tree was invented by Daniel Sleator and Robert Tarjan.
 type SplayTree[K any, V any] struct {
-	comp  CompareFunc[K]
+	comp  collection.CompareFunc[K]
 	count int
 	root  *stNode[K, V]
 }
 
 // Create a splay tree. The caller needs to provide a method for comparing element keys.
-func NewSplayTree[K any, V any](comp CompareFunc[K]) *SplayTree[K, V] {
+func NewSplayTree[K any, V any](comp collection.CompareFunc[K]) *SplayTree[K, V] {
 	return &SplayTree[K, V]{comp: comp}
 }
 
@@ -284,6 +286,6 @@ func (s *SplayTree[K, V]) Clean() {
 	s.root = nil
 }
 
-func (s *SplayTree[K, V]) Cursor() Cursor[K, V] {
+func (s *SplayTree[K, V]) Cursor() collection.Cursor[K, V] {
 	return newBSTCursor(s.root, s.comp)
 }

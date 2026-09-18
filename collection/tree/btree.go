@@ -14,11 +14,13 @@
 	limitations under the License.
 */
 
-package collection
+package tree
 
 import (
 	"errors"
 	"sync"
+
+	"github.com/flxj/graphlib/collection"
 )
 
 var (
@@ -421,7 +423,7 @@ func (bt *BTree[K, V]) Clean() {
 }
 
 // Create a cursor for the current BTree.
-func (bt *BTree[K, V]) Cursor() Cursor[K, V] {
+func (bt *BTree[K, V]) Cursor() collection.Cursor[K, V] {
 	return &btreeCursor[K, V]{tree: bt}
 }
 

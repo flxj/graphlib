@@ -14,7 +14,12 @@
 	limitations under the License.
 */
 
-package collection
+package tree
+
+import (
+	"github.com/flxj/graphlib/collection"
+	"github.com/flxj/graphlib/collection/stack"
+)
 
 var (
 	DefaultScapegoatTreeAlpha = 0.75
@@ -67,14 +72,14 @@ For example, Red Black Tree nodes are required to have color. In below implement
 we only have left, right and parent pointers in Node class. Use of parent is done for simplicity of implementation and can be avoided.
 */
 type ScapegoatTree[K any, V any] struct {
-	comp  CompareFunc[K]
+	comp  collection.CompareFunc[K]
 	num   int
 	alpha float64
 	root  *sgtNode[K, V]
 }
 
 // Create a scapegoat tree.
-func NewScapegoatTree[K any, V any](alpha float64, comp CompareFunc[K]) *ScapegoatTree[K, V] {
+func NewScapegoatTree[K any, V any](alpha float64, comp collection.CompareFunc[K]) *ScapegoatTree[K, V] {
 	if alpha < 0.0 || alpha >= 1.0 {
 		return nil
 	}
@@ -247,18 +252,17 @@ func (s *ScapegoatTree[K, V]) flatten(r *sgtNode[K, V]) ([]K, []V) {
 	}
 	var keys []K
 	var vals []V
-	stk := newStack[*sgtNode[K, V]]()
+	stk := stack.NewStack[*sgtNode[K, V]]()
 	p := r
-	for !stk.empty() || p != nil {
+	for !stk.IsEmpty() || p != nil {
 		for p != nil {
-			stk.push(p)
+			stk.Push(p)
 			p = p.l
 		}
-		p, _ = stk.pop()
+		p, _ = stk.Pop()
 		if !p.del {
 			keys = append(keys, p.key)
 			vals = append(vals, p.val)
-			//fmt.Println("add key=", p.key)
 		}
 		p = p.r
 	}
@@ -293,8 +297,8 @@ func (s *ScapegoatTree[K, V]) Clean() {
 	s.root = nil
 }
 
-func (s *ScapegoatTree[K, V]) Cursor() Cursor[K, V] {
-	return &sgtCursor[K, V]{tree: s, stk: NewStack[*sgtPath[K, V]]()}
+func (s *ScapegoatTree[K, V]) Cursor() collection.Cursor[K, V] {
+	return &sgtCursor[K, V]{tree: s, stk: stack.NewStack[*sgtPath[K, V]]()}
 }
 
 type sgtPath[K, V any] struct {
@@ -305,7 +309,7 @@ type sgtPath[K, V any] struct {
 type sgtCursor[K, V any] struct {
 	tree *ScapegoatTree[K, V]
 	prev *sgtNode[K, V]
-	stk  *Stack[*sgtPath[K, V]]
+	stk  *stack.Stack[*sgtPath[K, V]]
 }
 
 func (c *sgtCursor[K, V]) Open() error { return nil }

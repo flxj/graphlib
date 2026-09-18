@@ -14,13 +14,23 @@
 	limitations under the License.
 */
 
-package collection
+package rtree
 
 import (
 	"container/heap"
 	"math"
 	"sync"
+
+	"github.com/flxj/graphlib/collection"
+	hp "github.com/flxj/graphlib/collection/heap"
+	"github.com/flxj/graphlib/collection/stack"
 )
+
+type number interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
+		~float32 | ~float64
+}
 
 var (
 	// M represents the maximum number of elements
@@ -103,7 +113,7 @@ func (r *rNode[T, N]) update(rect Rectangle[N]) {
 func (r *rNode[T, N]) reset() {
 	// re calculate the mbr
 	var n N
-	r.mbr = Rectangle[N]{maxValue(n), maxValue(n), minValue(n), minValue(n)}
+	r.mbr = Rectangle[N]{collection.MaxValue(n), collection.MaxValue(n), collection.MinValue(n), collection.MinValue(n)}
 	for _, e := range r.entries {
 		r.update(e.rect)
 	}
@@ -175,7 +185,7 @@ func NewRTree[T any, N number](M int, lock bool, dist DistFunc[N]) *RTree[T, N] 
 		dist: dist,
 		M:    M,
 		lock: lock,
-		maxN: maxValue(n),
+		maxN: collection.MaxValue(n),
 	}
 	t.pool = sync.Pool{
 		New: func() any {
@@ -226,10 +236,10 @@ func (r *RTree[T, N]) Search(region Rectangle[N]) ([]Rectangle[N], []T) {
 	return r.search(r.root, region)
 }
 
-func (r *RTree[T, N]) searchPath(mbr Rectangle[N]) *stack[*rPath[T, N]] {
+func (r *RTree[T, N]) searchPath(mbr Rectangle[N]) *stack.Stack[*rPath[T, N]] {
 	// Traverse the tree from root to the appropriate leaf.
 	// At each level,select the node, L,whose MBR will require the minimum area enlargement to cover mbr.
-	stk := newStack[*rPath[T, N]]()
+	stk := stack.NewStack[*rPath[T, N]]()
 	for p := r.root; p != nil; {
 		i, j := -1, 0
 		si, sj := r.maxN, r.maxN
@@ -249,7 +259,7 @@ func (r *RTree[T, N]) searchPath(mbr Rectangle[N]) *stack[*rPath[T, N]] {
 		if i < 0 {
 			rp.idx = j
 		}
-		stk.push(rp)
+		stk.Push(rp)
 		if p.isLeaf() {
 			break
 		}
@@ -263,7 +273,7 @@ func (r *RTree[T, N]) Insert(data T, rect Rectangle[N]) {
 	p := r.searchPath(rect)
 	e := r.pool.Get().(*rEntry[T, N])
 	e.data, e.rect = data, rect
-	if p.empty() {
+	if p.IsEmpty() {
 		// tree is null, create a new root
 		r.root = &rNode[T, N]{
 			kind:    3, // root+leaf
@@ -271,16 +281,16 @@ func (r *RTree[T, N]) Insert(data T, rect Rectangle[N]) {
 			entries: []*rEntry[T, N]{e},
 		}
 	} else {
-		L, _ := p.pop()
+		L, _ := p.Pop()
 		L.rn.entries = append(L.rn.entries, e)
 		// if the selected leaf L can accommodate obj. Insert obj into L.
 		// Update all MBRs in the path from the root to L,so that all of them cover obj.mbr
 		if len(L.rn.entries) <= r.M {
 			L.rn.update(e.rect)
 			mbr := L.rn.mbr
-			for !p.empty() {
+			for !p.IsEmpty() {
 				// update mbr from leaf to root
-				rp, _ := p.pop()
+				rp, _ := p.Pop()
 				rp.rn.entries[rp.idx].rect = mbr
 				rp.rn.update(mbr)
 				mbr = rp.rn.mbr
@@ -295,9 +305,9 @@ func (r *RTree[T, N]) Insert(data T, rect Rectangle[N]) {
 			// depending on which of the MBRs of these nodes will require the minimum area
 			// enlargement so as to cover this entry.
 			L1, L2 := r.split(L.rn)
-			for !p.empty() {
+			for !p.IsEmpty() {
 				// Update the MBRs of nodes that are in the path from root to L, so as to cover L1 and accommodate L2.
-				rp, _ := p.pop()
+				rp, _ := p.Pop()
 				rp.rn.entries[rp.idx].rect = L1.mbr
 				rp.rn.entries[rp.idx].ptr = L1
 				rp.rn.update(L1.mbr)
@@ -311,7 +321,7 @@ func (r *RTree[T, N]) Insert(data T, rect Rectangle[N]) {
 				// Perform splits at the upper levels if necessary.
 				if len(rp.rn.entries) > r.M {
 					L1, L2 = r.split(rp.rn)
-					if p.empty() {
+					if p.IsEmpty() {
 						// In case the root has to be split, create a new root,which increase the height of the tree by one.
 						root := &rNode[T, N]{
 							kind:    2, // root+nonLedf
@@ -504,23 +514,23 @@ func (r *RTree[T, N]) leaf(node *rNode[T, N]) []*rNode[T, N] {
 
 // Scan all data (note that the scanning order is random).
 func (r *RTree[T, N]) Scan(fn func(Rectangle[N], T) error) error {
-	stk := newStack[*rPath[T, N]]()
+	stk := stack.NewStack[*rPath[T, N]]()
 	p := r.root
-	for !stk.empty() || p != nil {
+	for !stk.IsEmpty() || p != nil {
 		for p != nil {
 			rp := &rPath[T, N]{rn: p, idx: 0}
-			stk.push(rp)
+			stk.Push(rp)
 			if p.isLeaf() {
 				p = nil
 				break
 			}
 			p = p.entries[0].ptr
 		}
-		if !stk.empty() {
-			rp := stk.top()
+		if !stk.IsEmpty() {
+			rp := stk.Top()
 			if rp.rn.isLeaf() {
 				// visited rn
-				L, _ := stk.pop()
+				L, _ := stk.Pop()
 				for _, e := range L.rn.entries {
 					if err := fn(e.rect, e.data); err != nil {
 						return err
@@ -529,7 +539,7 @@ func (r *RTree[T, N]) Scan(fn func(Rectangle[N], T) error) error {
 			} else {
 				rp.idx++
 				if rp.idx >= len(rp.rn.entries) {
-					_, _ = stk.pop()
+					_, _ = stk.Pop()
 				} else {
 					p = rp.rn.entries[rp.idx].ptr
 				}
@@ -544,15 +554,15 @@ func (r *RTree[T, N]) NearestNeighbors(obj Rectangle[N], dist DistFunc[N], k int
 	if k <= 0 {
 		return nil, nil
 	}
-	hp := NewHeap[Rectangle[N], T, N](func(a, b N) bool { return a > b })
-	heap.Init(hp)
+	h := hp.NewHeap[Rectangle[N], T, N](func(a, b N) bool { return a > b })
+	heap.Init(h)
 	_ = r.Scan(func(rect Rectangle[N], data T) error {
 		d := dist(rect, obj)
-		if hp.Len() < k || hp.Top().Rank > d {
-			if hp.Len() >= k {
-				_ = heap.Pop(hp)
+		if h.Len() < k || h.Top().Rank > d {
+			if h.Len() >= k {
+				_ = heap.Pop(h)
 			}
-			heap.Push(hp, &HeapElem[Rectangle[N], T, N]{
+			heap.Push(h, &hp.HeapElem[Rectangle[N], T, N]{
 				Key:  rect,
 				Val:  data,
 				Rank: d,
@@ -563,8 +573,8 @@ func (r *RTree[T, N]) NearestNeighbors(obj Rectangle[N], dist DistFunc[N], k int
 
 	var rs []Rectangle[N]
 	var ds []T
-	for hp.Len() > 0 {
-		p := heap.Pop(hp).(*HeapElem[Rectangle[N], T, N])
+	for h.Len() > 0 {
+		p := heap.Pop(h).(*hp.HeapElem[Rectangle[N], T, N])
 		rs = append(rs, p.Key)
 		ds = append(ds, p.Val)
 	}

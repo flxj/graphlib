@@ -14,9 +14,13 @@
 	limitations under the License.
 */
 
-package collection
+package tree
 
-import "math/rand"
+import (
+	"math/rand"
+
+	"github.com/flxj/graphlib/collection"
+)
 
 type treapNode[K any, V any] struct {
 	key K
@@ -58,12 +62,12 @@ func (t *treapNode[K, V]) getVal() V {
 // The idea is to use Randomization and Binary Heap property to maintain balance with high probability.
 // The expected time complexity of search, insert and delete is O(Log n).
 type Treap[K any, V any] struct {
-	comp CompareFunc[K]
+	comp collection.CompareFunc[K]
 	root *treapNode[K, V]
 }
 
 // create a Non-rotating Treap.
-func NewTreap[K any, V any](comp CompareFunc[K]) *Treap[K, V] {
+func NewTreap[K any, V any](comp collection.CompareFunc[K]) *Treap[K, V] {
 	return &Treap[K, V]{comp: comp}
 }
 
@@ -240,7 +244,7 @@ func (t *Treap[K, V]) Max() (k K, v V, ok bool) {
 	return
 }
 
-func (t *Treap[K, V]) Cursor() Cursor[K, V] {
+func (t *Treap[K, V]) Cursor() collection.Cursor[K, V] {
 	return newBSTCursor[K, V](t.root, t.comp)
 }
 
@@ -292,7 +296,7 @@ func (t *Treap[K, V]) merge(t1, t2 *treapNode[K, V]) *treapNode[K, V] {
 	}
 }
 
-func TreapBuild[K any, V any](keys []K, vals []V, comp CompareFunc[K]) *Treap[K, V] {
+func TreapBuild[K any, V any](keys []K, vals []V, comp collection.CompareFunc[K]) *Treap[K, V] {
 	// check sorted
 	return nil
 }
