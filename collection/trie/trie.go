@@ -204,7 +204,3 @@ func (t *Trie[T]) Scan(fn func([]byte, T) error) error {
 	per := []byte{}
 	return t.scan(per, t.root, fn)
 }
-
-// Compressed Trie
-type PatriciaTrie[T any] struct {
-}
