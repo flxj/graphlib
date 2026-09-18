@@ -16,14 +16,6 @@
 
 package collection
 
-type number interface {
-	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
-		~float32 | ~float64
-}
-
-type CompareFunc[K any] func(K, K) int
-
 // Cursors are used to access ordered collections.
 type Cursor[K, V any] interface {
 	// If the collection object is in concurrent security mode,

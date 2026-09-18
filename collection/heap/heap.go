@@ -17,52 +17,59 @@
 package heap
 
 // Heap data element, rank is used to maintain heap structure.
-type HeapElem[K any, V any, P any] struct {
+type IndexHeapElem[K any, V any, P any] struct {
 	Key  K
 	Val  V
 	Rank P
 	Idx  int
 }
 
-type Heap[K any, V any, P any] struct {
-	elems []*HeapElem[K, V, P]
+type IndexHeap[K any, V any, P any] struct {
+	elems []*IndexHeapElem[K, V, P]
 	less  func(P, P) bool
 }
 
-func NewHeap[K any, V any, P any](less func(P, P) bool) *Heap[K, V, P] {
-	return &Heap[K, V, P]{less: less}
+func NewIndexHeap[K any, V any, P any](less func(P, P) bool) *IndexHeap[K, V, P] {
+	return &IndexHeap[K, V, P]{less: less}
 }
 
-func (h *Heap[K, V, P]) Len() int {
+func (h *IndexHeap[K, V, P]) Len() int {
 	return len(h.elems)
 }
 
-func (h *Heap[K, V, P]) Less(i, j int) bool {
+func (h *IndexHeap[K, V, P]) Less(i, j int) bool {
 	return h.less(h.elems[i].Rank, h.elems[j].Rank)
 }
 
-func (h *Heap[K, V, P]) Swap(i, j int) {
+func (h *IndexHeap[K, V, P]) Swap(i, j int) {
 	h.elems[i], h.elems[j] = h.elems[j], h.elems[i]
 	h.elems[i].Idx = i
 	h.elems[j].Idx = j
 }
 
-func (h *Heap[K, V, P]) Push(x any) {
-	v, _ := x.(*HeapElem[K, V, P])
+func (h *IndexHeap[K, V, P]) Push(x any) {
+	v, _ := x.(*IndexHeapElem[K, V, P])
 	v.Idx = len(h.elems)
 	h.elems = append(h.elems, v)
 }
 
-func (h *Heap[K, V, P]) Pop() any {
+func (h *IndexHeap[K, V, P]) Pop() any {
 	n := len(h.elems)
 	v := h.elems[n-1]
 	h.elems = h.elems[:n-1]
 	return v
 }
 
-func (h *Heap[K, V, P]) Top() *HeapElem[K, V, P] {
+func (h *IndexHeap[K, V, P]) Top() *IndexHeapElem[K, V, P] {
 	if len(h.elems) > 0 {
 		return h.elems[0]
+	}
+	return nil
+}
+
+func (h *IndexHeap[K, V, P]) Index(i int) *IndexHeapElem[K, V, P] {
+	if i >= 0 && i < len(h.elems) {
+		return h.elems[i]
 	}
 	return nil
 }

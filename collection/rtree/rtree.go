@@ -554,7 +554,7 @@ func (r *RTree[T, N]) NearestNeighbors(obj Rectangle[N], dist DistFunc[N], k int
 	if k <= 0 {
 		return nil, nil
 	}
-	h := hp.NewHeap[Rectangle[N], T, N](func(a, b N) bool { return a > b })
+	h := hp.NewIndexHeap[Rectangle[N], T, N](func(a, b N) bool { return a > b })
 	heap.Init(h)
 	_ = r.Scan(func(rect Rectangle[N], data T) error {
 		d := dist(rect, obj)
@@ -562,7 +562,7 @@ func (r *RTree[T, N]) NearestNeighbors(obj Rectangle[N], dist DistFunc[N], k int
 			if h.Len() >= k {
 				_ = heap.Pop(h)
 			}
-			heap.Push(h, &hp.HeapElem[Rectangle[N], T, N]{
+			heap.Push(h, &hp.IndexHeapElem[Rectangle[N], T, N]{
 				Key:  rect,
 				Val:  data,
 				Rank: d,
@@ -574,7 +574,7 @@ func (r *RTree[T, N]) NearestNeighbors(obj Rectangle[N], dist DistFunc[N], k int
 	var rs []Rectangle[N]
 	var ds []T
 	for h.Len() > 0 {
-		p := heap.Pop(h).(*hp.HeapElem[Rectangle[N], T, N])
+		p := heap.Pop(h).(*hp.IndexHeapElem[Rectangle[N], T, N])
 		rs = append(rs, p.Key)
 		ds = append(ds, p.Val)
 	}

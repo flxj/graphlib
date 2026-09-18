@@ -16,8 +16,6 @@
 
 package graphlib
 
-type CompareFunc[K any] func(K, K) int
-
 type element[K comparable, V any, P any] struct {
 	key  K
 	val  V
@@ -216,45 +214,4 @@ func (q *priorityQueue[K, V, P]) Get(k K) P {
 
 func (q *priorityQueue[K, V, P]) Len() int {
 	return len(q.items)
-}
-
-type PriorityQueue[T any, P any] struct {
-	heap *binaryHeap[int, T, P]
-}
-
-func NewPriorityQueue[T any, P any](less func(p1, p2 P) bool) *PriorityQueue[T, P] {
-	q := &PriorityQueue[T, P]{
-		heap: newBinaryHeap[int, T, P](less),
-	}
-	q.heap.init()
-	return q
-}
-
-// update modifies the priority and value of an Item in the queue.
-func (q *PriorityQueue[T, P]) Update(v T, priority P, comp CompareFunc[T]) {
-	for i := 0; i < len(q.heap.elems); i++ {
-		if comp(q.heap.elems[i].val, v) == 0 {
-			q.heap.elems[i].rank = priority
-			q.heap.shift(q.heap.elems[i].idx)
-			break
-		}
-	}
-}
-
-// update modifies the priority and value of an Item in the queue.
-func (q *PriorityQueue[T, P]) Push(value T, priority P) {
-	item := &element[int, T, P]{val: value, rank: priority}
-	q.heap.push(item)
-}
-
-func (q *PriorityQueue[T, P]) Pop() (v T, pr P, ok bool) {
-	p := q.heap.pop()
-	if p != nil {
-		v, pr, ok = p.val, p.rank, true
-	}
-	return
-}
-
-func (q *PriorityQueue[T, P]) Len() int {
-	return q.heap.length()
 }

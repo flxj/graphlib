@@ -14,16 +14,21 @@
 	limitations under the License.
 */
 
-package graphlib
+package set
 
-type dynamicUnionFind struct {
+// The Union-Find algorithm, also known as the Disjoint-Set data structure,
+// is a powerful tool used to manage a collection of disjoint sets.
+// It supports two primary operations: Find and Union.
+// This data structure is particularly useful in scenarios where we need to
+// determine whether two elements belong to the same set or to merge two sets.
+type UnionFind struct {
 	count  int
 	parent []int
 	size   []int
 }
 
-func newDynamicUnionFind(n int) *dynamicUnionFind {
-	u := &dynamicUnionFind{
+func NewUnionFind(n int) *UnionFind {
+	u := &UnionFind{
 		count:  n,
 		parent: make([]int, n),
 		size:   make([]int, n),
@@ -35,7 +40,8 @@ func newDynamicUnionFind(n int) *dynamicUnionFind {
 	return u
 }
 
-func (u *dynamicUnionFind) Find(x int) int {
+// The Find operation determines the representative or root of the set containing a particular element.
+func (u *UnionFind) Find(x int) int {
 	if x >= len(u.parent) || x < 0 {
 		return -1
 	}
@@ -46,7 +52,8 @@ func (u *dynamicUnionFind) Find(x int) int {
 	return x
 }
 
-func (u *dynamicUnionFind) Union(x, y int) {
+// The Union operation merges two sets by connecting their roots.
+func (u *UnionFind) Union(x, y int) {
 	rx := u.Find(x)
 	ry := u.Find(y)
 	if rx < 0 || ry < 0 || rx == ry {
@@ -62,70 +69,20 @@ func (u *dynamicUnionFind) Union(x, y int) {
 	u.count--
 }
 
-func (u *dynamicUnionFind) Connected(x, y int) bool {
+// Check if two elements are connected.
+func (u *UnionFind) Connected(x, y int) bool {
 	return u.Find(x) == u.Find(y)
 }
 
 // return the subtree size with root as x.
-func (u *dynamicUnionFind) Size(x int) int {
+func (u *UnionFind) Size(x int) int {
 	if x < 0 || x >= len(u.parent) {
 		return -1
 	}
 	return u.size[x]
 }
 
-func (u *dynamicUnionFind) Component() int {
+// The current number of connected components.
+func (u *UnionFind) Component() int {
 	return u.count
-}
-
-func (u *dynamicUnionFind) GetParent(x int) int {
-	if x < len(u.parent) && x >= 0 {
-		return u.parent[x]
-	}
-	return -1
-}
-
-func (u *dynamicUnionFind) SetParent(x int, y int) {
-	if x < 0 || x >= len(u.parent) || y < 0 || y >= len(u.parent) {
-		return
-	}
-	u.parent[x] = y
-	for u.parent[y] != y {
-		u.size[y] += u.size[x]
-		y = u.parent[y]
-	}
-}
-
-func (u *dynamicUnionFind) Reset() {
-	for i := 0; i < len(u.parent); i++ {
-		u.parent[i] = i
-		u.size[i] = 1
-	}
-	u.count = len(u.parent)
-}
-
-func (u *dynamicUnionFind) Add(n int) {
-	l := len(u.parent)
-	for i := 0; i < n; i++ {
-		u.parent = append(u.parent, l+i)
-		u.size = append(u.size, 1)
-	}
-	u.count += n
-}
-
-func (u *dynamicUnionFind) Cut(x int) {
-	if x < 0 || x >= len(u.parent) {
-		return
-	}
-	if u.parent[x] == x {
-		return
-	}
-	u.parent[x] = x
-	for y := u.parent[x]; ; {
-		u.size[y] -= u.size[x]
-		if y == u.parent[y] {
-			break
-		}
-		y = u.parent[y]
-	}
 }
