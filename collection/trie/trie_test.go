@@ -21,7 +21,7 @@ import (
 	"testing"
 )
 
-func testTrieRW(tt *testing.T, n int) {
+func testTrieRW(tt *testing.T) {
 	str := []string{
 		"a",
 		"b",
@@ -57,15 +57,19 @@ func testTrieRW(tt *testing.T, n int) {
 		}
 	}
 	// "abcd" --> 5
-	res, _ := t.Prefix([]byte("abcd"))
-	if len(res) != 5 {
+	var cnt int
+	t.ScanPrefix([]byte("abcd"), func(k []byte, v int) bool {
+		cnt++
+		return true
+	})
+	if cnt != 5 {
 		tt.Error("prefix search error")
 	}
 
 	var st []string
-	fn := func(k []byte, _ int) error {
+	fn := func(k []byte, _ int) bool {
 		st = append(st, string(k))
-		return nil
+		return true
 	}
 	_ = t.Scan(fn)
 	for _, s := range st {
@@ -77,5 +81,5 @@ func testTrieRW(tt *testing.T, n int) {
 }
 
 func TestTrie(t *testing.T) {
-	testTrieRW(t, 100)
+	testTrieRW(t)
 }

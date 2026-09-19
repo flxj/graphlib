@@ -16,26 +16,39 @@
 
 package trie
 
+import "sync"
+
 type tNode256[T any] struct {
 	flag int8
+	key  []byte
 	val  T
 	ch   [256]*tNode256[T]
 }
 
 type Trie[T any] struct {
+	lock bool
+	mu   sync.RWMutex
 	cnt  int
 	root *tNode256[T]
 }
 
-func NewTrie[T any]() *Trie[T] {
-	return &Trie[T]{}
+func NewTrie[T any](lock bool) *Trie[T] {
+	return &Trie[T]{lock: lock}
 }
 
 func (t *Trie[T]) Len() int {
+	if t.lock {
+		t.mu.RLock()
+		defer t.mu.RUnlock()
+	}
 	return t.cnt
 }
 
 func (t *Trie[T]) Insert(s []byte, v T) {
+	if t.lock {
+		t.mu.Lock()
+		defer t.mu.Unlock()
+	}
 	if t.root == nil {
 		t.root = &tNode256[T]{}
 	}
@@ -46,6 +59,7 @@ func (t *Trie[T]) Insert(s []byte, v T) {
 		}
 		p = p.ch[b]
 	}
+	p.key = s
 	p.val = v
 	if (p.flag & 1) != 0 {
 		return
@@ -55,6 +69,10 @@ func (t *Trie[T]) Insert(s []byte, v T) {
 }
 
 func (t *Trie[T]) Search(s []byte) (v T, ok bool) {
+	if t.lock {
+		t.mu.RLock()
+		defer t.mu.RUnlock()
+	}
 	p := t.root
 	for _, b := range s {
 		if p == nil {
@@ -81,52 +99,46 @@ func (t *Trie[T]) Update(s []byte, fn func(T) T) {
 	}
 }
 
-func (t *Trie[T]) Prefix(s []byte) ([][]byte, []T) {
+func (t *Trie[T]) ScanPrefix(s []byte, fn func([]byte, T) bool) bool {
+	if t.lock {
+		t.mu.RLock()
+		defer t.mu.RUnlock()
+	}
 	p := t.root
 	for _, b := range s {
 		if p == nil {
-			return nil, nil
+			return false
 		}
 		p = p.ch[b]
 	}
-	var keys [][]byte
-	var vals []T
-	ks, vs := t.all(p)
-	for i := 0; i < len(ks); i++ {
-		key := make([]byte, len(s)+len(ks[i]))
-		copy(key, s)
-		copy(key[len(s):], ks[i])
-		keys = append(keys, key)
-		vals = append(vals, vs[i])
-	}
-	return keys, vals
+	return t.scan(p, fn)
 }
 
-func (t *Trie[T]) all(node *tNode256[T]) ([][]byte, []T) {
+func (t *Trie[T]) scan(node *tNode256[T], fn func([]byte, T) bool) bool {
 	if node == nil {
-		return nil, nil
+		return true
 	}
-	var keys [][]byte
-	var vals []T
 	if (node.flag & 3) == 1 {
-		keys = append(keys, []byte{})
-		vals = append(vals, node.val)
-	}
-
-	for b, q := range node.ch {
-		ks, vs := t.all(q)
-		for i, s := range ks {
-			key := make([]byte, len(s)+1)
-			key[0] = byte(b)
-			copy(key[1:], s)
-			keys = append(keys, key)
-			vals = append(vals, vs[i])
+		if !fn(node.key, node.val) {
+			return false
 		}
 	}
-	return keys, vals
+	for _, q := range node.ch {
+		if q == nil {
+			continue
+		}
+		if !t.scan(q, fn) {
+			return false
+		}
+	}
+	return true
 }
 
 func (t *Trie[T]) Delete(s []byte) bool {
+	if t.lock {
+		t.mu.Lock()
+		defer t.mu.Unlock()
+	}
 	p := t.root
 	for _, b := range s {
 		if p == nil {
@@ -159,6 +171,10 @@ func (t *Trie[T]) count(node *tNode256[T]) int {
 }
 
 func (t *Trie[T]) DeleteByPrefix(pre []byte) bool {
+	if t.lock {
+		t.mu.Lock()
+		defer t.mu.Unlock()
+	}
 	var idx int
 	var pp *tNode256[T]
 	p := t.root
@@ -177,30 +193,10 @@ func (t *Trie[T]) DeleteByPrefix(pre []byte) bool {
 	return true
 }
 
-func (t *Trie[T]) scan(pre []byte, node *tNode256[T], fn func([]byte, T) error) error {
-	if node == nil {
-		return nil
+func (t *Trie[T]) Scan(fn func([]byte, T) bool) bool {
+	if t.lock {
+		t.mu.RLock()
+		defer t.mu.RUnlock()
 	}
-	if (node.flag & 1) != 0 {
-		if err := fn(pre, node.val); err != nil {
-			return err
-		}
-	}
-	for i, p := range node.ch {
-		if p != nil {
-			s := make([]byte, len(pre)+1)
-			copy(s, pre)
-			s[len(pre)] = byte(i)
-			err := t.scan(s, p, fn)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func (t *Trie[T]) Scan(fn func([]byte, T) error) error {
-	per := []byte{}
-	return t.scan(per, t.root, fn)
+	return t.scan(t.root, fn)
 }
