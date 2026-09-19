@@ -16,6 +16,10 @@
 
 package graphlib
 
+import (
+	"errors"
+)
+
 // In our formal description of DFS, each vertex x of D gets two time-stamps:
 // tvisit(x) once x is visited and texpl(x) once x is declared explored.
 //
@@ -397,4 +401,191 @@ func LexDFS[K comparable, W number](g Graph[K, W], start K, f func(Vertex[K, W])
 		}
 	}
 	return nil
+}
+
+func eulerPath[K comparable, W number](g Graph[K, W]) (Path[K, W], error) {
+	p := Path[K, W]{}
+	if g == nil {
+		return p, errNilGraph
+	}
+	gp, ok := g.Property(ProConnected)
+	if !ok || !gp.Value.(bool) {
+		return p, errors.New("graph is not connected")
+	}
+	vtx := g.AllVertexes()
+	if len(vtx) == 0 {
+		return p, nil
+	}
+	start, end, odd := -1, -1, 0
+	for i, v := range vtx {
+		deg, _ := g.Degree(v.Key)
+		if deg%2 != 0 {
+			odd++
+			if start < 0 {
+				start = i
+			}
+			if end < 0 {
+				end = i
+			}
+		}
+	}
+	if odd != 0 && odd != 2 {
+		return p, errors.New("not exists euler path or circuit")
+	}
+	if start < 0 {
+		start, end = 0, 0
+	}
+	//var path []K
+	edges := make([]K, 0, g.Size())
+	visited := make(map[K]struct{})
+	stk := newStack[K]()
+	stk.push(vtx[start].Key)
+	for !stk.empty() {
+		u := stk.top()
+
+		var found bool
+		es, _ := g.IncidentEdges(u)
+		for _, e := range es {
+			if _, ok := visited[e.Key]; ok {
+				continue
+			}
+			// find a edge e,that not be used.
+			visited[e.Key] = struct{}{}
+			v := e.Head
+			if e.Head == u {
+				v = e.Tail
+			}
+			edges = append(edges, e.Key)
+			stk.push(v)
+			found = true
+			break
+		}
+		if !found {
+			//path = append(path, u)
+			_, _ = stk.pop()
+		}
+	}
+	//if len(path) != g.Size()+1 {
+	//	return p, nil
+	//}
+	//slices.Reverse(path)
+	//
+	if len(edges) != g.Size() {
+		return p, errors.New("not exists euler path or circuit")
+	}
+	p.Edges = edges
+	p.Source = vtx[start].Key
+	p.Target = vtx[end].Key
+
+	return p, nil
+}
+
+func eulerPathDigraph[K comparable, W number](g Digraph[K, W]) (Path[K, W], error) {
+	p := Path[K, W]{}
+	if g == nil {
+		return p, errNilGraph
+	}
+	gp, ok := g.Property(ProConnected)
+	if !ok || !gp.Value.(bool) {
+		return p, errors.New("graph is not connected")
+	}
+	vtx := g.AllVertexes()
+	if len(vtx) == 0 {
+		return p, nil
+	}
+	start, end := -1, -1
+	plus, minus := 0, 0
+	for i, v := range vtx {
+		out, _ := g.OutDegree(v.Key)
+		in, _ := g.InDegree(v.Key)
+
+		switch out - in {
+		case 1:
+			plus++
+			start = i
+		case -1:
+			minus++
+			end = i
+		case 0:
+		default:
+			return p, errors.New("not exists euler path or circuit")
+		}
+	}
+	if plus != minus || plus > 1 {
+		return p, errors.New("not exists euler path or circuit")
+	}
+	if plus == 0 {
+		start, end = 0, 0
+	}
+
+	//var path []K
+	edges := make([]K, 0, g.Size())
+	visited := make(map[K]struct{})
+	stk := newStack[K]()
+	stk.push(vtx[start].Key)
+	for !stk.empty() {
+		u := stk.top()
+
+		var found bool
+		es, _ := g.OutEdges(u)
+		for _, e := range es {
+			if _, ok := visited[e.Key]; ok {
+				continue
+			}
+			// find a edge e,that not be used.
+			visited[e.Key] = struct{}{}
+			v := e.Head
+			edges = append(edges, e.Key)
+			stk.push(v)
+			found = true
+			break
+		}
+		if !found {
+			//path = append(path, u)
+			_, _ = stk.pop()
+		}
+	}
+	//if len(path) != g.Size()+1 {
+	//	return p, nil
+	//}
+	//slices.Reverse(path)
+	//
+	if len(edges) != g.Size() {
+		return p, errors.New("not exists euler path or circuit")
+	}
+	p.Edges = edges
+	p.Source = vtx[start].Key
+	p.Target = vtx[end].Key
+
+	return p, nil
+}
+
+func EulerPath[K comparable, W number](g Graph[K, W]) (Path[K, W], error) {
+	return eulerPath(g)
+}
+
+func EulerPathDigraph[K comparable, W number](g Digraph[K, W]) (Path[K, W], error) {
+	return eulerPathDigraph(g)
+}
+
+func EulerCircuit[K comparable, W number](g Graph[K, W]) (p Path[K, W], err error) {
+	p, err = eulerPath(g)
+	if err != nil {
+		return p, err
+	}
+	if len(p.Edges) == 0 || p.Source != p.Target {
+		return p, errors.New("not exists euler circuit")
+	}
+	return p, nil
+}
+
+func EulerCircuitDigraph[K comparable, W number](g Digraph[K, W]) (p Path[K, W], err error) {
+	p, err = eulerPathDigraph(g)
+	if err != nil {
+		return p, err
+	}
+	if len(p.Edges) == 0 || p.Source != p.Target {
+		return p, errors.New("not exists euler circuit")
+	}
+	return p, nil
 }
