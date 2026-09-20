@@ -31,7 +31,7 @@ func RandStr(n int) string {
 	return string(b)
 }
 
-func MaxValue[N number](n N) N {
+func MaxValue[N Number](n N) N {
 	switch any(n).(type) {
 	case int:
 		return any(math.MaxInt).(N)
@@ -62,7 +62,7 @@ func MaxValue[N number](n N) N {
 	}
 }
 
-func MinValue[N number](n N) N {
+func MinValue[N Number](n N) N {
 	switch any(n).(type) {
 	case int:
 		return any(math.MinInt).(N)

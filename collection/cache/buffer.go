@@ -30,7 +30,7 @@ type frame[K comparable, V any] struct {
 	inYoung bool
 }
 
-type Pool[K comparable, V any] struct {
+type BufferPool[K comparable, V any] struct {
 	mu     sync.Mutex
 	cap    int
 	size   int // young list length limit.
@@ -43,19 +43,19 @@ type Pool[K comparable, V any] struct {
 	onEvict func(K, V)
 }
 
-func NewPool[K comparable, V any](
+func NewBufferPool[K comparable, V any](
 	capacity int,
 	youngRatio float64,
 	timeWindow time.Duration,
 	onEvict func(K, V),
-) *Pool[K, V] {
+) *BufferPool[K, V] {
 	if capacity <= 0 {
 		panic("pool: capacity must be positive")
 	}
 	if youngRatio <= 0 || youngRatio >= 1 {
 		youngRatio = 0.625
 	}
-	return &Pool[K, V]{
+	return &BufferPool[K, V]{
 		cap:     capacity,
 		size:    int(float64(capacity) * youngRatio),
 		window:  timeWindow,
@@ -66,13 +66,13 @@ func NewPool[K comparable, V any](
 	}
 }
 
-func (p *Pool[K, V]) Len() int {
+func (p *BufferPool[K, V]) Len() int {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	return p.young.Len() + p.old.Len()
 }
 
-func (p *Pool[K, V]) Get(key K) (V, bool) {
+func (p *BufferPool[K, V]) Get(key K) (V, bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -95,7 +95,7 @@ func (p *Pool[K, V]) Get(key K) (V, bool) {
 	return f.val, true
 }
 
-func (p *Pool[K, V]) trimYoung() {
+func (p *BufferPool[K, V]) trimYoung() {
 	for p.young.Len() > p.size {
 		ele := p.young.Back()
 		p.young.Remove(ele)
@@ -106,7 +106,7 @@ func (p *Pool[K, V]) trimYoung() {
 	}
 }
 
-func (p *Pool[K, V]) Unpin(key K) {
+func (p *BufferPool[K, V]) Unpin(key K) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if ele, ok := p.cache[key]; ok {
@@ -117,7 +117,7 @@ func (p *Pool[K, V]) Unpin(key K) {
 	}
 }
 
-func (p *Pool[K, V]) Put(key K, value V) {
+func (p *BufferPool[K, V]) Put(key K, value V) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -132,7 +132,7 @@ func (p *Pool[K, V]) Put(key K, value V) {
 	p.cache[key] = p.old.PushFront(f)
 }
 
-func (p *Pool[K, V]) evictIfNeeded() {
+func (p *BufferPool[K, V]) evictIfNeeded() {
 	for p.young.Len()+p.old.Len() > p.cap {
 		ele := p.findEvictable()
 		if ele == nil {
@@ -151,7 +151,7 @@ func (p *Pool[K, V]) evictIfNeeded() {
 	}
 }
 
-func (p *Pool[K, V]) findEvictable() *list.Element {
+func (p *BufferPool[K, V]) findEvictable() *list.Element {
 	for e := p.old.Back(); e != nil; e = e.Prev() {
 		f := e.Value.(*frame[K, V])
 		if f.pin == 0 {

@@ -26,12 +26,6 @@ import (
 	"github.com/flxj/graphlib/collection/stack"
 )
 
-type number interface {
-	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
-		~float32 | ~float64
-}
-
 var (
 	// M represents the maximum number of elements
 	// allowed to be included in each leaf node.
@@ -43,7 +37,7 @@ var (
 // where the first two elements represent the coordinates of the
 // bottom left corner and the last two elements represent
 // the coordinates of the top right corner.
-type Rectangle[N number] [4]N
+type Rectangle[N collection.Number] [4]N
 
 // Determine whether two rectangles overlap.
 func (t Rectangle[N]) Intersect(r Rectangle[N]) bool {
@@ -70,7 +64,7 @@ func (t Rectangle[N]) Equels(r Rectangle[N]) bool {
 // minimum allowed number of entries is m ≤ M/2. Each entry is of the form
 // (mbr,oid), such that mbr is the MBR that spatially contains the object and
 // oid is the object’s identifier.
-type rEntry[T any, N number] struct {
+type rEntry[T any, N collection.Number] struct {
 	rect Rectangle[N]
 	data T
 	ptr  *rNode[T, N]
@@ -79,7 +73,7 @@ type rEntry[T any, N number] struct {
 // The number of entries that each internal node can store is again between m≤M/2 and M.
 // Eachentry is of the form (mbr,p), where p is a pointer to
 // a child of the node and mbr is the MBR that spatially contains the MBRs contained in this child.
-type rNode[T any, N number] struct {
+type rNode[T any, N collection.Number] struct {
 	kind    uint8
 	mbr     Rectangle[N]
 	parent  *rNode[T, N]
@@ -131,18 +125,18 @@ func (r *rNode[T, N]) del(i int) {
 	r.reset()
 }
 
-type rPath[T any, N number] struct {
+type rPath[T any, N collection.Number] struct {
 	rn  *rNode[T, N]
 	idx int
 }
 
 // Distance calculation function
-type DistFunc[N number] func(Rectangle[N], Rectangle[N]) N
+type DistFunc[N collection.Number] func(Rectangle[N], Rectangle[N]) N
 
 // The default distance calculation function.
 // Box distance is calculated as the Euclidean distance
 // between the centers of two rectangles.
-func BoxDist[N number](r1, r2 Rectangle[N]) N {
+func BoxDist[N collection.Number](r1, r2 Rectangle[N]) N {
 	dx := r1[0] + r1[2] - r2[0] - r2[2]
 	dy := r1[1] + r1[3] - r2[1] - r2[3]
 	s := math.Sqrt(float64(dx*dx+dy*dy)) / 2.0
@@ -161,7 +155,7 @@ A few large rectangles may increase the degree of overlap significantly,
 leading to performance degradation during range query execution, due to
 empty space.
 */
-type RTree[T any, N number] struct {
+type RTree[T any, N collection.Number] struct {
 	dist DistFunc[N]
 	M    int
 	lock bool
@@ -179,7 +173,7 @@ type RTree[T any, N number] struct {
 // M: the maximum number of elements that an internal node can accommodate.
 // lock: Is concurrency secure;
 // dist: Specify distance function.
-func NewRTree[T any, N number](M int, lock bool, dist DistFunc[N]) *RTree[T, N] {
+func NewRTree[T any, N collection.Number](M int, lock bool, dist DistFunc[N]) *RTree[T, N] {
 	var n N
 	t := &RTree[T, N]{
 		dist: dist,
@@ -602,5 +596,5 @@ func (r *RTree[T, N]) NearestNeighborsByDist(obj Rectangle[N], dist DistFunc[N],
 // R+-trees do not allow overlapping of MBRs at the same tree level.
 // In turn, to achieve this,inserted objects have to be divided in two or more MBRs,
 // which means that a specific object’s entries may be duplicated and redundantly stored in several nodes.
-type RPlusTree[T any, N number] struct {
+type RPlusTree[T any, N collection.Number] struct {
 }

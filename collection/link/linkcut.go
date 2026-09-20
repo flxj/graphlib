@@ -22,13 +22,7 @@ import (
 	"github.com/flxj/graphlib/collection"
 )
 
-type number interface {
-	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
-		~float32 | ~float64
-}
-
-type lctNode[K any, V any, W number] struct {
+type lctNode[K any, V any, W collection.Number] struct {
 	key K
 	val V
 	wt  W
@@ -75,7 +69,7 @@ than v in v’s represented tree and all the elements in its right subtree are l
 Auxiliary trees are joined together using path-parent pointers. T
 here is one path-parent pointer per auxiliary tree and it is stored in the root of the auxiliary tree.
 */
-type LinkCutTree[K any, V any, W number] struct {
+type LinkCutTree[K any, V any, W collection.Number] struct {
 	comp   collection.CompareFunc[K]
 	nodes  []*lctNode[K, V, W] // auxiliary trees
 	emptyK K
@@ -83,7 +77,7 @@ type LinkCutTree[K any, V any, W number] struct {
 }
 
 // Create an LCT, in order to quickly find elements, a comparison function for element keys needs to be provided.
-func NewLinkCutTree[K any, V any, W number](comp collection.CompareFunc[K]) *LinkCutTree[K, V, W] {
+func NewLinkCutTree[K any, V any, W collection.Number](comp collection.CompareFunc[K]) *LinkCutTree[K, V, W] {
 	return &LinkCutTree[K, V, W]{comp: comp}
 }
 

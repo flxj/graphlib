@@ -43,12 +43,19 @@
 
 ✔️ **Data Structure:**
 
-* Stack/FIFO
-* Heap/PriorityQueue
+* ArrayList
+* Stack
+* FIFO
+* BinaryHeap
 * Fibonacci Heap
+* PairingHeap/SkewHeap
+* PriorityQueue
 * LinkCut Tree
 * Disjoint Set
 * Difference Array
+* BitArray/BloomFilter
+* SuffixArray
+* SegmentTree
 * Treap
 * Scapegoat Tree
 * RedBlack Tree
@@ -58,6 +65,7 @@
 * RTree
 * Trie
 * Adaptive Radix Tree
+* Cache(LRU/LFU/BufferPool)
 
 ### Getting started
 

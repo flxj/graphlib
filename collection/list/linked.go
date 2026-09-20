@@ -14,15 +14,7 @@
 	limitations under the License.
 */
 
-package collection
+package list
 
-type Number interface {
-	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
-		~float32 | ~float64
+type LinkedList[T any] struct {
 }
-
-type (
-	Less[K any]        func(K, K) bool
-	CompareFunc[K any] func(K, K) int
-)
