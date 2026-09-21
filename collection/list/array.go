@@ -106,9 +106,11 @@ func (l *ArrayList[T]) Set(i int, elem T) {
 func (l *ArrayList[T]) Insert(i int, elem T) {
 	l.checkIndex(i)
 	if i < len(l.head) {
-		i = len(l.head) - i - 1
+		i = len(l.head) - i
 		l.head = append(l.head, elem)
-		copy(l.head[i+1:], l.head[i:])
+		if i < len(l.head)-2 {
+			copy(l.head[i+1:], l.head[i:])
+		}
 		l.head[i] = elem
 	} else {
 		i -= len(l.head)
@@ -126,9 +128,11 @@ func (l *ArrayList[T]) InsertAll(i int, elems ...T) {
 	l.checkIndex(i)
 	if i < len(l.head) {
 		old := len(l.head)
-		i = old - i - 1
+		i = old - i
 		l.head = append(l.head, elems...)
-		copy(l.head[i+len(elems):], l.head[i:old])
+		if i < old-1 {
+			copy(l.head[i+len(elems):], l.head[i:old])
+		}
 		for j := 0; j < len(elems); j++ {
 			l.head[i+len(elems)-j-1] = elems[j]
 		}
